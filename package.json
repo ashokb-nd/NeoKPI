@@ -1,0 +1,25 @@
+{
+  "name": "neokpi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@vitest/ui": "^3.2.4",
+    "jsdom": "^26.1.0",
+    "rollup": "^4.45.1",
+    "vitest": "^3.2.4"
+  }
+}
