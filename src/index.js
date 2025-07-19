@@ -44,6 +44,9 @@ import { GlobalScope } from './core/global-scope.js';
 (() => {
   'use strict';
 
+  // change the title of the page
+  document.title = " NeoKPI 🎉";
+
   // Create and initialize the application
   const app = new Application();
   app.init();
