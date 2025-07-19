@@ -3,6 +3,8 @@ import { ModalManager } from '../ui/modal-manager.js';
 import { MetadataManager } from '../services/metadata.js';
 import { NotesManager } from '../features/notes.js';
 import { TagsUI } from '../ui/tags-ui.js';
+import { AnnotationManager } from '../features/annotations/annotation-manager.js';
+import { AnnotationParser } from '../features/annotations/annotation-parser.js';
 import { CONFIG } from '../config/constants.js';
 
 /**
@@ -70,6 +72,22 @@ export class GlobalScope {
       // Store constants for easy access
       STORES: CONFIG.DATABASE.STORES
     };
+
+    // Expose annotation system for console access
+    window.AlertDebugAnnotations = {
+      manager: AnnotationManager,
+      parser: AnnotationParser,
+      
+      // Helper functions for testing
+      createSample: () => AnnotationParser.createSampleAnnotation(),
+      loadSample: async () => {
+        const sample = AnnotationParser.createSampleAnnotation();
+        return await AnnotationManager.loadAnnotationsForAlert(sample.alertId);
+      },
+      hide: () => AnnotationManager.hideAnnotations(),
+      show: () => AnnotationManager.showAnnotations(),
+      clear: () => AnnotationManager.clearAnnotations()
+    };
     
     this.logAvailableCommands();
   }
@@ -81,6 +99,15 @@ export class GlobalScope {
     console.log('%cAlert Debug Admin Commands Available:', 'color: #4CAF50; font-weight: bold;');
     console.log('AlertDebugAdmin.showStats() - Show storage statistics');
     console.log('AlertDebugAdmin.clearAll() - Clear all data');
+    console.log('AlertDebugAdmin.exportMetadata() - Export metadata list');
+    console.log('AlertDebugAdmin.deleteDB() - Delete IndexedDB database');
+    
+    console.log('%cAnnotation System Commands:', 'color: #2196F3; font-weight: bold;');
+    console.log('AlertDebugAnnotations.createSample() - Create sample annotation');
+    console.log('AlertDebugAnnotations.loadSample() - Load sample annotation');
+    console.log('AlertDebugAnnotations.hide() - Hide all annotations');
+    console.log('AlertDebugAnnotations.show() - Show all annotations');
+    console.log('AlertDebugAnnotations.clear() - Clear all annotations');
     console.log('AlertDebugAdmin.cleanup(1000, 30) - Clean up old entries');
     console.log('AlertDebugAdmin.exportMetadata() - Export metadata list');
     console.log('AlertDebugAdmin.deleteDB() - Delete IndexedDB database');

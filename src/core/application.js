@@ -11,6 +11,7 @@ import { BulkProcessor } from '../features/bulk-processor.js';
 import { FireworkShow } from '../ui/fireworks.js';
 import { VideoControlsManager } from '../ui/video-controls.js';
 import { UIManager, NotepadUI } from '../ui/ui-manager.js';
+import { AnnotationManager } from '../features/annotations/annotation-manager.js';
 
 /**
  * Main Application class that orchestrates the initialization
@@ -64,6 +65,7 @@ export class Application {
       
       // Initialize UI components
       VideoControlsManager.init();
+      AnnotationManager.init();
       
       // Auto-open notepad on page load
       this.autoOpenNotepad();

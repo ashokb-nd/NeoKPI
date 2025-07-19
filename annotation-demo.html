@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Annotation System Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .mock-video {
+            width: 640px;
+            height: 360px;
+            background: linear-gradient(45deg, #2a2a2a, #4a4a4a);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ccc;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .annotation-info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .json-display {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            border: 1px solid #444;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        h1, h2 {
+            color: #4CAF50;
+        }
+        
+        .highlight {
+            color: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🎯 Video Annotation System Demo</h1>
+        <p>This demo showcases the modular video annotation system with normalized coordinates and millisecond timing.</p>
+        
+        <div class="video-container">
+            <div class="mock-video" id="mockVideo">
+                📹 Mock Video Element (640x360)
+                <div style="position: absolute; bottom: 10px; right: 10px; font-size: 12px;">
+                    Time: <span id="videoTime">0.00</span>s
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="createSampleAnnotations()">Create Sample Annotations</button>
+            <button onclick="showAnnotations()" id="showBtn">Show Annotations</button>
+            <button onclick="hideAnnotations()" id="hideBtn">Hide Annotations</button>
+            <button onclick="clearAnnotations()">Clear Annotations</button>
+            <button onclick="validateJson()">Validate JSON</button>
+            <button onclick="simulateVideoTime()">Simulate Video Playback</button>
+        </div>
+
+        <div class="status" id="status">
+            Ready. Click "Create Sample Annotations" to start.
+        </div>
+
+        <div class="annotation-info">
+            <h2>📋 Current Annotation Data</h2>
+            <div class="json-display" id="jsonDisplay">
+                No annotations loaded.
+            </div>
+        </div>
+
+        <div class="annotation-info">
+            <h2>🚀 Key Features Demonstrated</h2>
+            <ul>
+                <li><span class="highlight">Normalized Coordinates (0.0-1.0)</span> - Automatically scales with video resize</li>
+                <li><span class="highlight">Millisecond Timing</span> - Precise synchronization with ML model outputs</li>
+                <li><span class="highlight">Static vs Dynamic Annotations</span> - Performance optimized rendering</li>
+                <li><span class="highlight">Multiple Annotation Types</span> - Detections, graphs, text, trajectories</li>
+                <li><span class="highlight">Modular Renderer System</span> - Easy to extend with new types</li>
+                <li><span class="highlight">Canvas-based Rendering</span> - Hardware accelerated performance</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import our annotation system
+        import { AnnotationParser } from '/src/features/annotations/annotation-parser.js';
+        
+        let currentAnnotationData = null;
+        let videoTimeInterval = null;
+        let currentVideoTime = 0;
+        
+        // Make functions globally available
+        window.createSampleAnnotations = createSampleAnnotations;
+        window.showAnnotations = showAnnotations;
+        window.hideAnnotations = hideAnnotations;
+        window.clearAnnotations = clearAnnotations;
+        window.validateJson = validateJson;
+        window.simulateVideoTime = simulateVideoTime;
+        
+        function logStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            status.textContent = `${emoji} [${timestamp}] ${message}`;
+            console.log(`${emoji} ${message}`);
+        }
+
+        function createSampleAnnotations() {
+            try {
+                // Create comprehensive sample with all annotation types
+                currentAnnotationData = {
+                    version: "1.0",
+                    alertId: "demo-alert-001",
+                    videoMetadata: {
+                        durationMs: 15000,
+                        fps: 30,
+                        resolution: { width: 1920, height: 1080 },
+                        videoStartTimeMs: Date.now()
+                    },
+                    annotations: [
+                        {
+                            id: "detection-1",
+                            type: "detection",
+                            timeRange: { startMs: 2000, endMs: 8000 },
+                            isStatic: false,
+                            data: {
+                                bbox: { x: 0.1, y: 0.1, width: 0.3, height: 0.4 },
+                                confidence: 0.95,
+                                class: "vehicle",
+                                trackId: "track_001"
+                            },
+                            style: {
+                                borderColor: "#ff0000",
+                                borderWidth: 3,
+                                showLabel: true,
+                                labelPosition: "top-left"
+                            }
+                        },
+                        {
+                            id: "text-overlay-1",
+                            type: "text",
+                            timeRange: { startMs: 1000, endMs: 12000 },
+                            isStatic: true,
+                            data: {
+                                text: "Critical Event Detected",
+                                position: { x: 0.5, y: 0.05 },
+                                anchor: "center"
+                            },
+                            style: {
+                                fontSize: 20,
+                                fontFamily: "Arial",
+                                color: "#ffffff",
+                                backgroundColor: "rgba(255,0,0,0.8)",
+                                padding: { x: 12, y: 6 },
+                                borderRadius: 6
+                            }
+                        },
+                        {
+                            id: "speed-graph",
+                            type: "graph",
+                            timeRange: { startMs: 0, endMs: 15000 },
+                            isStatic: true,
+                            data: {
+                                graphType: "line",
+                                series: [
+                                    {
+                                        name: "Vehicle Speed",
+                                        points: [
+                                            { timeMs: 0, value: 25.5 },
+                                            { timeMs: 3000, value: 32.1 },
+                                            { timeMs: 6000, value: 28.7 },
+                                            { timeMs: 9000, value: 35.2 },
+                                            { timeMs: 12000, value: 30.8 },
+                                            { timeMs: 15000, value: 27.3 }
+                                        ],
+                                        unit: "mph",
+                                        color: "#00ff00"
+                                    }
+                                ],
+                                position: { x: 0.02, y: 0.65, width: 0.35, height: 0.3 }
+                            },
+                            style: {
+                                backgroundColor: "rgba(0,0,0,0.8)",
+                                gridLines: true,
+                                showAxes: true,
+                                fontSize: 10
+                            }
+                        },
+                        {
+                            id: "trajectory-1",
+                            type: "trajectory",
+                            timeRange: { startMs: 3000, endMs: 12000 },
+                            isStatic: false,
+                            data: {
+                                points: [
+                                    { timeMs: 3000, x: 0.2, y: 0.3 },
+                                    { timeMs: 5000, x: 0.35, y: 0.28 },
+                                    { timeMs: 7000, x: 0.5, y: 0.32 },
+                                    { timeMs: 9000, x: 0.65, y: 0.29 },
+                                    { timeMs: 11000, x: 0.8, y: 0.35 }
+                                ],
+                                interpolation: "linear",
+                                showHistory: true,
+                                historyLengthMs: 3000
+                            },
+                            style: {
+                                lineColor: "#ffff00",
+                                lineWidth: 4,
+                                pointRadius: 6,
+                                showDirection: true
+                            }
+                        }
+                    ]
+                };
+
+                // Validate the created annotations
+                AnnotationParser.parse(currentAnnotationData);
+                
+                updateJsonDisplay();
+                logStatus(`Created ${currentAnnotationData.annotations.length} sample annotations`, 'success');
+                
+            } catch (error) {
+                logStatus(`Error creating annotations: ${error.message}`, 'error');
+            }
+        }
+
+        function showAnnotations() {
+            if (!currentAnnotationData) {
+                logStatus('No annotations to show. Create sample annotations first.', 'error');
+                return;
+            }
+            logStatus('Annotations shown (in real implementation, canvas overlay would be visible)', 'success');
+        }
+
+        function hideAnnotations() {
+            logStatus('Annotations hidden', 'success');
+        }
+
+        function clearAnnotations() {
+            currentAnnotationData = null;
+            updateJsonDisplay();
+            logStatus('Annotations cleared', 'success');
+        }
+
+        function validateJson() {
+            if (!currentAnnotationData) {
+                logStatus('No annotations to validate', 'error');
+                return;
+            }
+
+            try {
+                AnnotationParser.parse(currentAnnotationData);
+                logStatus('JSON validation passed! ✨', 'success');
+            } catch (error) {
+                logStatus(`Validation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function simulateVideoTime() {
+            if (videoTimeInterval) {
+                clearInterval(videoTimeInterval);
+                videoTimeInterval = null;
+                logStatus('Video simulation stopped');
+                return;
+            }
+
+            currentVideoTime = 0;
+            videoTimeInterval = setInterval(() => {
+                currentVideoTime += 100; // 100ms increments
+                document.getElementById('videoTime').textContent = (currentVideoTime / 1000).toFixed(2);
+                
+                if (currentVideoTime >= 15000) {
+                    clearInterval(videoTimeInterval);
+                    videoTimeInterval = null;
+                    currentVideoTime = 0;
+                    logStatus('Video simulation completed', 'success');
+                }
+            }, 100);
+            
+            logStatus('Simulating video playback (15s)...');
+        }
+
+        function updateJsonDisplay() {
+            const display = document.getElementById('jsonDisplay');
+            if (currentAnnotationData) {
+                display.textContent = JSON.stringify(currentAnnotationData, null, 2);
+            } else {
+                display.textContent = 'No annotations loaded.';
+            }
+        }
+
+        // Initialize
+        logStatus('Video Annotation System Demo Ready! 🚀');
+        
+    </script>
+</body>
+</html>
