@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NotesManager } from '../src/features/notes.js';
-import { StorageManager } from '../src/utils/storage.js';
 import { TagManager } from '../src/features/tags.js';
 
 // Mock dependencies
@@ -27,14 +26,6 @@ vi.mock('../src/utils/utils.js', () => ({
   Utils: {
     getCurrentAlertType: vi.fn(() => 'test-alert-type'),
     log: vi.fn()
-  }
-}));
-
-vi.mock('../src/utils/storage.js', () => ({
-  StorageManager: {
-    get: vi.fn(),
-    set: vi.fn(),
-    remove: vi.fn()
   }
 }));
 
@@ -104,8 +95,6 @@ describe('NotesManager', () => {
   describe('init', () => {
     test('should initialize IndexedDB manager', async () => {
       mockIndexedDBManager.init.mockResolvedValue(true);
-      mockIndexedDBManager.getAll.mockResolvedValue([]);
-      vi.mocked(StorageManager.get).mockReturnValue({});
       
       await NotesManager.init();
       
@@ -115,7 +104,7 @@ describe('NotesManager', () => {
   });
 
   describe('getAllNotes', () => {
-    test('should return notes from IndexedDB in legacy format', async () => {
+    test('should return notes from IndexedDB in native format', async () => {
       const mockIndexedDBNotes = [
         {
           id: 1,
@@ -132,14 +121,16 @@ describe('NotesManager', () => {
       
       const result = await NotesManager.getAllNotes();
       
-      expect(result).toEqual({
-        '12345': {
-          note: 'Test note',
+      expect(result).toEqual([
+        {
+          id: 1,
+          alertId: '12345',
+          content: 'Test note',
           tags: ['test'],
-          alertType: 'test-type',
+          category: 'test-type',
           timestamp: '2025-01-15T10:30:00.000Z'
         }
-      });
+      ]);
     });
   });
 
@@ -150,8 +141,6 @@ describe('NotesManager', () => {
       mockIndexedDBManager.add.mockResolvedValue(1);
       vi.mocked(TagManager.extractHashtagsFromText).mockReturnValue(['hashtag1']);
       vi.mocked(TagManager.mergeTags).mockReturnValue(['manual1', 'hashtag1']);
-      vi.mocked(StorageManager.get).mockReturnValue({});
-      vi.mocked(StorageManager.set).mockReturnValue(true);
       
       const result = await NotesManager.saveNote('12345', 'Test note #hashtag1', ['manual1']);
       
@@ -172,8 +161,6 @@ describe('NotesManager', () => {
       mockIndexedDBManager.init.mockResolvedValue(true);
       mockIndexedDBManager.getAllByIndex.mockResolvedValue([existingNote]);
       mockIndexedDBManager.delete.mockResolvedValue(true);
-      vi.mocked(StorageManager.get).mockReturnValue({'12345': {}});
-      vi.mocked(StorageManager.set).mockReturnValue(true);
       
       const result = await NotesManager.deleteNote('12345');
       
