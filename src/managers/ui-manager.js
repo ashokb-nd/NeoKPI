@@ -1,0 +1,659 @@
+import { CONFIG } from '../config/constants.js';
+import { Utils } from '../utils/utils.js';
+import { StorageManager } from '../utils/storage.js';
+import { BulkProcessor } from './bulk-processor.js';
+import { AppState } from './app-state.js';
+import { MetadataManager } from './metadata.js';
+import { NotesManager } from './notes.js';
+
+/**
+ * UIManager handles the main application UI components including
+ * bulk status notifications, alert loading, and general notifications
+ */
+export const UIManager = {
+  BULK_STATUS_STYLES: {
+    position: 'fixed',
+    top: '10px',
+    left: '10px',
+    background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
+    color: '#ffffff',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace',
+    fontSize: '13px',
+    fontWeight: '500',
+    zIndex: '10000',
+    border: '2px solid #4a90e2',
+    boxShadow: '0 0 20px rgba(74, 144, 226, 0.6), 0 0 40px rgba(74, 144, 226, 0.4), 0 0 60px rgba(74, 144, 226, 0.2)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+    animation: 'pulseGlow 2s ease-in-out infinite alternate'
+  },
+
+  showBulkStatus(message) {
+    let statusEl = document.querySelector('#bulk-status');
+    if (!statusEl) {
+      statusEl = this.createBulkStatusElement();
+      document.body.appendChild(statusEl);
+    }
+    statusEl.textContent = message;
+    
+    if (!BulkProcessor.state.isProcessing) {
+      setTimeout(() => {
+        if (statusEl && statusEl.parentNode) {
+          statusEl.parentNode.removeChild(statusEl);
+        }
+      }, 3000);
+    }
+  },
+
+  createBulkStatusElement() {
+    const statusEl = document.createElement('div');
+    statusEl.id = 'bulk-status';
+    
+    // Apply styles
+    Object.assign(statusEl.style, this.BULK_STATUS_STYLES);
+    
+    this.addGlowAnimation();
+    return statusEl;
+  },
+
+  addGlowAnimation() {
+    if (!document.querySelector('#bulk-status-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'bulk-status-keyframes';
+      style.textContent = `
+        @keyframes pulseGlow {
+          0% { box-shadow: 0 0 20px rgba(74, 144, 226, 0.6); }
+          100% { box-shadow: 0 0 30px rgba(74, 144, 226, 0.8); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  },
+
+  loadAlertId(alertId, elements) {
+    Utils.log(`Loading alert ID: ${alertId}`);
+    
+    // Update notepad if open
+    if (AppState.notepad.isOpen) {
+      AppState.setCurrentAlert(alertId);
+      NotepadUI.updateContent();
+    }
+    
+    // Set input value without focusing to prevent page scroll
+    this.setInputValue(elements.input, alertId);
+    
+    // Click submit button without focusing input
+    setTimeout(() => {
+      elements.button.click();
+    }, 200);
+  },
+
+  setInputValue(input, value) {
+    input.value = '';
+    
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(input, value);
+    
+    // Trigger input events for Dash
+    this.triggerInputEvents(input);
+  },
+
+  triggerInputEvents(input) {
+    const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+    Object.defineProperty(inputEvent, 'target', { writable: false, value: input });
+    input.dispatchEvent(inputEvent);
+    
+    const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+    Object.defineProperty(changeEvent, 'target', { writable: false, value: input });
+    input.dispatchEvent(changeEvent);
+  },
+
+  // Show notification message
+  showNotification(message, type = 'info', duration = 3000) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${this.getNotificationColor(type)};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      z-index: 10001;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, duration);
+  },
+
+  getNotificationColor(type) {
+    const colors = {
+      info: '#2196F3',
+      success: '#4CAF50',
+      warning: '#FF9800',
+      error: '#F44336'
+    };
+    return colors[type] || colors.info;
+  },
+
+  // Create a loading spinner
+  createLoadingSpinner() {
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    `;
+    
+    // Add spin animation if not already present
+    if (!document.querySelector('#spinner-animation')) {
+      const style = document.createElement('style');
+      style.id = 'spinner-animation';
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    return spinner;
+  }
+};
+
+/**
+ * NotepadUI handles the notepad panel interface including
+ * notes input, tags display, and panel resizing
+ */
+export const NotepadUI = {
+  createPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'notepad-panel';
+    panel.style.cssText = `
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: ${CONFIG.UI.PANEL_DEFAULT_HEIGHT}px;
+      background: #1e1e1e;
+      border-top: 1px solid #3c3c3c;
+      display: none;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #d4d4d4;
+      overflow: hidden;
+      min-height: ${CONFIG.UI.PANEL_MIN_HEIGHT}px;
+      max-height: ${CONFIG.UI.PANEL_MAX_HEIGHT_RATIO * 100}vh;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    `;
+
+    // Add resizer, header, and content
+    panel.appendChild(this.createTopResizer(panel));
+    panel.appendChild(this.createHeader());
+    panel.appendChild(this.createMainContent());
+    
+    // Load saved dimensions
+    this.loadSavedDimensions(panel);
+    
+    return panel;
+  },
+
+  createTopResizer(panel) {
+    const resizer = document.createElement('div');
+    resizer.style.cssText = `
+      height: 4px;
+      background: #3c3c3c;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    `;
+    
+    const dots = document.createElement('div');
+    dots.style.cssText = `
+      width: 20px;
+      height: 2px;
+      background: repeating-linear-gradient(to right, #666 0px, #666 2px, transparent 2px, transparent 4px);
+      opacity: 0.5;
+    `;
+    resizer.appendChild(dots);
+    
+    this.addResizerEvents(resizer, panel, dots);
+    return resizer;
+  },
+
+  createHeader() {
+    const header = document.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: #2d2d30;
+      border-bottom: 1px solid #3c3c3c;
+      font-size: 13px;
+    `;
+    
+    const left = document.createElement('div');
+    left.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+    
+    const title = document.createElement('span');
+    title.textContent = 'Notes & Tags';
+    title.style.cssText = 'font-weight: 500; color: #cccccc;';
+    
+    const alertId = document.createElement('span');
+    alertId.id = 'notepad-alert-id';
+    alertId.style.cssText = 'color: #569cd6; font-family: monospace; font-size: 12px;';
+    
+    const alertType = document.createElement('span');
+    alertType.id = 'notepad-alert-type';
+    alertType.style.cssText = 'color: #ce9178; font-family: monospace; font-size: 12px; font-style: italic;';
+    
+    left.appendChild(title);
+    left.appendChild(alertId);
+    left.appendChild(alertType);
+    
+    const right = this.createHeaderButtons();
+    
+    header.appendChild(left);
+    header.appendChild(right);
+    
+    return header;
+  },
+
+  createHeaderButtons() {
+    const container = document.createElement('div');
+    container.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+    
+    const buttons = [
+      { text: 'Download Metadata', color: '#6f42c1', action: () => MetadataManager.downloadCurrentMetadata() },
+      { text: 'Import CSV', color: '#28a745', action: () => this.importCsv() },
+      { text: 'Export CSV', color: '#0e639c', action: () => NotesManager.exportToCsv() },
+      { text: 'Clear Notes', color: '#a1260d', action: () => this.clearAllNotes() },
+      { text: 'Clear Bulk', color: '#d16c02', action: () => this.clearBulkAlerts() },
+      { text: '⚙️', color: '#6c757d', action: () => this.openSettings() },
+      { text: '×', color: '#3c3c3c', action: () => this.toggle() }
+    ];
+    
+    buttons.forEach(btn => {
+      const button = Utils.createButton(btn.text, btn.color, btn.action);
+      container.appendChild(button);
+    });
+    
+    return container;
+  },
+
+  createMainContent() {
+    const content = document.createElement('div');
+    content.style.cssText = `
+      display: flex;
+      height: calc(100% - 45px);
+      overflow: hidden;
+      position: relative;
+    `;
+    
+    const leftPanel = this.createNotesPanel();
+    const resizer = this.createVerticalResizer();
+    const rightPanel = this.createTagsPanel();
+    
+    content.appendChild(leftPanel);
+    content.appendChild(resizer);
+    content.appendChild(rightPanel);
+    
+    return content;
+  },
+
+  createNotesPanel() {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      border-right: 1px solid #3c3c3c;
+      min-width: 200px;
+    `;
+    
+    // Add tags section above textarea - import will be resolved at runtime
+    const tagsSection = window.TagsUI?.createCurrentAlertTagsSection?.() || document.createElement('div');
+    panel.appendChild(tagsSection);
+    
+    const textarea = document.createElement('textarea');
+    textarea.id = 'notepad-textarea';
+    textarea.placeholder = 'Enter your notes for this alert ID... (Type @ to insert video timestamp)';
+    textarea.style.cssText = `
+      width: 100%;
+      flex: 1;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      box-sizing: border-box;
+      margin-top: 8px;
+    `;
+    
+    textarea.addEventListener('input', (e) => this.handleNoteInput(textarea, e));
+    panel.appendChild(textarea);
+    
+    return panel;
+  },
+
+  createTagsPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'notepad-right-panel';
+    panel.style.cssText = `
+      width: ${CONFIG.UI.TAGS_DEFAULT_WIDTH}px;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 16px;
+      min-width: ${CONFIG.UI.TAGS_MIN_WIDTH}px;
+    `;
+    
+    // Only include the filter section - import will be resolved at runtime
+    const filterSection = window.TagsUI?.createFilterSection?.() || document.createElement('div');
+    panel.appendChild(filterSection);
+    
+    return panel;
+  },
+
+  toggle() {
+    let panel = document.querySelector('#notepad-panel');
+    
+    if (!panel) {
+      panel = this.createPanel();
+      document.body.appendChild(panel);
+    }
+    
+    if (AppState.notepad.isOpen) {
+      // If notepad is open, check if focus is within the notepad
+      if (Utils.isNotepadFocused()) {
+        // Focus is within notepad, so close it with animation
+        panel.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+          panel.style.display = 'none';
+        }, 250);
+        AppState.toggleNotepad();
+        document.body.focus();
+      } else {
+        // Focus is outside notepad, so focus on the textarea instead of closing
+        const textarea = document.querySelector('#notepad-textarea');
+        if (textarea) {
+          textarea.focus();
+        }
+      }
+    } else {
+      // Notepad is closed, so open it with animation
+      panel.style.display = 'block';
+      // Force reflow to ensure display change takes effect
+      panel.offsetHeight;
+      panel.style.transform = 'translateY(0)';
+      AppState.toggleNotepad();
+      
+      const elements = Utils.getRequiredElements();
+      const alertId = elements.input?.value.trim();
+      if (alertId) {
+        AppState.setCurrentAlert(alertId);
+      }
+      
+      this.updateContent();
+      // Focus after animation starts
+      setTimeout(() => {
+        document.querySelector('#notepad-textarea')?.focus();
+      }, 100);
+    }
+  },
+
+  updateContent() {
+    const alertDisplay = document.querySelector('#notepad-alert-id');
+    const alertTypeDisplay = document.querySelector('#notepad-alert-type');
+    const textarea = document.querySelector('#notepad-textarea');
+    
+    if (alertDisplay && alertTypeDisplay && textarea) {
+      const alertId = AppState.notepad.currentAlertId;
+      if (alertId) {
+        // Get alert type from stored notes data
+        const notes = NotesManager.getAllNotes();
+        const noteData = notes[alertId];
+        let alertType = 'unknown';
+        
+        if (noteData && typeof noteData === 'object' && noteData.alertType) {
+          alertType = noteData.alertType;
+        }
+        
+        // Check if current dropdown selection matches the alert type
+        const currentDropdownType = Utils.getCurrentAlertType();
+        const isTypeMismatch = currentDropdownType && alertType !== 'unknown' && 
+                               currentDropdownType.toLowerCase() !== alertType.toLowerCase();
+        
+        if (isTypeMismatch) {
+          alertDisplay.innerHTML = `[${alertType}:${alertId}] <span style="color: #ff6b6b;">⚠️ Change dropdown to "${alertType}"</span>`;
+          alertDisplay.style.color = '#569cd6'; // Keep default color for the main part
+        } else {
+          alertDisplay.textContent = `[${alertType}:${alertId}]`;
+          alertDisplay.style.color = '#569cd6'; // Default blue color
+        }
+        
+        alertTypeDisplay.textContent = ''; // Clear the separate type display
+        textarea.value = NotesManager.getNote(alertId);
+      } else {
+        alertDisplay.textContent = 'No alert ID selected';
+        alertDisplay.style.color = '#569cd6'; // Reset to default color
+        alertTypeDisplay.textContent = '';
+        textarea.value = '';
+      }
+    }
+    
+    // Update tags - these will be resolved at runtime
+    window.TagsUI?.updateTagsDisplay?.();
+    window.TagsUI?.updateFilterDisplay?.();
+  },
+
+  handleNoteInput(textarea, event) {
+    const alertId = AppState.notepad.currentAlertId;
+    if (!alertId) return;
+    
+    // Check if the user just typed "@" and replace it with video timestamp
+    if (event && event.inputType === 'insertText' && event.data === '@') {
+      const timestamp = Utils.getCurrentVideoTimestamp();
+      if (timestamp) {
+        // Get current cursor position
+        const cursorPos = textarea.selectionStart;
+        const textBefore = textarea.value.substring(0, cursorPos - 1); // -1 to exclude the "@"
+        const textAfter = textarea.value.substring(cursorPos);
+        
+        // Replace the "@" with the timestamp
+        textarea.value = textBefore + timestamp + textAfter;
+        
+        // Set cursor position after the timestamp
+        const newCursorPos = cursorPos - 1 + timestamp.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }
+    
+    const existingTags = NotesManager.getTags(alertId);
+    const previousText = NotesManager.getNote(alertId);
+    const previousHashtags = window.TagManager?.extractHashtagsFromText?.(previousText) || [];
+    const manualTags = existingTags.filter(tag => !previousHashtags.includes(tag));
+    
+    NotesManager.saveNote(alertId, textarea.value, manualTags);
+    window.TagsUI?.updateTagsDisplay?.();
+    window.TagsUI?.updateFilterDisplay?.();
+  },
+
+  // Helper methods for resizing and saving dimensions
+  addResizerEvents(resizer, panel, dots) {
+    let isResizing = false;
+    
+    resizer.addEventListener('mouseenter', () => {
+      resizer.style.backgroundColor = '#569cd6';
+      dots.style.opacity = '1';
+    });
+    
+    resizer.addEventListener('mouseleave', () => {
+      resizer.style.backgroundColor = '#3c3c3c';
+      dots.style.opacity = '0.5';
+    });
+    
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'ns-resize';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      const viewportHeight = window.innerHeight;
+      const newHeight = viewportHeight - e.clientY;
+      const minHeight = CONFIG.UI.PANEL_MIN_HEIGHT;
+      const maxHeight = viewportHeight * CONFIG.UI.PANEL_MAX_HEIGHT_RATIO;
+      const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+      
+      panel.style.height = `${clampedHeight}px`;
+      window.StorageManager?.set?.(CONFIG.STORAGE_KEYS.PANEL_HEIGHT, clampedHeight);
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+      }
+    });
+  },
+
+  createVerticalResizer() {
+    const resizer = document.createElement('div');
+    resizer.style.cssText = `
+      width: 4px;
+      background: #3c3c3c;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    `;
+    
+    const dots = document.createElement('div');
+    dots.style.cssText = `
+      width: 2px;
+      height: 20px;
+      background: repeating-linear-gradient(to bottom, #666 0px, #666 2px, transparent 2px, transparent 4px);
+      opacity: 0.5;
+    `;
+    resizer.appendChild(dots);
+    
+    let isResizing = false;
+    
+    resizer.addEventListener('mouseenter', () => {
+      resizer.style.backgroundColor = '#569cd6';
+      dots.style.opacity = '1';
+    });
+    
+    resizer.addEventListener('mouseleave', () => {
+      resizer.style.backgroundColor = '#3c3c3c';
+      dots.style.opacity = '0.5';
+    });
+    
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      const rightPanel = document.querySelector('#notepad-right-panel');
+      const container = rightPanel.parentElement;
+      const containerRect = container.getBoundingClientRect();
+      const newWidth = containerRect.right - e.clientX;
+      const clampedWidth = Math.max(CONFIG.UI.TAGS_MIN_WIDTH, Math.min(containerRect.width - 250, newWidth));
+      
+      rightPanel.style.width = `${clampedWidth}px`;
+      window.StorageManager?.set?.(CONFIG.STORAGE_KEYS.PANEL_WIDTH, clampedWidth);
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+      }
+    });
+    
+    return resizer;
+  },
+
+  loadSavedDimensions(panel) {
+    const savedHeight = window.StorageManager?.get?.(CONFIG.STORAGE_KEYS.PANEL_HEIGHT);
+    if (savedHeight) {
+      panel.style.height = `${savedHeight}px`;
+    }
+    
+    setTimeout(() => {
+      const savedWidth = window.StorageManager?.get?.(CONFIG.STORAGE_KEYS.PANEL_WIDTH);
+      const rightPanel = document.querySelector('#notepad-right-panel');
+      if (savedWidth && rightPanel) {
+        rightPanel.style.width = `${savedWidth}px`;
+      }
+    }, 100);
+  },
+
+  clearAllNotes() {
+    if (confirm('Are you sure you want to clear all notes and tags?')) {
+      NotesManager.clearAllNotes();
+      document.querySelector('#notepad-textarea').value = '';
+      this.updateContent();
+    }
+  },
+
+  clearBulkAlerts() {
+    if (confirm('Are you sure you want to clear all bulk alerts?')) {
+      BulkProcessor.clearBulkAlerts();
+      UIManager.showBulkStatus('Bulk alerts cleared');
+    }
+  },
+
+  openSettings() {
+    window.SettingsModal?.show?.();
+  },
+
+  importCsv() {
+    window.ModalManager?.showImportDialog?.();
+  }
+};
