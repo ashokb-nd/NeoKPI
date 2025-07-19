@@ -225,6 +225,4 @@ class FireworkShow {
   }
 }
 
-
-
 export { FireworkShow };

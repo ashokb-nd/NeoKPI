@@ -662,7 +662,7 @@ export const NotepadUI = {
   },
 
   openSettings() {
-    window.SettingsModal?.show?.();
+    window.ModalManager?.showSettingsDialog?.();
   },
 
   importCsv() {

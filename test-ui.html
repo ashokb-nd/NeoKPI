@@ -374,7 +374,7 @@
                 // Import all the UI modules
                 const { UIManager, NotepadUI } = await import('./src/ui/ui-manager.js');
                 const { TagsUI } = await import('./src/ui/tags-ui.js');
-                const { ModalManager, SettingsModal } = await import('./src/ui/modal-manager.js');
+                const { ModalManager } = await import('./src/ui/modal-manager.js');
                 const { FireworkShow } = await import('./src/ui/fireworks.js');
 
                 // Make them globally available for testing
@@ -382,7 +382,9 @@
                 window.NotepadUI = NotepadUI;
                 window.TagsUI = TagsUI;
                 window.ModalManager = ModalManager;
-                window.SettingsModal = SettingsModal;
+                window.SettingsModal = {
+                    show: () => ModalManager.showSettingsDialog()
+                };
                 window.FireworkShow = FireworkShow;
                 
                 logToStatus('All UI modules loaded successfully!', 'success');
@@ -450,11 +452,19 @@
         };
 
         window.testSettingsModal = () => {
-            if (window.SettingsModal) {
-                window.SettingsModal.show();
-                logToStatus('Settings modal opened', 'info');
-            } else {
-                logToStatus('SettingsModal not loaded yet', 'error');
+            try {
+                if (window.SettingsModal) {
+                    console.log('Testing SettingsModal...');
+                    console.log('ModalManager available:', !!window.ModalManager);
+                    console.log('ModalManager.showSettingsDialog:', typeof window.ModalManager?.showSettingsDialog);
+                    window.SettingsModal.show();
+                    logToStatus('Settings modal opened', 'info');
+                } else {
+                    logToStatus('SettingsModal not loaded yet', 'error');
+                }
+            } catch (err) {
+                console.error('Error opening settings modal:', err);
+                logToStatus(`Settings modal error: ${err.message}`, 'error');
             }
         };
 
