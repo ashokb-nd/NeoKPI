@@ -26,7 +26,7 @@ vi.mock('../src/config/constants.js', () => ({
   }
 }));
 
-import { SettingsManager } from '../src/managers/settings.js';
+import { SettingsManager } from '../src/services/settings.js';
 import { StorageManager } from '../src/utils/storage.js';
 import { Utils } from '../src/utils/utils.js';
 import { CONFIG } from '../src/config/constants.js';

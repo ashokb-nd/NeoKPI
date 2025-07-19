@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { BulkProcessor } from '../src/managers/bulk-processor.js';
+import { BulkProcessor } from '../src/features/bulk-processor.js';
 import { StorageManager } from '../src/utils/storage.js';
 import { Utils } from '../src/utils/utils.js';
-import { FilterManager } from '../src/managers/filter.js';
+import { FilterManager } from '../src/features/filter.js';
 
 // Mock dependencies
 vi.mock('../src/config/constants.js', () => ({
@@ -27,7 +27,7 @@ vi.mock('../src/utils/utils.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/filter.js', () => ({
+vi.mock('../src/features/filter.js', () => ({
   FilterManager: {
     getFilteredAlertIds: vi.fn(() => [])
   }

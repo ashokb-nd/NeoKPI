@@ -1,16 +1,16 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { FilterManager } from '../src/managers/filter.js';
-import { NotesManager } from '../src/managers/notes.js';
-import { TagManager } from '../src/managers/tags.js';
+import { FilterManager } from '../src/features/filter.js';
+import { NotesManager } from '../src/features/notes.js';
+import { TagManager } from '../src/features/tags.js';
 
 // Mock dependencies
-vi.mock('../src/managers/notes.js', () => ({
+vi.mock('../src/features/notes.js', () => ({
   NotesManager: {
     getAllNotes: vi.fn()
   }
 }));
 
-vi.mock('../src/managers/tags.js', () => ({
+vi.mock('../src/features/tags.js', () => ({
   TagManager: {
     extractHashtagsFromText: vi.fn(() => []),
     mergeTags: vi.fn((manual, hashtag) => [...(manual || []), ...(hashtag || [])])

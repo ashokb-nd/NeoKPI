@@ -1,8 +1,8 @@
-import { BulkProcessor } from './bulk-processor.js';
+import { BulkProcessor } from '../features/bulk-processor.js';
 import { UIManager, NotepadUI } from './ui-manager.js';
-import { NotesManager } from './notes.js';
-import { AppState } from './app-state.js';
-import { SettingsManager } from './settings.js';
+import { NotesManager } from '../features/notes.js';
+import { AppState } from '../core/app-state.js';
+import { SettingsManager } from '../services/settings.js';
 
 export const ModalManager = {
   showBulkDialog() {

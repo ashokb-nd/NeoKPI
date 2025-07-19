@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { TagManager } from '../src/managers/tags.js';
+import { TagManager } from '../src/features/tags.js';
 
 describe('TagManager Module', () => {
   beforeEach(() => {

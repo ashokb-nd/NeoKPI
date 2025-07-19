@@ -39,20 +39,28 @@
 import { CONFIG } from './config/constants.js';
 import { Utils } from './utils/utils.js';
 import { StorageManager } from './utils/storage.js';
-import { SettingsManager } from './managers/settings.js';
-import { TagManager } from './managers/tags.js';
-import { MetadataManager } from './managers/metadata.js';
-import { NotesManager } from './managers/notes.js';
 import { AdminTools } from './utils/admin.js';
-import { FilterManager } from './managers/filter.js';
-import { BulkProcessor } from './managers/bulk-processor.js';
-import { AppState } from './managers/app-state.js';
-import { FireworksManager } from './managers/fireworks.js';
-import { TagsUI } from './managers/tags-ui.js';
-import { VideoControlsManager } from './managers/video-controls.js';
-import { UIManager, NotepadUI } from './managers/ui-manager.js';
-import { ModalManager, SettingsModal } from './managers/modal-manager.js';
-import { KeyboardManager } from './managers/keyboard-manager.js';
+
+// Core modules
+import { AppState } from './core/app-state.js';
+import { KeyboardManager } from './core/keyboard-manager.js';
+
+// Service modules
+import { SettingsManager } from './services/settings.js';
+import { MetadataManager } from './services/metadata.js';
+
+// Feature modules
+import { TagManager } from './features/tags.js';
+import { NotesManager } from './features/notes.js';
+import { FilterManager } from './features/filter.js';
+import { BulkProcessor } from './features/bulk-processor.js';
+
+// UI modules
+import { FireworksManager } from './ui/fireworks.js';
+import { TagsUI } from './ui/tags-ui.js';
+import { VideoControlsManager } from './ui/video-controls.js';
+import { UIManager, NotepadUI } from './ui/ui-manager.js';
+import { ModalManager, SettingsModal } from './ui/modal-manager.js';
 
 // Ensure imports are not tree-shaken
 [CONFIG, Utils, StorageManager, SettingsManager, TagManager, MetadataManager, NotesManager, AdminTools, FilterManager, UIManager, NotepadUI, ModalManager, SettingsModal, KeyboardManager];

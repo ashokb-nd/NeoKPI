@@ -1,10 +1,10 @@
 import { CONFIG } from '../config/constants.js';
 import { Utils } from '../utils/utils.js';
-import { BulkProcessor } from './bulk-processor.js';
-import { UIManager, NotepadUI } from './ui-manager.js';
-import { ModalManager } from './modal-manager.js';
+import { BulkProcessor } from '../features/bulk-processor.js';
+import { UIManager, NotepadUI } from '../ui/ui-manager.js';
+import { ModalManager } from '../ui/modal-manager.js';
 import { AppState } from './app-state.js';
-import { FilterManager } from './filter.js';
+import { FilterManager } from '../features/filter.js';
 
 export const KeyboardManager = {
   handlers: {

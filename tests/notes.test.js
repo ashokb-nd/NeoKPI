@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { NotesManager } from '../src/managers/notes.js';
+import { NotesManager } from '../src/features/notes.js';
 import { StorageManager } from '../src/utils/storage.js';
-import { TagManager } from '../src/managers/tags.js';
+import { TagManager } from '../src/features/tags.js';
 
 // Mock dependencies
 vi.mock('../src/config/constants.js', () => ({
@@ -26,7 +26,7 @@ vi.mock('../src/utils/storage.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/tags.js', () => ({
+vi.mock('../src/features/tags.js', () => ({
   TagManager: {
     extractHashtagsFromText: vi.fn(() => []),
     mergeTags: vi.fn((manual, hashtag) => [...(manual || []), ...(hashtag || [])])

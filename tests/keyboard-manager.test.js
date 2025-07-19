@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { KeyboardManager } from '../src/managers/keyboard-manager.js';
+import { KeyboardManager } from '../src/core/keyboard-manager.js';
 
 // Mock dependencies
 vi.mock('../src/config/constants.js', () => ({
@@ -37,7 +37,7 @@ vi.mock('../src/utils/utils.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/bulk-processor.js', () => ({
+vi.mock('../src/features/bulk-processor.js', () => ({
   BulkProcessor: {
     parseAlertIds: vi.fn(() => ['123', '456']),
     loadAlertIds: vi.fn(() => 2),
@@ -52,7 +52,7 @@ vi.mock('../src/managers/bulk-processor.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/ui-manager.js', () => ({
+vi.mock('../src/ui/ui-manager.js', () => ({
   UIManager: {
     showBulkStatus: vi.fn(),
     loadAlertId: vi.fn()
@@ -63,13 +63,13 @@ vi.mock('../src/managers/ui-manager.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/modal-manager.js', () => ({
+vi.mock('../src/ui/modal-manager.js', () => ({
   ModalManager: {
     showBulkDialog: vi.fn()
   }
 }));
 
-vi.mock('../src/managers/app-state.js', () => ({
+vi.mock('../src/core/app-state.js', () => ({
   AppState: {
     notepad: {
       isOpen: false,
@@ -80,7 +80,7 @@ vi.mock('../src/managers/app-state.js', () => ({
   }
 }));
 
-vi.mock('../src/managers/filter.js', () => ({
+vi.mock('../src/features/filter.js', () => ({
   FilterManager: {
     getFilteredAlertIds: vi.fn(() => ['123', '456'])
   }
@@ -145,8 +145,8 @@ describe('KeyboardManager', () => {
   describe('handlers.submitForm', () => {
     it('should submit form when Enter is pressed in input', () => {
       const { Utils } = require('../src/utils/utils.js');
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { AppState } = require('../src/managers/app-state.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { AppState } = require('../src/core/app-state.js');
       
       Utils.isInputFocused.mockReturnValue(true);
       BulkProcessor.parseAlertIds.mockReturnValue(['123']); // Single alert
@@ -167,8 +167,8 @@ describe('KeyboardManager', () => {
 
     it('should handle bulk alerts input', () => {
       const { Utils } = require('../src/utils/utils.js');
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { UIManager } = require('../src/managers/ui-manager.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { UIManager } = require('../src/ui/ui-manager.js');
       
       Utils.isInputFocused.mockReturnValue(true);
       BulkProcessor.parseAlertIds.mockReturnValue(['123', '456', '789']); // Multiple alerts
@@ -188,8 +188,8 @@ describe('KeyboardManager', () => {
 
   describe('handlers.bulkProcessing', () => {
     it('should handle next alert in bulk mode', () => {
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { UIManager } = require('../src/managers/ui-manager.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { UIManager } = require('../src/ui/ui-manager.js');
       
       BulkProcessor.state.isProcessing = true;
       
@@ -210,8 +210,8 @@ describe('KeyboardManager', () => {
     });
 
     it('should handle previous alert in bulk mode', () => {
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { UIManager } = require('../src/managers/ui-manager.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { UIManager } = require('../src/ui/ui-manager.js');
       
       BulkProcessor.state.isProcessing = true;
       
@@ -231,7 +231,7 @@ describe('KeyboardManager', () => {
     });
 
     it('should return false when not in bulk processing mode', () => {
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
       
       BulkProcessor.state.isProcessing = false;
       
@@ -251,8 +251,8 @@ describe('KeyboardManager', () => {
 
   describe('handlers.toggleBulkMode', () => {
     it('should show bulk dialog when not in bulk mode', () => {
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { ModalManager } = require('../src/managers/modal-manager.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { ModalManager } = require('../src/ui/modal-manager.js');
       
       BulkProcessor.state.isProcessing = false;
       
@@ -272,8 +272,8 @@ describe('KeyboardManager', () => {
     });
 
     it('should exit bulk mode when in bulk mode and confirmed', () => {
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
-      const { UIManager } = require('../src/managers/ui-manager.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
+      const { UIManager } = require('../src/ui/ui-manager.js');
       
       BulkProcessor.state.isProcessing = true;
       window.confirm = vi.fn(() => true);
@@ -296,7 +296,7 @@ describe('KeyboardManager', () => {
 
   describe('handlers.toggleNotepad', () => {
     it('should toggle notepad when correct key is pressed', () => {
-      const { NotepadUI } = require('../src/managers/ui-manager.js');
+      const { NotepadUI } = require('../src/ui/ui-manager.js');
       
       const event = {
         key: 'j',
@@ -407,8 +407,8 @@ describe('KeyboardManager', () => {
 
   describe('getFilteredProgress', () => {
     it('should return filtered progress when filters are applied', () => {
-      const { FilterManager } = require('../src/managers/filter.js');
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
+      const { FilterManager } = require('../src/features/filter.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
       
       FilterManager.getFilteredAlertIds.mockReturnValue(['123', '456', '789']);
       BulkProcessor.getCurrentAlert.mockReturnValue('456');
@@ -419,8 +419,8 @@ describe('KeyboardManager', () => {
     });
 
     it('should return regular progress when alert not in filtered results', () => {
-      const { FilterManager } = require('../src/managers/filter.js');
-      const { BulkProcessor } = require('../src/managers/bulk-processor.js');
+      const { FilterManager } = require('../src/features/filter.js');
+      const { BulkProcessor } = require('../src/features/bulk-processor.js');
       
       FilterManager.getFilteredAlertIds.mockReturnValue(['456', '789']);
       BulkProcessor.getCurrentAlert.mockReturnValue('123');
@@ -454,7 +454,7 @@ describe('KeyboardManager', () => {
 
     it('should continue to next handler if current handler returns false', () => {
       const { Utils } = require('../src/utils/utils.js');
-      const { NotepadUI } = require('../src/managers/ui-manager.js');
+      const { NotepadUI } = require('../src/ui/ui-manager.js');
       
       Utils.isInputFocused.mockReturnValue(false);
       

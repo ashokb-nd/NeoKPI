@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { VideoControlsManager } from '../src/managers/video-controls.js';
+import { VideoControlsManager } from '../src/ui/video-controls.js';
 
 // Mock CONFIG
 vi.mock('../src/config/constants.js', () => ({

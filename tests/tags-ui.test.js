@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TagsUI } from '../src/managers/tags-ui.js';
-import { AppState } from '../src/managers/app-state.js';
-import { UIManager } from '../src/managers/ui-manager.js';
-import { BulkProcessor } from '../src/managers/bulk-processor.js';
-import { FilterManager } from '../src/managers/filter.js';
-import { NotesManager } from '../src/managers/notes.js';
+import { TagsUI } from '../src/ui/tags-ui.js';
+import { AppState } from '../src/core/app-state.js';
+import { UIManager } from '../src/ui/ui-manager.js';
+import { BulkProcessor } from '../src/features/bulk-processor.js';
+import { FilterManager } from '../src/features/filter.js';
+import { NotesManager } from '../src/features/notes.js';
 import { StorageManager } from '../src/utils/storage.js';
-import { TagManager } from '../src/managers/tags.js';
+import { TagManager } from '../src/features/tags.js';
 import { Utils } from '../src/utils/utils.js';
 
 // Mock all dependencies
-vi.mock('../src/managers/app-state.js');
-vi.mock('../src/managers/ui-manager.js');
-vi.mock('../src/managers/bulk-processor.js');
-vi.mock('../src/managers/filter.js');
-vi.mock('../src/managers/notes.js');
+vi.mock('../src/core/app-state.js');
+vi.mock('../src/ui/ui-manager.js');
+vi.mock('../src/features/bulk-processor.js');
+vi.mock('../src/features/filter.js');
+vi.mock('../src/features/notes.js');
 vi.mock('../src/utils/storage.js');
-vi.mock('../src/managers/tags.js');
+vi.mock('../src/features/tags.js');
 vi.mock('../src/utils/utils.js');
 
 // Mock DOM

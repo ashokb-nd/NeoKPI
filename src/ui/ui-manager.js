@@ -1,10 +1,10 @@
 import { CONFIG } from '../config/constants.js';
 import { Utils } from '../utils/utils.js';
 import { StorageManager } from '../utils/storage.js';
-import { BulkProcessor } from './bulk-processor.js';
-import { AppState } from './app-state.js';
-import { MetadataManager } from './metadata.js';
-import { NotesManager } from './notes.js';
+import { BulkProcessor } from '../features/bulk-processor.js';
+import { AppState } from '../core/app-state.js';
+import { MetadataManager } from '../services/metadata.js';
+import { NotesManager } from '../features/notes.js';
 
 /**
  * UIManager handles the main application UI components including

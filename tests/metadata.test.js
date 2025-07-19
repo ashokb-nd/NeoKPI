@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MetadataManager } from '../src/managers/metadata.js';
+import { MetadataManager } from '../src/services/metadata.js';
 
 // Mock dependencies
 vi.mock('../src/config/constants.js', () => ({

@@ -1,10 +1,10 @@
-import { AppState } from './app-state.js';
+import { AppState } from '../core/app-state.js';
 import { UIManager } from './ui-manager.js';
-import { BulkProcessor } from './bulk-processor.js';
-import { FilterManager } from './filter.js';
-import { NotesManager } from './notes.js';
+import { BulkProcessor } from '../features/bulk-processor.js';
+import { FilterManager } from '../features/filter.js';
+import { NotesManager } from '../features/notes.js';
 import { StorageManager } from '../utils/storage.js';
-import { TagManager } from './tags.js';
+import { TagManager } from '../features/tags.js';
 import { Utils } from '../utils/utils.js';
 
 export const TagsUI = {

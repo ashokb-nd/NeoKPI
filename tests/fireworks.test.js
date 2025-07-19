@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FireworksManager } from '../src/managers/fireworks.js';
+import { FireworksManager } from '../src/ui/fireworks.js';
 
 // Mock DOM methods
 const mockCanvas = {
