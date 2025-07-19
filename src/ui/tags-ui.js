@@ -401,33 +401,33 @@ export const TagsUI = {
     return list;
   },
 
-  addTag(tagName) {
+  async addTag(tagName) {
     const alertId = AppState.notepad.currentAlertId;
     if (!alertId || !tagName) return;
     
-    const currentTags = NotesManager.getTags(alertId);
+    const currentTags = await NotesManager.getTags(alertId);
     if (!currentTags.includes(tagName)) {
       currentTags.push(tagName);
       const noteText = document.querySelector('#notepad-textarea').value;
-      NotesManager.saveNote(alertId, noteText, currentTags);
+      await NotesManager.saveNote(alertId, noteText, currentTags);
       this.updateTagsDisplay();
       this.updateFilterDisplay();
     }
   },
 
-  removeTag(tagName) {
+  async removeTag(tagName) {
     const alertId = AppState.notepad.currentAlertId;
     if (!alertId) return;
     
-    const currentTags = NotesManager.getTags(alertId);
+    const currentTags = await NotesManager.getTags(alertId);
     const updatedTags = currentTags.filter(tag => tag !== tagName);
     const noteText = document.querySelector('#notepad-textarea').value;
-    NotesManager.saveNote(alertId, noteText, updatedTags);
+    await NotesManager.saveNote(alertId, noteText, updatedTags);
     this.updateTagsDisplay();
     this.updateFilterDisplay();
   },
 
-  updateTagsDisplay() {
+  async updateTagsDisplay() {
     const display = document.querySelector('#current-tags-display');
     if (!display) return;
     
@@ -435,8 +435,8 @@ export const TagsUI = {
     
     const alertId = AppState.notepad.currentAlertId;
     if (alertId) {
-      const tags = NotesManager.getTags(alertId);
-      const noteText = NotesManager.getNote(alertId);
+      const tags = await NotesManager.getTags(alertId);
+      const noteText = await NotesManager.getNote(alertId);
       const hashtagTags = TagManager.extractHashtagsFromText(noteText);
       
       tags.forEach(tag => {

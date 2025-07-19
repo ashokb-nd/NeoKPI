@@ -215,21 +215,21 @@ describe('TagsUI', () => {
       vi.spyOn(TagsUI, 'updateFilterDisplay');
     });
 
-    it('should add new tag to current alert', () => {
-      TagsUI.addTag('new-tag');
+    it('should add new tag to current alert', async () => {
+      await TagsUI.addTag('new-tag');
       
       expect(NotesManager.getTags).toHaveBeenCalledWith('test-alert-123');
       expect(NotesManager.saveNote).toHaveBeenCalledWith('test-alert-123', 'note text', ['existing-tag', 'new-tag']);
     });
 
-    it('should not add duplicate tag', () => {
-      TagsUI.addTag('existing-tag');
+    it('should not add duplicate tag', async () => {
+      await TagsUI.addTag('existing-tag');
       
       expect(NotesManager.saveNote).not.toHaveBeenCalled();
     });
 
-    it('should update displays after adding tag', () => {
-      TagsUI.addTag('new-tag');
+    it('should update displays after adding tag', async () => {
+      await TagsUI.addTag('new-tag');
       
       expect(TagsUI.updateTagsDisplay).toHaveBeenCalled();
       expect(TagsUI.updateFilterDisplay).toHaveBeenCalled();
@@ -267,15 +267,15 @@ describe('TagsUI', () => {
       vi.spyOn(TagsUI, 'updateFilterDisplay');
     });
 
-    it('should remove tag from current alert', () => {
-      TagsUI.removeTag('tag2');
+    it('should remove tag from current alert', async () => {
+      await TagsUI.removeTag('tag2');
       
       expect(NotesManager.getTags).toHaveBeenCalledWith('test-alert-123');
       expect(NotesManager.saveNote).toHaveBeenCalledWith('test-alert-123', 'note text', ['tag1', 'tag3']);
     });
 
-    it('should update displays after removing tag', () => {
-      TagsUI.removeTag('tag2');
+    it('should update displays after removing tag', async () => {
+      await TagsUI.removeTag('tag2');
       
       expect(TagsUI.updateTagsDisplay).toHaveBeenCalled();
       expect(TagsUI.updateFilterDisplay).toHaveBeenCalled();
@@ -298,31 +298,31 @@ describe('TagsUI', () => {
       vi.spyOn(TagsUI, 'createTagChip').mockReturnValue(mockElement);
     });
 
-    it('should update tags display with current tags', () => {
+    it('should update tags display with current tags', async () => {
       const mockDisplay = { innerHTML: '', appendChild: vi.fn() };
       mockDocument.querySelector.mockReturnValue(mockDisplay);
       
-      TagsUI.updateTagsDisplay();
+      await TagsUI.updateTagsDisplay();
       
       expect(NotesManager.getTags).toHaveBeenCalledWith('test-alert-123');
       expect(TagsUI.createTagChip).toHaveBeenCalledWith('manual-tag', true, false);
     });
 
-    it('should handle hashtag tags differently', () => {
+    it('should handle hashtag tags differently', async () => {
       NotesManager.getTags.mockReturnValue(['hashtag', 'manual-tag']);
       const mockDisplay = { innerHTML: '', appendChild: vi.fn() };
       mockDocument.querySelector.mockReturnValue(mockDisplay);
       
-      TagsUI.updateTagsDisplay();
+      await TagsUI.updateTagsDisplay();
       
       expect(TagsUI.createTagChip).toHaveBeenCalledWith('hashtag', false, true);
       expect(TagsUI.createTagChip).toHaveBeenCalledWith('manual-tag', true, false);
     });
 
-    it('should handle missing display element', () => {
+    it('should handle missing display element', async () => {
       mockDocument.querySelector.mockReturnValue(null);
       
-      expect(() => TagsUI.updateTagsDisplay()).not.toThrow();
+      await expect(() => TagsUI.updateTagsDisplay()).not.toThrow();
     });
   });
 

@@ -2,6 +2,7 @@ import { AdminTools } from '../utils/admin.js';
 import { ModalManager, SettingsModal } from '../ui/modal-manager.js';
 import { MetadataManager } from '../services/metadata.js';
 import { NotesManager } from '../features/notes.js';
+import { TagsUI } from '../ui/tags-ui.js';
 import { CONFIG } from '../config/constants.js';
 
 /**
@@ -20,6 +21,9 @@ export class GlobalScope {
     // Expose modal managers for UI access
     window.ModalManager = ModalManager;
     window.SettingsModal = SettingsModal;
+    
+    // Expose TagsUI for UI components
+    window.TagsUI = TagsUI;
     
     // Expose admin tools for console access
     window.AlertDebugAdmin = {

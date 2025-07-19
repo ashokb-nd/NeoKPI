@@ -100,6 +100,15 @@ vi.mock('../src/ui/ui-manager.js', () => ({
   }
 }));
 
+vi.mock('../src/ui/tags-ui.js', () => ({
+  TagsUI: {
+    createCurrentAlertTagsSection: vi.fn(() => ({ appendChild: vi.fn() })),
+    createFilterSection: vi.fn(() => ({ appendChild: vi.fn() })),
+    updateTagsDisplay: vi.fn(),
+    updateFilterDisplay: vi.fn()
+  }
+}));
+
 // Mock the modal manager properly
 vi.mock('../src/ui/modal-manager.js', () => ({
   ModalManager: {
@@ -128,6 +137,7 @@ describe('Application Bootstrap Integration', () => {
     // Clear global window properties
     delete window.ModalManager;
     delete window.SettingsModal;
+    delete window.TagsUI;
     delete window.AlertDebugApp;
     delete window.AlertDebugAdmin;
     
@@ -140,6 +150,7 @@ describe('Application Bootstrap Integration', () => {
   afterEach(() => {
     delete window.ModalManager;
     delete window.SettingsModal;
+    delete window.TagsUI;
     delete window.AlertDebugApp;
     delete window.AlertDebugAdmin;
     vi.restoreAllMocks();
@@ -194,6 +205,7 @@ describe('Application Bootstrap Integration', () => {
       // Check that global objects are available
       expect(window.ModalManager).toBeDefined();
       expect(window.SettingsModal).toBeDefined();
+      expect(window.TagsUI).toBeDefined();
       expect(window.AlertDebugApp).toBe(app);
     });
   });
