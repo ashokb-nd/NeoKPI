@@ -9,7 +9,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "docs:update": "node scripts/update-docs.js",
+    "prebuild": "npm run docs:update",
+    "setup": "bash scripts/setup-dev.sh"
   },
   "keywords": [],
   "author": "",

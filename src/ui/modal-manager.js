@@ -3,6 +3,7 @@ import { UIManager, NotepadUI } from './ui-manager.js';
 import { NotesManager } from '../features/notes.js';
 import { AppState } from '../core/app-state.js';
 import { SettingsManager } from '../services/settings.js';
+import { KeyboardHelpGenerator } from '../utils/keyboard-help.js';
 
 export const ModalManager = {
   showBulkDialog() {
@@ -609,6 +610,10 @@ export const SettingsModal = {
     
     const shortcuts = document.createElement('div');
     shortcuts.style.cssText = 'font-size: 12px; color: #cccccc; line-height: 1.4;';
+    
+    // Generate dynamic keyboard help from config
+    const dynamicHelpHTML = KeyboardHelpGenerator.generateKeyboardHelpHTML();
+    
     shortcuts.innerHTML = `
       <style>
         kbd {
@@ -621,17 +626,7 @@ export const SettingsModal = {
           color: #ffffff;
         }
       </style>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <div><kbd>i</kbd> Focus input field</div>
-        <div><kbd>j</kbd> Toggle notepad</div>
-        <div><kbd>Space</kbd> Video play/pause</div>
-        <div><kbd>b</kbd> Bulk process mode</div>
-        <div><kbd>←/→</kbd> Video rewind/forward</div>
-        <div><kbd>↑/↓</kbd> Previous/next alert</div>
-      </div>
-      <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #404040; font-size: 11px; color: #999999;">
-        <strong>Tip:</strong> Use <kbd>Cmd+↓/↑</kbd> for bulk alert navigation
-      </div>
+      ${dynamicHelpHTML}
     `;
     
     help.appendChild(title);

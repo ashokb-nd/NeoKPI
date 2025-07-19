@@ -27,7 +27,7 @@ export const CONFIG = {
     NEXT_ALERT: 'ArrowDown',
     PREV_ALERT: 'ArrowUp',
     BULK_PROCESS: 'b',
-    TOGGLE_NOTEPAD: 'j'
+    TOGGLE_NOTEPAD: 'j'  // Reverted back
   },
   STORAGE_KEYS: {
     NOTES: 'alert-debug-notes',
