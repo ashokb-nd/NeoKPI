@@ -95,6 +95,7 @@
         <div>
             <button class="test-button" onclick="testNotepadToggle()">Toggle Notepad</button>
             <button class="test-button" onclick="testLoadingSpinner()">Test Loading Spinner</button>
+            <button class="test-button" onclick="testFireworks()">🎆 Test Fireworks</button>
         </div>
         
         <div>
@@ -374,13 +375,15 @@
                 const { UIManager, NotepadUI } = await import('./src/ui/ui-manager.js');
                 const { TagsUI } = await import('./src/ui/tags-ui.js');
                 const { ModalManager, SettingsModal } = await import('./src/ui/modal-manager.js');
-                
+                const { FireworkShow } = await import('./src/ui/fireworks.js');
+
                 // Make them globally available for testing
                 window.UIManager = UIManager;
                 window.NotepadUI = NotepadUI;
                 window.TagsUI = TagsUI;
                 window.ModalManager = ModalManager;
                 window.SettingsModal = SettingsModal;
+                window.FireworkShow = FireworkShow;
                 
                 logToStatus('All UI modules loaded successfully!', 'success');
                 
@@ -461,6 +464,16 @@
                 logToStatus('Import dialog opened', 'info');
             } else {
                 logToStatus('ModalManager not loaded yet', 'error');
+            }
+        };
+
+        window.testFireworks = () => {
+            if (window.FireworkShow) {
+                const fireworksInstance = new window.FireworkShow();
+                fireworksInstance.init();
+                logToStatus('🎆 Fireworks display started!', 'success');
+            } else {
+                logToStatus('FireworkShow not loaded yet', 'error');
             }
         };
 

@@ -8,7 +8,7 @@ import { SettingsManager } from '../services/settings.js';
 import { MetadataManager } from '../services/metadata.js';
 import { NotesManager } from '../features/notes.js';
 import { BulkProcessor } from '../features/bulk-processor.js';
-import { FireworksManager } from '../ui/fireworks.js';
+import { FireworkShow } from '../ui/fireworks.js';
 import { VideoControlsManager } from '../ui/video-controls.js';
 import { UIManager, NotepadUI } from '../ui/ui-manager.js';
 
@@ -29,8 +29,9 @@ export class Application {
       Utils.log(`Initializing Alert Debug UserScript v${this.VERSION}`);
       
       // Initialize beautiful fireworks on first load
-      FireworksManager.init();
-      
+      const fireworks = new FireworkShow();
+      fireworks.init();
+
       // Wait for required elements and initialize
       Utils.waitForElements((elements) => {
         this.initializeFeatures(elements);
