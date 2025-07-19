@@ -55,6 +55,18 @@ vi.mock('../src/services/metadata.js', () => ({
   }
 }));
 
+vi.mock('../src/features/notes.js', () => ({
+  NotesManager: {
+    init: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(() => ({})),
+    exportAll: vi.fn(),
+    clear: vi.fn()
+  }
+}));
+
 vi.mock('../src/features/bulk-processor.js', () => ({
   BulkProcessor: {
     loadBulkAlerts: vi.fn(() => false),

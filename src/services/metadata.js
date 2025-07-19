@@ -390,7 +390,7 @@ export const MetadataManager = {
       
       // Try using the newer showSaveFilePicker API if available
       if ('showSaveFilePicker' in window) {
-        this.downloadWithFilePicker(blob, filename);
+        await this.downloadWithFilePicker(blob, filename);
       } else {
         // Fallback to traditional method
         this.downloadWithLink(blob, filename);
@@ -398,6 +398,12 @@ export const MetadataManager = {
       
       Utils.log(`Downloaded metadata file for alert ${alertId}`);
     } catch (error) {
+      // Check if user cancelled the download
+      if (error.name === 'AbortError' || error.message.includes('aborted')) {
+        Utils.log(`File download cancelled by user for alert ${alertId}`);
+        return; // Don't treat cancellation as an error
+      }
+      
       Utils.log(`Error downloading metadata file: ${error.message}`);
       throw error;
     }
@@ -420,6 +426,12 @@ export const MetadataManager = {
       
       Utils.log('File saved successfully using File System Access API');
     } catch (error) {
+      // Check if user cancelled the file picker
+      if (error.name === 'AbortError' || error.message.includes('aborted')) {
+        Utils.log('File save cancelled by user');
+        throw error; // Re-throw to prevent fallback download
+      }
+      
       Utils.log(`File picker failed, falling back to link method: ${error.message}`);
       this.downloadWithLink(blob, filename);
     }
