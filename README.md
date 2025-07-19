@@ -24,7 +24,6 @@ npm run build
 - **`Cmd+↓/↑`** - Navigate bulk alerts
 - **Smart Notes** - Auto-save with tags and timestamps
 - **CSV Export/Import** - Backup your work
-
 ## 🛠 Development
 
 ```bash

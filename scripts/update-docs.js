@@ -12,9 +12,9 @@ function updateReadme() {
   
   const shortcutsMarkdown = KeyboardHelpGenerator.generateMarkdownHelp();
   
-  // Replace the key features section (between ## 🎯 Key Features and ## � Development)
+  // Replace the key features section (between ## 🎯 Key Features and ## 🛠 Development)
   const startMarker = '## 🎯 Key Features\n\n';
-  const endMarker = '\n## � Development';
+  const endMarker = '\n## 🛠 Development';
   
   const startIndex = content.indexOf(startMarker);
   const endIndex = content.indexOf(endMarker);

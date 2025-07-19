@@ -1,4 +1,5 @@
 import { AdminTools } from '../utils/admin.js';
+import { ModalManager, SettingsModal } from '../ui/modal-manager.js';
 
 /**
  * Global scope utilities for console access and development
@@ -12,6 +13,10 @@ export class GlobalScope {
     
     // Expose main application instance
     window.AlertDebugApp = app;
+    
+    // Expose modal managers for UI access
+    window.ModalManager = ModalManager;
+    window.SettingsModal = SettingsModal;
     
     // Expose admin tools for console access
     window.AlertDebugAdmin = {
