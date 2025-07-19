@@ -1,8 +1,7 @@
-/* sample usage:
-import { FireworkShow } from './fireworks.js';
-fw = new FireworkShow();
-fw.init();
-*/
+// Sample usage:
+// import { FireworkShow } from './fireworks.js';
+// const fw = new FireworkShow();
+// fw.init();
 
 // Firework class
 class Firework {
