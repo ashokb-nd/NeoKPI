@@ -62,5 +62,8 @@ export const CONFIG = {
       TRIM_WHITESPACE: true,
       HANDLE_NULL_UNDEFINED: true
     }
+  },
+  TAGS: {
+    HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g
   }
 };

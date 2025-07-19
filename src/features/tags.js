@@ -1,5 +1,8 @@
+
+import { CONFIG } from '../config/constants.js';
+
 export const TagManager = {
-  HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g,
+  HASHTAG_REGEX: CONFIG.TAGS.HASHTAG_REGEX,
 
   extractHashtagsFromText(text) {
     if (!text) return [];
