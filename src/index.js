@@ -39,13 +39,15 @@
 // Core modules - used directly in bootstrap
 import { Application } from './core/application.js';
 import { GlobalScope } from './core/global-scope.js';
+import { CONFIG } from './config/constants.js';
+
 
 // Application Bootstrap
 (() => {
   'use strict';
 
-  // change the title of the page
-  document.title = " NeoKPI 🎉";
+  // change the title of the page to "NeoKPI - <version> 🎉"
+  document.title = `NeoKPI - ${CONFIG.VERSION} 🎉`;
 
   // Create and initialize the application
   const app = new Application();

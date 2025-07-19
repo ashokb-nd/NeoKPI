@@ -38,6 +38,11 @@ npm run build   # Build UserScript
 - **[Architecture](docs/ARCHITECTURE.md)** - Project structure & design
 - **[Configuration](docs/CONFIGURATION.md)** - Keyboard shortcuts & settings
 - **[Usage Guide](docs/USAGE.md)** - Detailed feature documentation
+## 🚀 Upcoming Features
+
+- Automatic caching of alert type
+- Saved dataset management
+- Video annotations from metadata (using runtime overlay)
 
 ---
 

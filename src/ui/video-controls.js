@@ -91,7 +91,7 @@ export const VideoControlsManager = {
       }
       
       .video-control-button.active {
-        background: rgba(0, 0, 0, 0.08);
+        background: transparent;
         color: #222;
       }
       
