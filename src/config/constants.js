@@ -45,5 +45,22 @@ export const CONFIG = {
   },
   S3_PRESIGNER: {
     LOCAL_SERVER_URL: 'http://localhost:8080'
+  },
+  DATABASE: {
+    NAME: 'NeoKPIApp',
+    VERSION: 1,
+    STORES: {
+      METADATA: 'metadata',
+      METADATA_URLS: 'metadataUrls',
+      NOTES: 'notes',
+      TAGS: 'tags',
+      SETTINGS: 'settings'
+    },
+    // Best practices for key handling
+    KEY_NORMALIZATION: {
+      ALWAYS_USE_STRINGS: true,
+      TRIM_WHITESPACE: true,
+      HANDLE_NULL_UNDEFINED: true
+    }
   }
 };

@@ -8,6 +8,17 @@ vi.mock('../src/config/constants.js', () => ({
   CONFIG: {
     STORAGE_KEYS: {
       NOTES: 'alert-debug-notes'
+    },
+    DATABASE: {
+      NAME: 'NeoKPIApp',
+      VERSION: 1,
+      STORES: {
+        METADATA: 'metadata',
+        METADATA_URLS: 'metadataUrls',
+        NOTES: 'notes',
+        TAGS: 'tags',
+        SETTINGS: 'settings'
+      }
     }
   }
 }));

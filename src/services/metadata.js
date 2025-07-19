@@ -8,6 +8,21 @@ import { createAppDatabase } from '../utils/indexdb-manager.js';
 export const MetadataManager = {
   db: null,
 
+  // Helper function to normalize alert IDs to strings
+  normalizeAlertId(alertId) {
+    if (alertId === null || alertId === undefined) {
+      Utils.log('Warning: alertId is null or undefined');
+      return null;
+    }
+    // Convert to string and trim whitespace
+    const normalized = String(alertId).trim();
+    if (!normalized) {
+      Utils.log('Warning: alertId is empty after normalization');
+      return null;
+    }
+    return normalized;
+  },
+
   async init() {
     this.db = createAppDatabase();
     await this.db.init();
@@ -47,7 +62,7 @@ export const MetadataManager = {
           );
           
           if (hasMetadataComponent) {
-            MetadataManager.processResponse(responseData);
+            await MetadataManager.processResponse(responseData);
           }
           
         } catch (error) {
@@ -62,7 +77,7 @@ export const MetadataManager = {
     };
   },
 
-  processResponse(responseData) {
+  async processResponse(responseData) {
     try {
       // Check for the metadata component - try both hyphenated and underscored versions
       const possibleKeys = [
@@ -77,7 +92,7 @@ export const MetadataManager = {
           
           if (data.alert_id && (data.metadata_path || data.summaryPath)) {
             const metadataUrl = data.metadata_path || data.summaryPath;
-            this.storeMetadataUrl(data.alert_id, metadataUrl);
+            await this.storeMetadataUrl(data.alert_id, metadataUrl);
             Utils.log(`🎯 Captured metadata URL for alert ${data.alert_id}`);
             break;
           }
@@ -92,18 +107,24 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
+      // Normalize alertId to string
+      const normalizedAlertId = this.normalizeAlertId(alertId);
+      if (!normalizedAlertId) {
+        throw new Error(`Invalid alertId: ${alertId}`);
+      }
+      
       const urlData = {
-        alertId,
+        alertId: normalizedAlertId,
         url: metadataPath,
         timestamp: new Date().toISOString(),
         downloaded: false
       };
       
       // Check if already exists
-      const existing = await this.db.get('metadataUrls', alertId);
+      const existing = await this.db.get(CONFIG.DATABASE.STORES.METADATA_URLS, normalizedAlertId);
       if (!existing) {
-        await this.db.put('metadataUrls', urlData);
-        Utils.log(`Stored metadata URL for alert ${alertId} in IndexedDB`);
+        await this.db.put(CONFIG.DATABASE.STORES.METADATA_URLS, urlData);
+        Utils.log(`Stored metadata URL for alert ${normalizedAlertId} in IndexedDB`);
       }
     } catch (error) {
       Utils.log(`Error storing metadata URL in IndexedDB: ${error.message}`);
@@ -115,7 +136,14 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
-      const result = await this.db.get('metadataUrls', alertId);
+      // Normalize alertId to string
+      const normalizedAlertId = this.normalizeAlertId(alertId);
+      if (!normalizedAlertId) {
+        Utils.log(`Invalid alertId: ${alertId}. Cannot retrieve metadata URL.`);
+        return null;
+      }
+      
+      const result = await this.db.get(CONFIG.DATABASE.STORES.METADATA_URLS, normalizedAlertId);
       return result?.url || null;
     } catch (error) {
       Utils.log(`Error getting metadata URL from IndexedDB: ${error.message}`);
@@ -127,7 +155,7 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
-      const result = await this.db.getAll('metadataUrls');
+      const result = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA_URLS);
       
       // Convert array to object for backwards compatibility
       const urlsObject = {};
@@ -150,21 +178,28 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
+      // Normalize alertId to string
+      const normalizedAlertId = this.normalizeAlertId(alertId);
+      if (!normalizedAlertId) {
+        Utils.log(`Invalid alertId: ${alertId}. Cannot download metadata.`);
+        return null;
+      }
+      
       // First check if we have the metadata content in IndexedDB
-      const cachedMetadata = await this.db.get('metadata', alertId);
+      const cachedMetadata = await this.db.get(CONFIG.DATABASE.STORES.METADATA, normalizedAlertId);
       if (cachedMetadata) {
-        console.log('🔍 Found cached metadata in IndexedDB for alertId:', alertId);
+        console.log('🔍 Found cached metadata in IndexedDB for alertId:', normalizedAlertId);
         return cachedMetadata.content;
       }
       
       // Get URL from IndexedDB
-      const metadataUrl = await this.getMetadataUrl(alertId);
+      const metadataUrl = await this.getMetadataUrl(normalizedAlertId);
       
-      console.log('🔍 downloadMetadata called for alertId:', alertId);
+      console.log('🔍 downloadMetadata called for alertId:', normalizedAlertId);
       console.log('🔍 metadataUrl:', metadataUrl);
       
       if (!metadataUrl) {
-        Utils.log(`No metadata URL found for alert ID: ${alertId}`);
+        Utils.log(`No metadata URL found for alert ID: ${normalizedAlertId}`);
         return null;
       }
       
@@ -186,10 +221,10 @@ export const MetadataManager = {
       const content = await response.text();
       
       // Store in IndexedDB
-      await this.storeMetadataInIndexedDB(alertId, content, metadataUrl);
+      await this.storeMetadataInIndexedDB(normalizedAlertId, content, metadataUrl);
       
       // Process the metadata
-      this.processMetadata(alertId, content);
+      this.processMetadata(normalizedAlertId, content);
       
       return content;
       
@@ -263,6 +298,40 @@ export const MetadataManager = {
       
     } catch (error) {
       Utils.log(`Error processing metadata for alert ${alertId}: ${error.message}`);
+    }
+  },
+
+  // Store metadata content in IndexedDB
+  async storeMetadataInIndexedDB(alertId, content, metadataUrl) {
+    try {
+      if (!this.db) await this.init();
+      
+      // Normalize alertId to string
+      const normalizedAlertId = this.normalizeAlertId(alertId);
+      if (!normalizedAlertId) {
+        throw new Error(`Invalid alertId: ${alertId}`);
+      }
+      
+      const metadataData = {
+        alertId: normalizedAlertId,
+        content,
+        url: metadataUrl,
+        timestamp: new Date().toISOString(),
+        size: content ? content.length : 0
+      };
+      
+      await this.db.put(CONFIG.DATABASE.STORES.METADATA, metadataData);
+      Utils.log(`Stored metadata content for alert ${normalizedAlertId} in IndexedDB`);
+      
+      // Also update the URL record to mark as downloaded
+      const urlRecord = await this.db.get(CONFIG.DATABASE.STORES.METADATA_URLS, normalizedAlertId);
+      if (urlRecord) {
+        urlRecord.downloaded = true;
+        await this.db.put(CONFIG.DATABASE.STORES.METADATA_URLS, urlRecord);
+      }
+    } catch (error) {
+      Utils.log(`Error storing metadata in IndexedDB: ${error.message}`);
+      throw error;
     }
   },
 
@@ -411,10 +480,10 @@ export const MetadataManager = {
       if (!this.db) await this.init();
       
       // Get URL stats
-      const allUrls = await this.db.getAll('metadataUrls');
+      const allUrls = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA_URLS);
       
       // Get metadata stats
-      const allMetadata = await this.db.getAll('metadata');
+      const allMetadata = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA);
       
       const total = allUrls.length;
       const downloaded = allUrls.filter(item => item.downloaded).length;
@@ -440,13 +509,13 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
-      const urlsDeleted = await this.db.cleanup('metadataUrls', {
+      const urlsDeleted = await this.db.cleanup(CONFIG.DATABASE.STORES.METADATA_URLS, {
         maxEntries,
         maxAgeInDays,
         timestampField: 'timestamp'
       });
       
-      const metadataDeleted = await this.db.cleanup('metadata', {
+      const metadataDeleted = await this.db.cleanup(CONFIG.DATABASE.STORES.METADATA, {
         maxEntries,
         maxAgeInDays,
         timestampField: 'timestamp'
@@ -465,8 +534,8 @@ export const MetadataManager = {
     try {
       if (!this.db) await this.init();
       
-      await this.db.clear('metadataUrls');
-      await this.db.clear('metadata');
+      await this.db.clear(CONFIG.DATABASE.STORES.METADATA_URLS);
+      await this.db.clear(CONFIG.DATABASE.STORES.METADATA);
       
       Utils.log('Cleared all metadata from IndexedDB');
       return true;

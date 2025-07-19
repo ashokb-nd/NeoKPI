@@ -1,5 +1,8 @@
 import { AdminTools } from '../utils/admin.js';
 import { ModalManager, SettingsModal } from '../ui/modal-manager.js';
+import { MetadataManager } from '../services/metadata.js';
+import { NotesManager } from '../features/notes.js';
+import { CONFIG } from '../config/constants.js';
 
 /**
  * Global scope utilities for console access and development
@@ -26,6 +29,41 @@ export class GlobalScope {
       exportMetadata: () => AdminTools.exportMetadataList(),
       deleteDB: () => AdminTools.deleteIndexedDatabase()
     };
+
+    // Expose database instances for console access
+    window.AlertDebugDB = {
+      metadata: MetadataManager,
+      notes: NotesManager,
+      // Direct access to database instances
+      get metadataDB() { return MetadataManager.db; },
+      get notesDB() { return NotesManager.db; },
+      
+      // Convenient helper functions using constants
+      async inspectStore(storeName) {
+        const db = MetadataManager.db || NotesManager.db;
+        if (!db) {
+          console.error('Database not initialized');
+          return null;
+        }
+        
+        try {
+          const data = await db.getAll(storeName);
+          const stats = await db.getStats(storeName);
+          
+          console.log(`📊 Store: ${storeName}`);
+          console.log(`📦 Count: ${stats.count}`);
+          console.log('📋 Data:', data);
+          
+          return { data, stats };
+        } catch (error) {
+          console.error(`Error inspecting store ${storeName}:`, error);
+          return null;
+        }
+      },
+      
+      // Store constants for easy access
+      STORES: CONFIG.DATABASE.STORES
+    };
     
     this.logAvailableCommands();
   }
@@ -41,5 +79,19 @@ export class GlobalScope {
     console.log('AlertDebugAdmin.exportMetadata() - Export metadata list');
     console.log('AlertDebugAdmin.deleteDB() - Delete IndexedDB database');
     console.log('AlertDebugApp.cleanup() - Clean up all UI elements and storage');
+    
+    console.log('%cAlert Debug Database Access:', 'color: #2196F3; font-weight: bold;');
+    console.log('AlertDebugDB.metadata - MetadataManager instance');
+    console.log('AlertDebugDB.notes - NotesManager instance');
+    console.log('AlertDebugDB.metadataDB - Direct IndexedDB instance for metadata');
+    console.log('AlertDebugDB.notesDB - Direct IndexedDB instance for notes');
+    console.log('AlertDebugDB.STORES - Database store name constants');
+    console.log('AlertDebugDB.inspectStore(storeName) - Inspect any store with data & stats');
+    
+    console.log('%cExample database usage:', 'color: #FF9800; font-style: italic;');
+    console.log('AlertDebugDB.metadata.getAllMetadataUrls() - Get all metadata URLs');
+    console.log('AlertDebugDB.notes.getAllNotes() - Get all notes');
+    console.log('AlertDebugDB.inspectStore("metadataUrls") - Inspect metadata URLs store');
+    console.log('AlertDebugDB.inspectStore(AlertDebugDB.STORES.METADATA) - Using constants');
   }
 }

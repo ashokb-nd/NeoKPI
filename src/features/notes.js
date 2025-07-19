@@ -6,7 +6,7 @@ import { createAppDatabase } from '../utils/indexdb-manager.js';
 
 export const NotesManager = {
   db: null,
-  storeName: 'notes',
+  storeName: CONFIG.DATABASE.STORES.NOTES,
   
   async init() {
     if (!this.db) {

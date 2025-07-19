@@ -1,12 +1,13 @@
 import { createAppDatabase } from '../utils/indexdb-manager.js';
 import { Utils } from '../utils/utils.js';
+import { CONFIG } from '../config/constants.js';
 
 // ========================================
 // NOTES MANAGER - Using IndexedDB Utility
 // ========================================
 export const NotesManager = {
   db: null,
-  storeName: 'notes',
+  storeName: CONFIG.DATABASE.STORES.NOTES,
 
   async init() {
     this.db = createAppDatabase();

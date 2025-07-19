@@ -1,4 +1,5 @@
 import { Utils } from './utils.js';
+import { CONFIG } from '../config/constants.js';
 
 // ========================================
 // INDEXEDDB MANAGER - Reusable IndexedDB Utility
@@ -319,23 +320,23 @@ export class IndexedDBManager {
 
 // Factory function for creating commonly used databases
 export const createAppDatabase = () => {
-  return new IndexedDBManager('NeoKPIApp', 1)
+  return new IndexedDBManager(CONFIG.DATABASE.NAME, CONFIG.DATABASE.VERSION)
     // Metadata stores
-    .defineStore('metadata', {
+    .defineStore(CONFIG.DATABASE.STORES.METADATA, {
       keyPath: 'alertId',
       indexes: [
         { name: 'timestamp', unique: false },
         { name: 'downloaded', unique: false }
       ]
     })
-    .defineStore('metadataUrls', {
+    .defineStore(CONFIG.DATABASE.STORES.METADATA_URLS, {
       keyPath: 'alertId',
       indexes: [
         { name: 'timestamp', unique: false }
       ]
     })
     // Notes store
-    .defineStore('notes', {
+    .defineStore(CONFIG.DATABASE.STORES.NOTES, {
       keyPath: 'id',
       autoIncrement: true,
       indexes: [
@@ -345,7 +346,7 @@ export const createAppDatabase = () => {
       ]
     })
     // Tags store
-    .defineStore('tags', {
+    .defineStore(CONFIG.DATABASE.STORES.TAGS, {
       keyPath: 'name',
       indexes: [
         { name: 'color', unique: false },
@@ -353,7 +354,7 @@ export const createAppDatabase = () => {
       ]
     })
     // Settings store
-    .defineStore('settings', {
+    .defineStore(CONFIG.DATABASE.STORES.SETTINGS, {
       keyPath: 'key',
       indexes: [
         { name: 'category', unique: false },
