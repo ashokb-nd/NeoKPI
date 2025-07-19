@@ -1,6 +1,7 @@
 import { Utils } from '../utils/utils.js';
 import { StorageManager } from '../utils/storage.js';
-import { AdminTools } from '../utils/admin.js';
+// import { AdminTools } from '../utils/admin.js';
+import { CONFIG } from '../config/constants.js';
 import { AppState } from './app-state.js';
 import { KeyboardManager } from './keyboard-manager.js';
 import { SettingsManager } from '../services/settings.js';
@@ -16,7 +17,7 @@ import { UIManager, NotepadUI } from '../ui/ui-manager.js';
  */
 export class Application {
   constructor() {
-    this.VERSION = '0.5';
+    this.VERSION = CONFIG.VERSION;
   }
 
   /**

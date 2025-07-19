@@ -1,7 +1,12 @@
 // ========================================
 // CONSTANTS & CONFIGURATION
 // ========================================
+
+// Read version from package.json to maintain single source of truth
+import packageJson from '../../package.json' with { type: 'json' };
+
 export const CONFIG = {
+  VERSION: packageJson.version,
   SELECTORS: {
     INPUT: '#alert-debug-user-input',
     BUTTON: '#debug-alert-id-submit',

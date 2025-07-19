@@ -1,4 +1,8 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import json from '@rollup/plugin-json';
+import { readFileSync } from 'fs';
+
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
 
 export default {
   input: 'src/index.js',
@@ -8,7 +12,7 @@ export default {
     banner: `// ==UserScript==
 // @name         Alert Debug Shortcut (Refactored)
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      ${packageJson.version}
 // @description  Keyboard shortcuts with notes, tags, filtering, and bulk processing
 // @author       Batakal Ashok
 // @match        https://analytics-kpis.netradyne.com/alert-debug
@@ -16,6 +20,7 @@ export default {
 // ==/UserScript==`,
   },
   plugins: [
+    json(),
     nodeResolve()
   ]
 };
