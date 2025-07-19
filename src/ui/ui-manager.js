@@ -297,7 +297,11 @@ export const NotepadUI = {
     const buttons = [
       { text: 'Download Metadata', color: '#6f42c1', action: () => MetadataManager.downloadCurrentMetadata() },
       { text: 'Import CSV', color: '#28a745', action: () => this.importCsv() },
-      { text: 'Export CSV', color: '#0e639c', action: () => NotesManager.exportToCsv() },
+      { text: 'Export CSV', color: '#0e639c', action: () => {
+        NotesManager.exportToCsv().catch(error => {
+          Utils.log(`Error exporting CSV: ${error.message}`);
+        });
+      }},
       { text: 'Clear Notes', color: '#a1260d', action: () => this.clearAllNotes() },
       { text: 'Clear Bulk', color: '#d16c02', action: () => this.clearBulkAlerts() },
       { text: '⚙️', color: '#6c757d', action: () => this.openSettings() },
@@ -367,7 +371,11 @@ export const NotepadUI = {
       margin-top: 8px;
     `;
     
-    textarea.addEventListener('input', (e) => this.handleNoteInput(textarea, e));
+    textarea.addEventListener('input', (e) => {
+      this.handleNoteInput(textarea, e).catch(error => {
+        Utils.log(`Error handling note input: ${error.message}`);
+      });
+    });
     panel.appendChild(textarea);
     
     return panel;
@@ -431,7 +439,9 @@ export const NotepadUI = {
         AppState.setCurrentAlert(alertId);
       }
       
-      this.updateContent();
+      this.updateContent().catch(error => {
+        Utils.log(`Error updating notepad content: ${error.message}`);
+      });
       // Focus after animation starts
       setTimeout(() => {
         document.querySelector('#notepad-textarea')?.focus();
@@ -439,7 +449,7 @@ export const NotepadUI = {
     }
   },
 
-  updateContent() {
+  async updateContent() {
     const alertDisplay = document.querySelector('#notepad-alert-id');
     const alertTypeDisplay = document.querySelector('#notepad-alert-type');
     const textarea = document.querySelector('#notepad-textarea');
@@ -448,7 +458,7 @@ export const NotepadUI = {
       const alertId = AppState.notepad.currentAlertId;
       if (alertId) {
         // Get alert type from stored notes data
-        const notes = NotesManager.getAllNotes();
+        const notes = await NotesManager.getAllNotes();
         const noteData = notes[alertId];
         let alertType = 'unknown';
         
@@ -470,7 +480,7 @@ export const NotepadUI = {
         }
         
         alertTypeDisplay.textContent = ''; // Clear the separate type display
-        textarea.value = NotesManager.getNote(alertId);
+        textarea.value = await NotesManager.getNote(alertId);
       } else {
         alertDisplay.textContent = 'No alert ID selected';
         alertDisplay.style.color = '#569cd6'; // Reset to default color
@@ -484,7 +494,7 @@ export const NotepadUI = {
     window.TagsUI?.updateFilterDisplay?.();
   },
 
-  handleNoteInput(textarea, event) {
+  async handleNoteInput(textarea, event) {
     const alertId = AppState.notepad.currentAlertId;
     if (!alertId) return;
     
@@ -506,12 +516,12 @@ export const NotepadUI = {
       }
     }
     
-    const existingTags = NotesManager.getTags(alertId);
-    const previousText = NotesManager.getNote(alertId);
+    const existingTags = await NotesManager.getTags(alertId);
+    const previousText = await NotesManager.getNote(alertId);
     const previousHashtags = window.TagManager?.extractHashtagsFromText?.(previousText) || [];
     const manualTags = existingTags.filter(tag => !previousHashtags.includes(tag));
     
-    NotesManager.saveNote(alertId, textarea.value, manualTags);
+    await NotesManager.saveNote(alertId, textarea.value, manualTags);
     window.TagsUI?.updateTagsDisplay?.();
     window.TagsUI?.updateFilterDisplay?.();
   },
@@ -634,11 +644,13 @@ export const NotepadUI = {
     }, 100);
   },
 
-  clearAllNotes() {
+  async clearAllNotes() {
     if (confirm('Are you sure you want to clear all notes and tags?')) {
-      NotesManager.clearAllNotes();
+      await NotesManager.clearAllNotes();
       document.querySelector('#notepad-textarea').value = '';
-      this.updateContent();
+      this.updateContent().catch(error => {
+        Utils.log(`Error updating notepad content: ${error.message}`);
+      });
     }
   },
 

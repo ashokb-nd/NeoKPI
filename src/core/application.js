@@ -6,6 +6,7 @@ import { AppState } from './app-state.js';
 import { KeyboardManager } from './keyboard-manager.js';
 import { SettingsManager } from '../services/settings.js';
 import { MetadataManager } from '../services/metadata.js';
+import { NotesManager } from '../features/notes.js';
 import { BulkProcessor } from '../features/bulk-processor.js';
 import { FireworksManager } from '../ui/fireworks.js';
 import { VideoControlsManager } from '../ui/video-controls.js';
@@ -51,6 +52,7 @@ export class Application {
       // Initialize core services
       MetadataManager.init();
       SettingsManager.init();
+      NotesManager.init(); // Initialize IndexedDB for notes
       
       // Restore application state
       this.restoreBulkAlerts();

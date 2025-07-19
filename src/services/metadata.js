@@ -1,54 +1,18 @@
 import { CONFIG } from '../config/constants.js';
 import { Utils } from '../utils/utils.js';
+import { createAppDatabase } from '../utils/indexdb-manager.js';
 
 // ========================================
 // METADATA MANAGER
 // ========================================
 export const MetadataManager = {
   db: null,
-  dbName: 'AlertDebugMetadata',
-  dbVersion: 1,
 
   async init() {
-    await this.initIndexedDB();
+    this.db = createAppDatabase();
+    await this.db.init();
     this.interceptDashRequests();
     Utils.log('Metadata manager initialized - intercepting Dash requests and IndexedDB');
-  },
-
-  async initIndexedDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-      
-      request.onerror = () => {
-        Utils.log('IndexedDB failed to open');
-        reject(request.error);
-      };
-      
-      request.onsuccess = () => {
-        this.db = request.result;
-        Utils.log('IndexedDB opened successfully');
-        resolve(this.db);
-      };
-      
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        
-        // Create metadata store
-        if (!db.objectStoreNames.contains('metadata')) {
-          const metadataStore = db.createObjectStore('metadata', { keyPath: 'alertId' });
-          metadataStore.createIndex('timestamp', 'timestamp', { unique: false });
-          metadataStore.createIndex('downloaded', 'downloaded', { unique: false });
-          Utils.log('Created metadata object store');
-        }
-        
-        // Create URLs store for quick lookups
-        if (!db.objectStoreNames.contains('urls')) {
-          const urlsStore = db.createObjectStore('urls', { keyPath: 'alertId' });
-          urlsStore.createIndex('timestamp', 'timestamp', { unique: false });
-          Utils.log('Created URLs object store');
-        }
-      };
-    });
   },
 
   interceptDashRequests() {
@@ -126,7 +90,7 @@ export const MetadataManager = {
 
   async storeMetadataUrl(alertId, metadataPath) {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
       const urlData = {
         alertId,
@@ -135,13 +99,10 @@ export const MetadataManager = {
         downloaded: false
       };
       
-      const transaction = this.db.transaction(['urls'], 'readwrite');
-      const store = transaction.objectStore('urls');
-      
       // Check if already exists
-      const existing = await this.getFromStore(store, alertId);
+      const existing = await this.db.get('metadataUrls', alertId);
       if (!existing) {
-        await this.putToStore(store, urlData);
+        await this.db.put('metadataUrls', urlData);
         Utils.log(`Stored metadata URL for alert ${alertId} in IndexedDB`);
       }
     } catch (error) {
@@ -152,17 +113,9 @@ export const MetadataManager = {
 
   async getMetadataUrl(alertId) {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
-      if (!this.db) {
-        Utils.log('IndexedDB not available for metadata URL retrieval');
-        return null;
-      }
-      
-      const transaction = this.db.transaction(['urls'], 'readonly');
-      const store = transaction.objectStore('urls');
-      const result = await this.getFromStore(store, alertId);
-      
+      const result = await this.db.get('metadataUrls', alertId);
       return result?.url || null;
     } catch (error) {
       Utils.log(`Error getting metadata URL from IndexedDB: ${error.message}`);
@@ -172,11 +125,9 @@ export const MetadataManager = {
 
   async getAllMetadataUrls() {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
-      const transaction = this.db.transaction(['urls'], 'readonly');
-      const store = transaction.objectStore('urls');
-      const result = await this.getAllFromStore(store);
+      const result = await this.db.getAll('metadataUrls');
       
       // Convert array to object for backwards compatibility
       const urlsObject = {};
@@ -197,10 +148,10 @@ export const MetadataManager = {
 
   async downloadMetadata(alertId) {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
       // First check if we have the metadata content in IndexedDB
-      const cachedMetadata = await this.getMetadataFromIndexedDB(alertId);
+      const cachedMetadata = await this.db.get('metadata', alertId);
       if (cachedMetadata) {
         console.log('🔍 Found cached metadata in IndexedDB for alertId:', alertId);
         return cachedMetadata.content;
@@ -343,83 +294,6 @@ export const MetadataManager = {
     return content;
   },
 
-  // IndexedDB Helper Functions
-  async getFromStore(store, key) {
-    return new Promise((resolve, reject) => {
-      const request = store.get(key);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  },
-
-  async putToStore(store, data) {
-    return new Promise((resolve, reject) => {
-      const request = store.put(data);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  },
-
-  async getAllFromStore(store) {
-    return new Promise((resolve, reject) => {
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  },
-
-  async deleteFromStore(store, key) {
-    return new Promise((resolve, reject) => {
-      const request = store.delete(key);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  },
-
-  async getMetadataFromIndexedDB(alertId) {
-    try {
-      const transaction = this.db.transaction(['metadata'], 'readonly');
-      const store = transaction.objectStore('metadata');
-      return await this.getFromStore(store, alertId);
-    } catch (error) {
-      Utils.log(`Error getting metadata from IndexedDB: ${error.message}`);
-      return null;
-    }
-  },
-
-  async storeMetadataInIndexedDB(alertId, content, url) {
-    try {
-      const metadataData = {
-        alertId,
-        content,
-        url,
-        timestamp: new Date().toISOString(),
-        downloaded: true,
-        downloadedAt: new Date().toISOString(),
-        size: content.length
-      };
-      
-      const transaction = this.db.transaction(['metadata', 'urls'], 'readwrite');
-      
-      // Store full metadata
-      const metadataStore = transaction.objectStore('metadata');
-      await this.putToStore(metadataStore, metadataData);
-      
-      // Update URL record
-      const urlsStore = transaction.objectStore('urls');
-      const urlData = await this.getFromStore(urlsStore, alertId);
-      if (urlData) {
-        urlData.downloaded = true;
-        urlData.downloadedAt = new Date().toISOString();
-        await this.putToStore(urlsStore, urlData);
-      }
-      
-      Utils.log(`Stored metadata content for alert ${alertId} in IndexedDB (${(content.length / 1024).toFixed(2)} KB)`);
-    } catch (error) {
-      Utils.log(`Error storing metadata in IndexedDB: ${error.message}`);
-    }
-  },
-
   // Download metadata content as a JSON file
   // along with some additional metadata
   async downloadMetadataAsFile(alertId, content) {
@@ -534,17 +408,13 @@ export const MetadataManager = {
   // Get stats about stored metadata
   async getStats() {
     try {
-      if (!this.db) await this.initIndexedDB();
-      
-      const transaction = this.db.transaction(['urls', 'metadata'], 'readonly');
+      if (!this.db) await this.init();
       
       // Get URL stats
-      const urlsStore = transaction.objectStore('urls');
-      const allUrls = await this.getAllFromStore(urlsStore);
+      const allUrls = await this.db.getAll('metadataUrls');
       
       // Get metadata stats
-      const metadataStore = transaction.objectStore('metadata');
-      const allMetadata = await this.getAllFromStore(metadataStore);
+      const allMetadata = await this.db.getAll('metadata');
       
       const total = allUrls.length;
       const downloaded = allUrls.filter(item => item.downloaded).length;
@@ -568,47 +438,22 @@ export const MetadataManager = {
   // Clean up old metadata entries to prevent storage bloat
   async cleanupOldEntries(maxEntries = 1000, maxAgeInDays = 30) {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - maxAgeInDays);
+      const urlsDeleted = await this.db.cleanup('metadataUrls', {
+        maxEntries,
+        maxAgeInDays,
+        timestampField: 'timestamp'
+      });
       
-      const transaction = this.db.transaction(['urls', 'metadata'], 'readwrite');
+      const metadataDeleted = await this.db.cleanup('metadata', {
+        maxEntries,
+        maxAgeInDays,
+        timestampField: 'timestamp'
+      });
       
-      // Clean URLs store
-      const urlsStore = transaction.objectStore('urls');
-      const allUrls = await this.getAllFromStore(urlsStore);
-      
-      if (allUrls.length > maxEntries) {
-        // Sort by timestamp and keep only newest entries
-        const sorted = allUrls.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-        const toDelete = sorted.slice(0, sorted.length - maxEntries);
-        
-        for (const item of toDelete) {
-          await this.deleteFromStore(urlsStore, item.alertId);
-        }
-        
-        Utils.log(`Cleaned up ${toDelete.length} old URL entries from IndexedDB`);
-      }
-      
-      // Clean metadata store
-      const metadataStore = transaction.objectStore('metadata');
-      const allMetadata = await this.getAllFromStore(metadataStore);
-      
-      let deletedMetadata = 0;
-      for (const item of allMetadata) {
-        const itemDate = new Date(item.timestamp);
-        if (itemDate < cutoffDate) {
-          await this.deleteFromStore(metadataStore, item.alertId);
-          deletedMetadata++;
-        }
-      }
-      
-      if (deletedMetadata > 0) {
-        Utils.log(`Cleaned up ${deletedMetadata} old metadata entries from IndexedDB`);
-      }
-      
-      return true;
+      Utils.log(`Cleaned up ${urlsDeleted} URL entries and ${metadataDeleted} metadata entries`);
+      return urlsDeleted + metadataDeleted;
     } catch (error) {
       Utils.log(`Error cleaning up IndexedDB: ${error.message}`);
       throw error;
@@ -618,28 +463,12 @@ export const MetadataManager = {
   // Clear all metadata from IndexedDB
   async clearAll() {
     try {
-      if (!this.db) await this.initIndexedDB();
+      if (!this.db) await this.init();
       
-      const transaction = this.db.transaction(['urls', 'metadata'], 'readwrite');
-      
-      // Clear both stores
-      const urlsStore = transaction.objectStore('urls');
-      const metadataStore = transaction.objectStore('metadata');
-      
-      await new Promise((resolve, reject) => {
-        const clearUrls = urlsStore.clear();
-        clearUrls.onsuccess = resolve;
-        clearUrls.onerror = reject;
-      });
-      
-      await new Promise((resolve, reject) => {
-        const clearMetadata = metadataStore.clear();
-        clearMetadata.onsuccess = resolve;
-        clearMetadata.onerror = reject;
-      });
+      await this.db.clear('metadataUrls');
+      await this.db.clear('metadata');
       
       Utils.log('Cleared all metadata from IndexedDB');
-      
       return true;
     } catch (error) {
       Utils.log(`Error clearing IndexedDB: ${error.message}`);
@@ -649,28 +478,15 @@ export const MetadataManager = {
 
   // Delete entire IndexedDB database
   async deleteDatabase() {
-    return new Promise((resolve, reject) => {
+    try {
       if (this.db) {
-        this.db.close();
+        await this.db.deleteDatabase();
         this.db = null;
       }
-      
-      const deleteRequest = indexedDB.deleteDatabase(this.dbName);
-      
-      deleteRequest.onsuccess = () => {
-        Utils.log('IndexedDB database deleted successfully');
-        resolve();
-      };
-      
-      deleteRequest.onerror = () => {
-        Utils.log('Error deleting IndexedDB database');
-        reject(deleteRequest.error);
-      };
-      
-      deleteRequest.onblocked = () => {
-        Utils.log('IndexedDB deletion blocked - close other tabs');
-        reject(new Error('Database deletion blocked'));
-      };
-    });
+      return true;
+    } catch (error) {
+      Utils.log(`Error deleting IndexedDB database: ${error.message}`);
+      throw error;
+    }
   }
 };
