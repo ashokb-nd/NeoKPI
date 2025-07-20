@@ -22,40 +22,44 @@ export const AnnotationSamples = {
         source: "debug-utils",
         created: new Date().toISOString()
       },
-      items: [
-        // Vehicle detection
-        new Annotation({
-          id: "detection-1",
-          type: "detection",
-          timeRange: { startMs: 1000, endMs: 5000 },
-          data: {
-            bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
-            confidence: 0.95,
-            class: "vehicle"
-          }
-        }),
-        // Person detection
-        new Annotation({
-          id: "detection-2", 
-          type: "detection",
-          timeRange: { startMs: 2000, endMs: 6000 },
-          data: {
-            bbox: { x: 0.5, y: 0.2, width: 0.15, height: 0.25 },
-            confidence: 0.88,
-            class: "person"
-          }
-        }),
-        // Debug cross - always visible
-        new Annotation({
-          id: "debug-cross-1",
-          type: "cross",
-          timeRange: { startMs: 0, endMs: 10000 },
-          data: {
-            debugText: "DEBUG CROSS",
-            includeCenterLines: false
-          }
-        })
-      ]
+      items: {
+        detection: [
+          // Vehicle detection
+          new Annotation({
+            id: "detection-1",
+            type: "detection",
+            timeRange: { startMs: 1000, endMs: 5000 },
+            data: {
+              bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
+              confidence: 0.95,
+              class: "vehicle"
+            }
+          }),
+          // Person detection
+          new Annotation({
+            id: "detection-2", 
+            type: "detection",
+            timeRange: { startMs: 2000, endMs: 6000 },
+            data: {
+              bbox: { x: 0.5, y: 0.2, width: 0.15, height: 0.25 },
+              confidence: 0.88,
+              class: "person"
+            }
+          })
+        ],
+        cross: [
+          // Debug cross - always visible
+          new Annotation({
+            id: "debug-cross-1",
+            type: "cross",
+            timeRange: { startMs: 0, endMs: 10000 },
+            data: {
+              debugText: "DEBUG CROSS",
+              includeCenterLines: false
+            }
+          })
+        ]
+      }
     });
   },
 
@@ -66,28 +70,30 @@ export const AnnotationSamples = {
   createDetectionSample() {
     return new AnnotationManifest({
       metadata: { source: "debug-detections" },
-      items: [
-        new Annotation({
-          id: "test-vehicle",
-          type: "detection",
-          timeRange: { startMs: 0, endMs: 8000 },
-          data: {
-            bbox: { x: 0.2, y: 0.3, width: 0.3, height: 0.4 },
-            confidence: 0.92,
-            class: "vehicle"
-          }
-        }),
-        new Annotation({
-          id: "test-person",
-          type: "detection", 
-          timeRange: { startMs: 1000, endMs: 7000 },
-          data: {
-            bbox: { x: 0.6, y: 0.1, width: 0.2, height: 0.5 },
-            confidence: 0.85,
-            class: "person"
-          }
-        })
-      ]
+      items: {
+        detection: [
+          new Annotation({
+            id: "test-vehicle",
+            type: "detection",
+            timeRange: { startMs: 0, endMs: 8000 },
+            data: {
+              bbox: { x: 0.2, y: 0.3, width: 0.3, height: 0.4 },
+              confidence: 0.92,
+              class: "vehicle"
+            }
+          }),
+          new Annotation({
+            id: "test-person",
+            type: "detection", 
+            timeRange: { startMs: 1000, endMs: 7000 },
+            data: {
+              bbox: { x: 0.6, y: 0.1, width: 0.2, height: 0.5 },
+              confidence: 0.85,
+              class: "person"
+            }
+          })
+        ]
+      }
     });
   },
 
@@ -98,17 +104,19 @@ export const AnnotationSamples = {
   createCrossSample() {
     return new AnnotationManifest({
       metadata: { source: "debug-cross" },
-      items: [
-        new Annotation({
-          id: "corner-cross",
-          type: "cross",
-          timeRange: { startMs: 0, endMs: 15000 },
-          data: {
-            debugText: "CORNER TO CORNER",
-            includeCenterLines: false
-          }
-        })
-      ]
+      items: {
+        cross: [
+          new Annotation({
+            id: "corner-cross",
+            type: "cross",
+            timeRange: { startMs: 0, endMs: 15000 },
+            data: {
+              debugText: "CORNER TO CORNER",
+              includeCenterLines: false
+            }
+          })
+        ]
+      }
     });
   },
 
@@ -119,18 +127,20 @@ export const AnnotationSamples = {
   createTextSample() {
     return new AnnotationManifest({
       metadata: { source: "debug-text" },
-      items: [
-        new Annotation({
-          id: "debug-text-1",
-          type: "text",
-          timeRange: { startMs: 0, endMs: 10000 },
-          data: {
-            text: "Debug Text Overlay",
-            position: { x: 0.1, y: 0.1 },
-            anchor: "top-left"
-          }
-        })
-      ]
+      items: {
+        text: [
+          new Annotation({
+            id: "debug-text-1",
+            type: "text",
+            timeRange: { startMs: 0, endMs: 10000 },
+            data: {
+              text: "Debug Text Overlay",
+              position: { x: 0.1, y: 0.1 },
+              anchor: "top-left"
+            }
+          })
+        ]
+      }
     });
   },
 
@@ -141,51 +151,55 @@ export const AnnotationSamples = {
   createTimeBasedSample() {
     return new AnnotationManifest({
       metadata: { source: "debug-timing" },
-      items: [
-        // Early detection (0-3s)
-        new Annotation({
-          id: "early-detection",
-          type: "detection",
-          timeRange: { startMs: 0, endMs: 3000 },
-          data: {
-            bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.2 },
-            confidence: 0.9,
-            class: "early"
-          }
-        }),
-        // Middle detection (2-6s) - overlaps with early
-        new Annotation({
-          id: "middle-detection",
-          type: "detection",
-          timeRange: { startMs: 2000, endMs: 6000 },
-          data: {
-            bbox: { x: 0.4, y: 0.3, width: 0.25, height: 0.3 },
-            confidence: 0.85,
-            class: "middle"
-          }
-        }),
-        // Late detection (5-8s) - overlaps with middle
-        new Annotation({
-          id: "late-detection",
-          type: "detection",
-          timeRange: { startMs: 5000, endMs: 8000 },
-          data: {
-            bbox: { x: 0.7, y: 0.6, width: 0.2, height: 0.25 },
-            confidence: 0.88,
-            class: "late"
-          }
-        }),
-        // Always visible cross
-        new Annotation({
-          id: "timing-cross",
-          type: "cross",
-          timeRange: { startMs: 0, endMs: 10000 },
-          data: {
-            debugText: "TIMING TEST",
-            includeCenterLines: true
-          }
-        })
-      ]
+      items: {
+        detection: [
+          // Early detection (0-3s)
+          new Annotation({
+            id: "early-detection",
+            type: "detection",
+            timeRange: { startMs: 0, endMs: 3000 },
+            data: {
+              bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.2 },
+              confidence: 0.9,
+              class: "early"
+            }
+          }),
+          // Middle detection (2-6s) - overlaps with early
+          new Annotation({
+            id: "middle-detection",
+            type: "detection",
+            timeRange: { startMs: 2000, endMs: 6000 },
+            data: {
+              bbox: { x: 0.4, y: 0.3, width: 0.25, height: 0.3 },
+              confidence: 0.85,
+              class: "middle"
+            }
+          }),
+          // Late detection (5-8s) - overlaps with middle
+          new Annotation({
+            id: "late-detection",
+            type: "detection",
+            timeRange: { startMs: 5000, endMs: 8000 },
+            data: {
+              bbox: { x: 0.7, y: 0.6, width: 0.2, height: 0.25 },
+              confidence: 0.88,
+              class: "late"
+            }
+          })
+        ],
+        cross: [
+          // Always visible cross
+          new Annotation({
+            id: "timing-cross",
+            type: "cross",
+            timeRange: { startMs: 0, endMs: 10000 },
+            data: {
+              debugText: "TIMING TEST",
+              includeCenterLines: true
+            }
+          })
+        ]
+      }
     });
   }
 };

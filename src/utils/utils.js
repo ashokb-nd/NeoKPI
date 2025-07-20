@@ -8,14 +8,20 @@ export const Utils = {
     console.log(`[UserScript] ${message}`);
   },
 
-  waitForElements(callback) {
-    const interval = setInterval(() => {
-      const elements = this.getRequiredElements();
-      if (elements.input && elements.button && elements.typeDropdown) {
-        clearInterval(interval);
-        callback(elements);
-      }
-    }, CONFIG.TIMING.ELEMENT_CHECK_INTERVAL);
+  /**
+   * Wait for required elements to be available in the DOM.
+   * @returns {Promise<Object>} Resolves with an object containing the required elements
+   */
+  async waitForElements() {
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        const elements = this.getRequiredElements();
+        if (elements.input && elements.button && elements.typeDropdown) {
+          clearInterval(interval);
+          resolve(elements);
+        }
+      }, CONFIG.TIMING.ELEMENT_CHECK_INTERVAL);
+    });
   },
 
   getRequiredElements() {

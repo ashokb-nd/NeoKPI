@@ -34,9 +34,8 @@ export class Application {
       fireworks.init();
 
       // Wait for required elements and initialize
-      Utils.waitForElements((elements) => {
-        this.initializeFeatures(elements);
-      });
+      const elements = await Utils.waitForElements();
+      this.initializeFeatures(elements);
     } catch (error) {
       console.error("Failed to initialize UserScript:", error);
       UIManager.showNotification("UserScript initialization failed", "error");
