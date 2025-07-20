@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: utils/debug-utils.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: utils/debug-utils.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Debug Utilities for Annotation System
+ * 
+ * Contains helper functions for creating test data, debugging annotation rendering,
+ * and providing console utilities for development and troubleshooting.
+ */
+
+import { AnnotationManifest, Annotation } from '../features/annotations/annotation-manifest.js';
+
+/**
+ * Sample annotation data factory
+ * Creates various types of test annotations for debugging purposes
+ */
+export const AnnotationSamples = {
+  /**
+   * Create a comprehensive sample with different annotation types
+   * @returns {AnnotationManifest}
+   */
+  createFullSample() {
+    return new AnnotationManifest({
+      metadata: { 
+        source: "debug-utils",
+        created: new Date().toISOString()
+      },
+      items: [
+        // Vehicle detection
+        new Annotation({
+          id: "detection-1",
+          type: "detection",
+          timeRange: { startMs: 1000, endMs: 5000 },
+          data: {
+            bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
+            confidence: 0.95,
+            class: "vehicle"
+          }
+        }),
+        // Person detection
+        new Annotation({
+          id: "detection-2", 
+          type: "detection",
+          timeRange: { startMs: 2000, endMs: 6000 },
+          data: {
+            bbox: { x: 0.5, y: 0.2, width: 0.15, height: 0.25 },
+            confidence: 0.88,
+            class: "person"
+          }
+        }),
+        // Debug cross - always visible
+        new Annotation({
+          id: "debug-cross-1",
+          type: "cross",
+          timeRange: { startMs: 0, endMs: 10000 },
+          data: {
+            debugText: "DEBUG CROSS",
+            includeCenterLines: false
+          }
+        })
+      ]
+    });
+  },
+
+  /**
+   * Create detection-only sample for testing bounding boxes
+   * @returns {AnnotationManifest}
+   */
+  createDetectionSample() {
+    return new AnnotationManifest({
+      metadata: { source: "debug-detections" },
+      items: [
+        new Annotation({
+          id: "test-vehicle",
+          type: "detection",
+          timeRange: { startMs: 0, endMs: 8000 },
+          data: {
+            bbox: { x: 0.2, y: 0.3, width: 0.3, height: 0.4 },
+            confidence: 0.92,
+            class: "vehicle"
+          }
+        }),
+        new Annotation({
+          id: "test-person",
+          type: "detection", 
+          timeRange: { startMs: 1000, endMs: 7000 },
+          data: {
+            bbox: { x: 0.6, y: 0.1, width: 0.2, height: 0.5 },
+            confidence: 0.85,
+            class: "person"
+          }
+        })
+      ]
+    });
+  },
+
+  /**
+   * Create cross-only sample for canvas debugging
+   * @returns {AnnotationManifest}
+   */
+  createCrossSample() {
+    return new AnnotationManifest({
+      metadata: { source: "debug-cross" },
+      items: [
+        new Annotation({
+          id: "corner-cross",
+          type: "cross",
+          timeRange: { startMs: 0, endMs: 15000 },
+          data: {
+            debugText: "CORNER TO CORNER",
+            includeCenterLines: false
+          }
+        })
+      ]
+    });
+  },
+
+  /**
+   * Create text annotation sample
+   * @returns {AnnotationManifest}
+   */
+  createTextSample() {
+    return new AnnotationManifest({
+      metadata: { source: "debug-text" },
+      items: [
+        new Annotation({
+          id: "debug-text-1",
+          type: "text",
+          timeRange: { startMs: 0, endMs: 10000 },
+          data: {
+            text: "Debug Text Overlay",
+            position: { x: 0.1, y: 0.1 },
+            anchor: "top-left"
+          }
+        })
+      ]
+    });
+  },
+
+  /**
+   * Create multi-time sample with different visibility windows
+   * @returns {AnnotationManifest}
+   */
+  createTimeBasedSample() {
+    return new AnnotationManifest({
+      metadata: { source: "debug-timing" },
+      items: [
+        // Early detection (0-3s)
+        new Annotation({
+          id: "early-detection",
+          type: "detection",
+          timeRange: { startMs: 0, endMs: 3000 },
+          data: {
+            bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.2 },
+            confidence: 0.9,
+            class: "early"
+          }
+        }),
+        // Middle detection (2-6s) - overlaps with early
+        new Annotation({
+          id: "middle-detection",
+          type: "detection",
+          timeRange: { startMs: 2000, endMs: 6000 },
+          data: {
+            bbox: { x: 0.4, y: 0.3, width: 0.25, height: 0.3 },
+            confidence: 0.85,
+            class: "middle"
+          }
+        }),
+        // Late detection (5-8s) - overlaps with middle
+        new Annotation({
+          id: "late-detection",
+          type: "detection",
+          timeRange: { startMs: 5000, endMs: 8000 },
+          data: {
+            bbox: { x: 0.7, y: 0.6, width: 0.2, height: 0.25 },
+            confidence: 0.88,
+            class: "late"
+          }
+        }),
+        // Always visible cross
+        new Annotation({
+          id: "timing-cross",
+          type: "cross",
+          timeRange: { startMs: 0, endMs: 10000 },
+          data: {
+            debugText: "TIMING TEST",
+            includeCenterLines: true
+          }
+        })
+      ]
+    });
+  }
+};
+
+/**
+ * Canvas and rendering debug utilities
+ */
+export const RenderingDebug = {
+  /**
+   * Draw manual test shapes on canvas for debugging positioning
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {Object} canvasSize - {width, height}
+   */
+  drawTestShapes(ctx, canvasSize) {
+    ctx.save();
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    
+    // Draw corner-to-corner cross (magenta)
+    ctx.strokeStyle = "#ff00ff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(canvasSize.width, canvasSize.height);
+    ctx.moveTo(canvasSize.width, 0);
+    ctx.lineTo(0, canvasSize.height);
+    ctx.stroke();
+    
+    // Draw center cross (cyan)
+    ctx.strokeStyle = "#00ffff";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(canvasSize.width / 2, 0);
+    ctx.lineTo(canvasSize.width / 2, canvasSize.height);
+    ctx.moveTo(0, canvasSize.height / 2);
+    ctx.lineTo(canvasSize.width, canvasSize.height / 2);
+    ctx.stroke();
+    
+    // Draw test rectangle (red)
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(50, 50, 200, 100);
+    
+    // Draw test circle (green)
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(150, 200, 30, 0, 2 * Math.PI);
+    ctx.stroke();
+    
+    // Draw corner markers (yellow)
+    ctx.fillStyle = "#ffff00";
+    const markerSize = 10;
+    // Top-left
+    ctx.fillRect(0, 0, markerSize, markerSize);
+    // Top-right
+    ctx.fillRect(canvasSize.width - markerSize, 0, markerSize, markerSize);
+    // Bottom-left
+    ctx.fillRect(0, canvasSize.height - markerSize, markerSize, markerSize);
+    // Bottom-right
+    ctx.fillRect(canvasSize.width - markerSize, canvasSize.height - markerSize, markerSize, markerSize);
+    
+    // Draw text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "16px Arial";
+    ctx.fillText("Canvas Debug Test", 20, 30);
+    ctx.fillText(`Size: ${canvasSize.width}x${canvasSize.height}`, 20, 280);
+    
+    ctx.restore();
+  },
+
+  /**
+   * Manually draw detection boxes to test coordinate conversion
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {Object} canvasSize - {width, height}
+   */
+  drawTestDetections(ctx, canvasSize) {
+    ctx.save();
+    
+    // Test detection box 1 - normalized coordinates (0.1, 0.1, 0.2, 0.3)
+    const box1 = {
+      x: 0.1 * canvasSize.width,
+      y: 0.1 * canvasSize.height, 
+      width: 0.2 * canvasSize.width,
+      height: 0.3 * canvasSize.height
+    };
+    
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box1.x, box1.y, box1.width, box1.height);
+    
+    // Label for box 1
+    ctx.fillStyle = "#ff0000";
+    ctx.font = "14px Arial";
+    ctx.fillText("TEST VEHICLE", box1.x, box1.y - 5);
+    
+    // Test detection box 2 - normalized coordinates (0.5, 0.2, 0.15, 0.25)
+    const box2 = {
+      x: 0.5 * canvasSize.width,
+      y: 0.2 * canvasSize.height,
+      width: 0.15 * canvasSize.width, 
+      height: 0.25 * canvasSize.height
+    };
+    
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box2.x, box2.y, box2.width, box2.height);
+    
+    // Label for box 2
+    ctx.fillStyle = "#00ff00";
+    ctx.font = "14px Arial";
+    ctx.fillText("TEST PERSON", box2.x, box2.y - 5);
+    
+    console.log("Manual detection boxes drawn:");
+    console.log("Vehicle box:", box1);
+    console.log("Person box:", box2);
+    
+    ctx.restore();
+  },
+
+  /**
+   * Log detailed canvas and context information
+   * @param {HTMLCanvasElement} canvas - Canvas element
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  logCanvasInfo(canvas, ctx) {
+    console.group("🎨 Canvas Debug Information");
+    
+    console.log("Canvas Element:", canvas);
+    console.log("Canvas Context:", ctx);
+    console.log("Canvas Size:", `${canvas.width}x${canvas.height}`);
+    console.log("Canvas Style:", canvas.style.cssText);
+    console.log("Canvas Position:", {
+      offsetTop: canvas.offsetTop,
+      offsetLeft: canvas.offsetLeft,
+      clientTop: canvas.clientTop,
+      clientLeft: canvas.clientLeft
+    });
+    
+    const rect = canvas.getBoundingClientRect();
+    console.log("Canvas BoundingRect:", rect);
+    
+    console.log("Context Properties:", {
+      fillStyle: ctx.fillStyle,
+      strokeStyle: ctx.strokeStyle,
+      lineWidth: ctx.lineWidth,
+      globalAlpha: ctx.globalAlpha,
+      font: ctx.font
+    });
+    
+    console.groupEnd();
+  }
+};
+
+/**
+ * System diagnostic utilities
+ */
+export const SystemDebug = {
+  /**
+   * Get comprehensive annotation system status
+   * @param {Map} annotators - AnnotationManager.annotators
+   * @returns {Object}
+   */
+  getSystemStatus(annotators) {
+    const status = {
+      totalVideos: annotators.size,
+      videos: [],
+      totalAnnotations: 0,
+      rendererTypes: new Set()
+    };
+
+    annotators.forEach((annotator, video) => {
+      const videoInfo = {
+        src: video.src || "no src",
+        currentTime: video.currentTime,
+        currentTimeMs: video.currentTime * 1000,
+        paused: video.paused,
+        canvasVisible: annotator.isVisible,
+        canvasSize: {
+          width: annotator.canvas.width,
+          height: annotator.canvas.height
+        },
+        annotationCount: annotator.manifest ? annotator.manifest.count : 0,
+        renderers: Array.from(annotator.renderers.keys())
+      };
+
+      if (annotator.manifest) {
+        status.totalAnnotations += annotator.manifest.count;
+        const visibleAnnotations = annotator.getVisibleAnnotations(videoInfo.currentTimeMs);
+        videoInfo.visibleAnnotations = visibleAnnotations.length;
+        videoInfo.visibleTypes = visibleAnnotations.map(a => a.type);
+      } else {
+        videoInfo.visibleAnnotations = 0;
+        videoInfo.visibleTypes = [];
+      }
+
+      // Collect all renderer types
+      annotator.renderers.forEach((_, type) => {
+        status.rendererTypes.add(type);
+      });
+
+      status.videos.push(videoInfo);
+    });
+
+    status.rendererTypes = Array.from(status.rendererTypes);
+    
+    return status;
+  },
+
+  /**
+   * Log system status in a readable format
+   * @param {Map} annotators - AnnotationManager.annotators
+   */
+  logSystemStatus(annotators) {
+    const status = this.getSystemStatus(annotators);
+    
+    console.group("🔍 Annotation System Status");
+    console.log(`📊 Overview: ${status.totalVideos} videos, ${status.totalAnnotations} annotations`);
+    console.log(`🎨 Available renderers: ${status.rendererTypes.join(', ')}`);
+    
+    status.videos.forEach((video, index) => {
+      console.group(`📹 Video ${index + 1}`);
+      console.log(`Source: ${video.src}`);
+      console.log(`Time: ${video.currentTime.toFixed(2)}s (${video.currentTimeMs}ms)`);
+      console.log(`Status: ${video.paused ? 'Paused' : 'Playing'}`);
+      console.log(`Canvas: ${video.canvasVisible ? 'Visible' : 'Hidden'} (${video.canvasSize.width}x${video.canvasSize.height})`);
+      console.log(`Annotations: ${video.annotationCount} total, ${video.visibleAnnotations} visible`);
+      if (video.visibleTypes.length > 0) {
+        console.log(`Visible types: ${video.visibleTypes.join(', ')}`);
+      }
+      console.groupEnd();
+    });
+    
+    console.groupEnd();
+    
+    return status;
+  }
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Classes</h3><ul><li><a href="Application.html">Application</a></li><li><a href="GlobalScope.html">GlobalScope</a></li><li><a href="module-AnnotationManifest.Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest.AnnotationManifest.html">AnnotationManifest</a></li><li><a href="module-AnnotationManifest-Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AnnotationSamples">AnnotationSamples</a></li><li><a href="global.html#KeyboardHelpGenerator">KeyboardHelpGenerator</a></li><li><a href="global.html#NotepadUI">NotepadUI</a></li><li><a href="global.html#RenderingDebug">RenderingDebug</a></li><li><a href="global.html#SystemDebug">SystemDebug</a></li><li><a href="global.html#UIManager">UIManager</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sun Jul 20 2025 16:25:40 GMT+0530 (India Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

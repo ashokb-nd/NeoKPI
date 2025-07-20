@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/application.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/application.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Utils } from "../utils/utils.js";
+import { StorageManager } from "../utils/storage.js";
+// import { AdminTools } from '../utils/admin.js';
+import { CONFIG } from "../config/constants.js";
+import { AppState } from "./app-state.js";
+import { KeyboardManager } from "./keyboard-manager.js";
+import { SettingsManager } from "../services/settings.js";
+import { MetadataManager } from "../services/metadata.js";
+import { NotesManager } from "../features/notes.js";
+import { BulkProcessor } from "../features/bulk-processor.js";
+import { FireworkShow } from "../ui/fireworks.js";
+import { VideoControlsManager } from "../ui/video-controls.js";
+import { UIManager, NotepadUI } from "../ui/ui-manager.js";
+import { AnnotationManager } from "../features/annotations/annotation-manager.js";
+
+/**
+ * Main Application class that orchestrates the initialization
+ * and coordination of all modules
+ */
+export class Application {
+  constructor() {
+    this.VERSION = CONFIG.VERSION;
+  }
+
+  /**
+   * Initialize the application
+   */
+  async init() {
+    try {
+      Utils.log(`Initializing Alert Debug UserScript v${this.VERSION}`);
+
+      // Initialize beautiful fireworks on first load
+      const fireworks = new FireworkShow();
+      fireworks.init();
+
+      // Wait for required elements and initialize
+      Utils.waitForElements((elements) => {
+        this.initializeFeatures(elements);
+      });
+    } catch (error) {
+      console.error("Failed to initialize UserScript:", error);
+      UIManager.showNotification("UserScript initialization failed", "error");
+    }
+  }
+
+  /**
+   * Initialize all application features once DOM elements are ready
+   */
+  initializeFeatures(elements) {
+    try {
+      Utils.log("Required elements found - activating features");
+
+      // Initialize core services
+      MetadataManager.init();
+      SettingsManager.init();
+      NotesManager.init(); // Initialize IndexedDB for notes
+
+      // Restore application state
+      this.restoreBulkAlerts();
+
+      // Set up event handlers
+      this.setupInputMonitoring(elements);
+      this.setupKeyboardHandlers(elements);
+
+      // Initialize UI components
+      VideoControlsManager.init();
+      AnnotationManager.init();
+
+      // Auto-open notepad on page load
+      this.autoOpenNotepad();
+
+      Utils.log("UserScript initialization complete");
+    } catch (error) {
+      console.error("Failed to initialize features:", error);
+      UIManager.showNotification("Feature initialization failed", "error");
+    }
+  }
+
+  /**
+   * Restore bulk alerts from storage
+   */
+  restoreBulkAlerts() {
+    if (BulkProcessor.loadBulkAlerts()) {
+      const count = BulkProcessor.state.alertIds.length;
+      const progress = BulkProcessor.getProgress();
+      UIManager.showBulkStatus(
+        `Bulk mode: ${count} alerts loaded. Current: ${progress}`,
+      );
+    }
+  }
+
+  /**
+   * Set up input monitoring for notepad updates
+   */
+  setupInputMonitoring(elements) {
+    elements.input.addEventListener(
+      "input",
+      Utils.debounce(() => {
+        if (AppState.notepad.isOpen) {
+          const alertId = elements.input.value.trim();
+          if (alertId &amp;&amp; alertId !== AppState.notepad.currentAlertId) {
+            AppState.setCurrentAlert(alertId);
+            NotepadUI.updateContent();
+          }
+        }
+      }, 300),
+    );
+  }
+
+  /**
+   * Set up global keyboard event handlers
+   */
+  setupKeyboardHandlers(elements) {
+    document.addEventListener("keydown", (event) => {
+      try {
+        KeyboardManager.handleKeydown(event, elements);
+      } catch (error) {
+        console.error("Keyboard handler error:", error);
+      }
+    });
+  }
+
+  /**
+   * Auto-open notepad after initialization
+   */
+  autoOpenNotepad() {
+    setTimeout(() => {
+      if (!AppState.notepad.isOpen) {
+        NotepadUI.toggle();
+      }
+    }, 500);
+  }
+
+  /**
+   * Cleanup function for development/testing
+   */
+  cleanup() {
+    const elementsToRemove = [
+      "#fireworks-canvas",
+      "#bulk-status",
+      "#notepad-panel",
+      "#video-controls-styles",
+      "#bulk-status-keyframes",
+      "#spinner-animation",
+    ];
+
+    elementsToRemove.forEach((selector) => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.remove();
+      }
+    });
+
+    StorageManager.clear();
+    Utils.log("UserScript cleanup complete");
+  }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Classes</h3><ul><li><a href="Application.html">Application</a></li><li><a href="GlobalScope.html">GlobalScope</a></li><li><a href="module-AnnotationManifest.Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest.AnnotationManifest.html">AnnotationManifest</a></li><li><a href="module-AnnotationManifest-Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AnnotationSamples">AnnotationSamples</a></li><li><a href="global.html#KeyboardHelpGenerator">KeyboardHelpGenerator</a></li><li><a href="global.html#NotepadUI">NotepadUI</a></li><li><a href="global.html#RenderingDebug">RenderingDebug</a></li><li><a href="global.html#SystemDebug">SystemDebug</a></li><li><a href="global.html#UIManager">UIManager</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sun Jul 20 2025 16:25:40 GMT+0530 (India Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

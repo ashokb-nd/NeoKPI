@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: utils/keyboard-help.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: utils/keyboard-help.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { CONFIG } from "../config/constants.js";
+
+/**
+ * Generate dynamic keyboard shortcuts help from configuration
+ */
+export const KeyboardHelpGenerator = {
+  /**
+   * Get formatted keyboard shortcut display
+   */
+  formatKey(key, modifier = "") {
+    const keyMap = {
+      ArrowLeft: "←",
+      ArrowRight: "→",
+      ArrowDown: "↓",
+      ArrowUp: "↑",
+      Space: "Space",
+      Enter: "Enter",
+      Escape: "Esc",
+    };
+
+    const displayKey = keyMap[key] || key;
+    return modifier + displayKey;
+  },
+
+  /**
+   * Get keyboard shortcuts with descriptions
+   */
+  getShortcuts() {
+    return [
+      {
+        key: CONFIG.KEYS.FOCUS_INPUT,
+        modifier: "Cmd+",
+        description: "Focus input field",
+        category: "Input",
+      },
+      {
+        key: CONFIG.KEYS.SUBMIT,
+        modifier: "",
+        description: "Submit form",
+        category: "Input",
+      },
+      {
+        key: CONFIG.KEYS.TOGGLE_NOTEPAD,
+        modifier: "Cmd+",
+        description: "Toggle notepad",
+        category: "Notepad",
+      },
+      {
+        key: CONFIG.KEYS.BULK_PROCESS,
+        modifier: "Cmd+",
+        description: "Bulk process mode",
+        category: "Bulk",
+      },
+      {
+        key: CONFIG.KEYS.NEXT_ALERT,
+        modifier: "Cmd+",
+        description: "Next alert",
+        category: "Bulk",
+      },
+      {
+        key: CONFIG.KEYS.PREV_ALERT,
+        modifier: "Cmd+",
+        description: "Previous alert",
+        category: "Bulk",
+      },
+      {
+        key: CONFIG.KEYS.PLAY_PAUSE,
+        modifier: "",
+        description: "Video play/pause",
+        category: "Video",
+      },
+      {
+        key: CONFIG.KEYS.REWIND,
+        modifier: "",
+        description: "Video rewind",
+        category: "Video",
+      },
+      {
+        key: CONFIG.KEYS.FAST_FORWARD,
+        modifier: "",
+        description: "Video forward",
+        category: "Video",
+      },
+    ];
+  },
+
+  /**
+   * Generate HTML for keyboard shortcuts help
+   */
+  generateKeyboardHelpHTML() {
+    const shortcuts = this.getShortcuts();
+
+    let html = `
+      &lt;div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+    `;
+
+    shortcuts.forEach((shortcut) => {
+      const displayKey = this.formatKey(shortcut.key, shortcut.modifier);
+      html += `&lt;div>&lt;kbd>${displayKey}&lt;/kbd> ${shortcut.description}&lt;/div>`;
+    });
+
+    html += `
+      &lt;/div>
+      &lt;div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #404040; font-size: 11px; color: #999999;">
+        &lt;strong>Tip:&lt;/strong> Use &lt;kbd>Cmd+${this.formatKey(CONFIG.KEYS.PREV_ALERT)}&lt;/kbd>/&lt;kbd>Cmd+${this.formatKey(CONFIG.KEYS.NEXT_ALERT)}&lt;/kbd> for bulk navigation
+      &lt;/div>
+    `;
+
+    return html;
+  },
+
+  /**
+   * Generate markdown for documentation
+   */
+  generateMarkdownHelp() {
+    const shortcuts = this.getShortcuts();
+    const categories = {};
+
+    // Group by category
+    shortcuts.forEach((shortcut) => {
+      if (!categories[shortcut.category]) {
+        categories[shortcut.category] = [];
+      }
+      categories[shortcut.category].push(shortcut);
+    });
+
+    let markdown = "";
+
+    Object.entries(categories).forEach(([category, categoryShortcuts]) => {
+      const categoryNames = {
+        Input: "Input Management",
+        Notepad: "Smart Notepad System",
+        Bulk: "Bulk Processing",
+        Video: "Video Controls",
+      };
+
+      markdown += `### ${categoryNames[category] || category}\n`;
+
+      categoryShortcuts.forEach((shortcut) => {
+        const displayKey = this.formatKey(shortcut.key, shortcut.modifier);
+        markdown += `- **\`${displayKey}\`** - ${shortcut.description}\n`;
+      });
+
+      markdown += "\n";
+    });
+
+    return markdown;
+  },
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Classes</h3><ul><li><a href="Application.html">Application</a></li><li><a href="GlobalScope.html">GlobalScope</a></li><li><a href="module-AnnotationManifest.Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest.AnnotationManifest.html">AnnotationManifest</a></li><li><a href="module-AnnotationManifest-Annotation.html">Annotation</a></li><li><a href="module-AnnotationManifest-AnnotationManifest.html">AnnotationManifest</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AnnotationSamples">AnnotationSamples</a></li><li><a href="global.html#KeyboardHelpGenerator">KeyboardHelpGenerator</a></li><li><a href="global.html#NotepadUI">NotepadUI</a></li><li><a href="global.html#RenderingDebug">RenderingDebug</a></li><li><a href="global.html#SystemDebug">SystemDebug</a></li><li><a href="global.html#UIManager">UIManager</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sun Jul 20 2025 16:25:40 GMT+0530 (India Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

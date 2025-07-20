@@ -1,0 +1,24 @@
+{
+  "source": {
+    "include": ["./src/"],
+    "includePattern": "\\.(js|jsx)$",
+    "exclude": ["node_modules/"]
+  },
+  "opts": {
+    "destination": "./docs/generated/",
+    "recurse": true,
+    "private": false
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "metadata": {
+    "title": "NeoKPI Video Annotation System - API Documentation"
+  },
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc", "closure"]
+  }
+}
