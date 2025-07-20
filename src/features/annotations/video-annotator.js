@@ -1,236 +1,14 @@
 /**
- * VIDEO ANNOTATOR
- *
- * Core canvas overlay system that provides hardware-accelerated rendering of ML model
- * detections and annotations directly over a SINGLE video element using HTML5 Canvas.
- *
- * ⚠️  IMPORTANT: This class handles ONE video element only!
- * Each VideoAnnotator instance creates one canvas overlay for one specific video.
- * For multiple videos, create multiple VideoAnnotator instances (handled by AnnotationManager).
- *
- * OVERVIEW:
- * This class creates a transparent canvas overlay that positions precisely over ONE video
- * element to render real-time annotations. It manages the rendering lifecycle,
- * coordinate transformations, and synchronization with that specific video's playback.
- *
- * CORE FEATURES:
- * • Pixel-perfect canvas positioning over ONE specific video element
- * • Hardware-accelerated 2D rendering with Canvas API
- * • Real-time synchronization with the assigned video's playback timeline
- * • Automatic canvas resizing and repositioning for the target video
- * • Plugin-based renderer system for different annotation types
- * • Normalized coordinate system (0.0-1.0) for resolution independence
- * • Debug visualization tools for development
- *
- * SINGLE VIDEO ARCHITECTURE:
- * ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
- * │   Video Element │ <- │ VideoAnnotator  │ -> │  Canvas Overlay │
- * │   (this.video)  │    │                 │    │  (this.canvas)  │
- * └─────────────────┘    └─────────────────┘    └─────────────────┘
- *          |                       |                       |
- *          v                       v                       v
- * • Single video ref        • 1:1 relationship      • One canvas only
- * • timeupdate events       • Dedicated to one      • Positioned over
- * • resize monitoring       • video element         • assigned video
- * • playback sync          • Independent state      • Same dimensions
- *
- * RENDERING PIPELINE:
- * ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
- * │ Video Time   │ -> │ Filter       │ -> │ Coordinate   │ -> │ Renderer     │
- * │ Update       │    │ Annotations  │    │ Transform    │    │ Dispatch     │
- * └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
- *        |                     |                     |                     |
- *        v                     v                     v                     v
- * • video.currentTime   • timeRange filter   • Normalize to     • DetectionRenderer
- * • Millisecond sync    • Visibility check   • pixel coords     • TextRenderer
- * • Frame-accurate      • Static vs dynamic  • Resolution scale • GraphRenderer
- * • Performance opt     • Time interpolation • Aspect preserve  • TrajectoryRenderer
- *
- * COORDINATE SYSTEM:
- * Input (Normalized 0.0-1.0):           Output (Canvas Pixels):
- * ┌─────────────────────┐               ┌─────────────────────┐
- * │(0,0)           (1,0)│               │(0,0)         (W,0) │
- * │                     │    ──────>    │                     │
- * │                     │    TRANSFORM  │                     │
- * │(0,1)           (1,1)│               │(0,H)         (W,H) │
- * └─────────────────────┘               └─────────────────────┘
- *
- * TIMING SYNCHRONIZATION:
- * • video.currentTime (seconds) -> currentTimeMs (milliseconds)
- * • annotation.timeRange.startMs/endMs for visibility windows
- * • Frame-accurate rendering with requestAnimationFrame
- * • Optimized to skip rendering when time hasn't changed
- *
- * RENDERER ARCHITECTURE:
- * Each annotation type has a specialized renderer extending BaseRenderer:
- * • DetectionRenderer: Bounding boxes, confidence scores, class labels
- * • TextRenderer: Positioned text overlays with styling and anchoring
- * • GraphRenderer: Time-series charts, bar graphs, scatter plots
- * • TrajectoryRenderer: Motion paths, direction arrows, history trails
- *
- * USAGE EXAMPLES:
- *
- * Create annotator for ONE video:
- * ```javascript
- * const videoElement = document.querySelector('#my-video');
- * const annotator = new VideoAnnotator(videoElement, {
- *   autoResize: true,
- *   renderOnVideoTimeUpdate: true,
- *   debugMode: false
- * });
- * ```
- *
- * For MULTIPLE videos, create MULTIPLE annotators:
- * ```javascript
- * const videos = document.querySelectorAll('video');
- * const annotators = [];
- *
- * videos.forEach(video => {
- *   const annotator = new VideoAnnotator(video);
- *   annotators.push(annotator);
- * });
- *
- * // Or use AnnotationManager (recommended):
- * AnnotationManager.init(); // Automatically creates annotators for all videos
- * ```
- *
- * Load ML detection data:
- * ```javascript
- * import { AnnotationManifest, Annotation } from './annotation-manifest.js';
- *
- * // Method 1: Create manifest with items
- * const manifest = new AnnotationManifest({
- *   version: "1.0",
- *   metadata: { videoId: "abc123" },
- *   items: [
- *     new Annotation({
- *       id: "detection-1",
- *       type: "detection",
- *       timeRange: { startMs: 1000, endMs: 5000 },
- *       data: {
- *         bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
- *         confidence: 0.95,
- *         class: "vehicle"
- *       }
- *     })
- *   ]
- * });
+ * @fileoverview VideoAnnotator - Core canvas overlay system for rendering ML model
+ * detections and annotations over a HTML5 video elements.
+ * @module VideoAnnotator
+ */
+
+/**
+ * @example
+ * const annotator = new VideoAnnotator(videoElement, { debugMode: true });
  * annotator.loadManifest(manifest);
- *
- * // Method 2: From JSON data
- * const manifest2 = AnnotationManifest.fromJSON(jsonData);
- * annotator.loadManifest(manifest2);
- *
- * // Method 3: From ML detections
- * const manifest3 = AnnotationManifest.fromDetections(mlDetections, { videoId: "xyz" });
- * annotator.loadManifest(manifest3);
  * annotator.show();
- * ```
- *
- * Dynamic annotation management:
- * ```javascript
- * import { Annotation } from './annotation-manifest.js';
- * // Add single annotation (as object or Annotation instance)
- * annotator.addAnnotation({
- *   id: "new-detection",
- *   type: "detection",
- *   timeRange: { startMs: 2000, endMs: 6000 },
- *   data: { bbox: {...} }
- * });
- *
- * // Or add as Annotation instance
- * const annotation = new Annotation({...});
- * annotator.addAnnotation(annotation);
- *
- * // Remove by ID
- * annotator.removeAnnotation("detection-1");
- *
- * // Clear all
- * annotator.clearAnnotations();
- * ```
- *
- * PUBLIC API:
- * ```javascript
- * // Constructor
- * new VideoAnnotator(videoElement, options)
- *
- * // Annotation Management (Clean API)
- * annotator.loadManifest(annotationManifest)     // Load AnnotationManifest -> boolean
- * annotator.addAnnotation(annotation)            // Add Annotation instance or object -> void
- * annotator.removeAnnotation(id)                 // Remove by ID -> boolean
- * annotator.clearAnnotations()                   // Clear all -> void
- *
- * // Visibility Control
- * annotator.show()                               // Show overlay -> void
- * annotator.hide()                               // Hide overlay -> void
- * annotator.resize()                             // Recalculate positioning -> void
- *
- * // Renderer System
- * annotator.registerRenderer(renderer)           // Add custom renderer -> void
- * annotator.render(forceRender)                  // Manual render trigger -> void
- *
- * // Lifecycle
- * annotator.destroy()                            // Cleanup and remove -> void
- * ```
- *
- * PROPERTIES:
- * • annotator.video - Target video element (readonly)
- * • annotator.canvas - Canvas overlay element (readonly)
- * • annotator.manifest - Current AnnotationManifest (readonly)
- * • annotator.annotations - Current annotation items array (readonly)
- * • annotator.isVisible - Visibility state (readonly)
- *
- * PERFORMANCE OPTIMIZATIONS:
- * • Skips rendering when video time hasn't changed
- * • Uses requestAnimationFrame for smooth animations
- * • Filters annotations by time range before rendering
- * • Reuses canvas context and renderer instances
- * • Automatic cleanup of resources and event listeners
- *
- * CANVAS POSITIONING:
- * The canvas overlay uses absolute positioning to align perfectly with the video:
- * • Monitors video element bounds with ResizeObserver
- * • Calculates relative position within parent container
- * • Maintains aspect ratio and pixel alignment
- * • Handles container positioning (relative/absolute)
- * • Responsive to layout changes and video resizing
- *
- * DEBUG FEATURES:
- * • Visual canvas borders (green) for positioning verification
- * • Console logging for annotation loading and rendering errors
- * • Performance monitoring for render cycles
- * • Renderer registration and validation feedback
- *
- * INTEGRATION PATTERNS:
- * • Single video annotation: Create one VideoAnnotator per video
- * • Real-time ML model output: Load annotations as detections arrive for specific video
- * • Batch processing: Load complete annotation sets for one video analysis
- * • Interactive editing: Add/remove annotations during playback of target video
- * • Multi-video scenarios: Use AnnotationManager to create independent annotator instances
- *
- * MULTI-VIDEO RELATIONSHIP:
- * ```
- * Video A  ←→  VideoAnnotator A  ←→  Canvas A
- * Video B  ←→  VideoAnnotator B  ←→  Canvas B
- * Video C  ←→  VideoAnnotator C  ←→  Canvas C
- * ```
- * Each annotator is completely independent with its own:
- * • Canvas overlay positioned over its assigned video
- * • Annotation data specific to that video
- * • Rendering cycle synchronized with that video's timeline
- * • Event listeners bound to that video's events
- *
- * EVENT LIFECYCLE:
- * 1. Constructor: Initialize options and state
- * 2. init(): Create canvas, setup renderers, bind events
- * 3. positionCanvas(): Calculate overlay positioning
- * 4. loadAnnotations(): Validate and store annotation data
- * 5. render(): Filter visible annotations and delegate to renderers
- * 6. destroy(): Cleanup resources and remove from DOM
- *
- * @see AnnotationManager for video detection and enhancement
- * @see BaseRenderer for renderer implementation patterns
- * @see AnnotationParser for data validation and structure
  */
 
 import { Utils } from "../../utils/utils.js";
@@ -245,15 +23,88 @@ import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
 // ========================================
 // VIDEO ANNOTATOR
 // ========================================
-export class VideoAnnotator {
+class VideoAnnotator {
+  /**
+   * Creates a new VideoAnnotator instance for a specific video element.
+   * 
+   * @constructor
+   * @param {HTMLVideoElement} videoElement - The HTML5 video element to annotate
+   * @param {Object} [options={}] - Configuration options
+   * @param {boolean} [options.autoResize=true] - Automatically resize canvas when video resizes
+   * @param {boolean} [options.renderOnVideoTimeUpdate=true] - Render annotations on video time updates
+   * @param {boolean} [options.debugMode=false] - Enable debug logging and visual indicators
+   * @param {number} [options.canvasZIndex=10] - Z-index for the canvas overlay
+   * @param {number} [options.opacity=1.0] - Opacity of the annotation overlay (0.0-1.0)
+   * @param {boolean} [options.showDebugBorder=false] - Show debug border around canvas
+   * 
+   * @example
+   * // Basic usage
+   * const video = document.getElementById('myVideo');
+   * const annotator = new VideoAnnotator(video);
+   * 
+   * @example
+   * // With custom options
+   * const annotator = new VideoAnnotator(video, {
+   *   debugMode: true,
+   *   canvasZIndex: 15,
+   *   opacity: 0.8
+   * });
+   */
   constructor(videoElement, options = {}) {
+    /**
+     * @type {HTMLVideoElement}
+     * @readonly
+     * @description The target video element for this annotator
+     */
     this.video = videoElement;
+    
+    /**
+     * @type {HTMLCanvasElement|null}
+     * @readonly
+     * @description The canvas overlay element
+     */
     this.canvas = null;
+    
+    /**
+     * @type {CanvasRenderingContext2D|null}
+     * @private
+     * @description The 2D rendering context for the canvas
+     */
     this.ctx = null;
-    this.manifest = null; // AnnotationManifest instance
+    
+    /**
+     * @type {AnnotationManifest|null}
+     * @readonly
+     * @description Current annotation manifest containing all annotations
+     */
+    this.manifest = null;
+    
+    /**
+     * @type {Map<string, BaseRenderer>}
+     * @private
+     * @description Map of registered renderers by annotation type
+     */
     this.renderers = new Map();
+    
+    /**
+     * @type {boolean}
+     * @readonly
+     * @description Current visibility state of the annotation overlay
+     */
     this.isVisible = false;
+    
+    /**
+     * @type {number}
+     * @private
+     * @description Last render time in milliseconds for optimization
+     */
     this.lastRenderTime = -1;
+    
+    /**
+     * @type {number|null}
+     * @private
+     * @description Animation frame request ID for cleanup
+     */
     this.animationFrameId = null;
 
     // Default options
@@ -270,13 +121,33 @@ export class VideoAnnotator {
   }
 
   /**
-   * Get current annotation items (readonly)
-   * @returns {Annotation[]}
+   * Get all loaded annotations as a flat array.
+   * 
+   * @readonly
+   * @memberof VideoAnnotator
+   * @returns {Annotation[]} Array of all annotations from all types
+   * 
+   * @example
+   * const annotations = annotator.annotations;
+   * console.log(`Found ${annotations.length} annotations`);
    */
   get annotations() {
-    return this.manifest ? this.manifest.items : [];
-  }
+    if (!this.manifest || !this.manifest.items) {
+      return [];
+    }
 
+    // Get all annotations from the map structure
+    return Object.values(this.manifest.items).flat();
+  }  /**
+   * Initialize the VideoAnnotator instance.
+   * Creates the canvas overlay, sets up renderers, and binds event listeners.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @description This method is called automatically by the constructor to set up 
+   * the annotator. It creates the canvas, registers default renderers, and 
+   * establishes event listeners for video time updates and resize events.
+   */
   init() {
     this.createOverlayCanvas();
     this.setupRenderers();
@@ -297,6 +168,18 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Creates and positions the canvas overlay element.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @description Creates a transparent HTML5 canvas element that overlays the video.
+   * The canvas is positioned absolutely over the video with pointer events disabled
+   * to allow interaction with the video controls. Applies styling based on options
+   * including z-index, opacity, and optional debug borders.
+   * 
+   * @throws {Error} If canvas 2D context cannot be obtained
+   */
   createOverlayCanvas() {
     // Create canvas element
     this.canvas = document.createElement("canvas");
@@ -340,6 +223,18 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Registers all default annotation renderers.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @description Sets up the default set of renderers for different annotation types:
+   * - DetectionRenderer: For bounding boxes and object detection results
+   * - TextRenderer: For text overlays and labels
+   * - GraphRenderer: For charts and data visualizations
+   * - TrajectoryRenderer: For motion paths and tracking
+   * - CrossRenderer: For crosshair and point annotations
+   */
   setupRenderers() {
     // Register default renderers
     this.registerRenderer(new DetectionRenderer(this));
@@ -349,6 +244,26 @@ export class VideoAnnotator {
     this.registerRenderer(new CrossRenderer(this));
   }
 
+  /**
+   * Registers a custom renderer for a specific annotation type.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * @param {BaseRenderer} renderer - The renderer instance to register
+   * @throws {Error} If renderer doesn't extend BaseRenderer
+   * 
+   * @description Adds a new renderer to handle a specific annotation type.
+   * The renderer must extend BaseRenderer and implement the required methods.
+   * If a renderer for the same type already exists, it will be replaced.
+   * 
+   * @example
+   * // Register a custom renderer
+   * import { MyCustomRenderer } from './my-custom-renderer.js';
+   * const customRenderer = new MyCustomRenderer(annotator);
+   * annotator.registerRenderer(customRenderer);
+   * 
+   * @see {@link BaseRenderer} for implementation details
+   */
   registerRenderer(renderer) {
     if (!(renderer instanceof BaseRenderer)) {
       throw new Error("Renderer must extend BaseRenderer");
@@ -361,6 +276,17 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Sets up event listeners for video and resize events.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @description Binds event listeners for:
+   * - Video timeupdate events (if renderOnVideoTimeUpdate is enabled)
+   * - Video element resize events (if autoResize is enabled) 
+   * - Video loadedmetadata events for initial setup
+   * Uses ResizeObserver for efficient resize detection when available.
+   */
   setupEventListeners() {
     // Video time update
     if (this.options.renderOnVideoTimeUpdate) {
@@ -396,6 +322,20 @@ export class VideoAnnotator {
     });
   }
 
+  /**
+   * Positions and sizes the canvas overlay to match the video element.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @description Calculates the exact position and dimensions of the video element
+   * and applies them to the canvas overlay. This ensures pixel-perfect alignment
+   * between the video and annotations. Updates both CSS positioning and internal
+   * canvas dimensions for proper rendering.
+   * 
+   * @example
+   * // Called automatically on resize, but can be called manually
+   * annotator.positionCanvas();
+   */
   positionCanvas() {
     const videoRect = this.video.getBoundingClientRect();
     const containerRect = this.video.parentElement.getBoundingClientRect();
@@ -411,6 +351,35 @@ export class VideoAnnotator {
     this.canvas.height = videoRect.height;
   }
 
+  /**
+   * Loads an annotation manifest containing annotation data.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * @param {AnnotationManifest} manifest - The annotation manifest to load
+   * @returns {boolean} True if manifest was successfully loaded
+   * @throws {Error} If manifest is not an AnnotationManifest instance
+   * @throws {Error} If manifest fails validation
+   * 
+   * @description Loads a complete set of annotations from an AnnotationManifest.
+   * The manifest must be a valid AnnotationManifest instance and pass validation.
+   * This replaces any existing annotations. Triggers a render if the overlay is visible.
+   * 
+   * @example
+   * // Load from AnnotationManifest instance
+   * const manifest = new AnnotationManifest({
+   *   version: "1.0",
+   *   items: [annotations...]
+   * });
+   * const success = annotator.loadManifest(manifest);
+   * 
+   * @example
+   * // Load from JSON data
+   * const manifest = AnnotationManifest.fromJSON(jsonData);
+   * annotator.loadManifest(manifest);
+   * 
+   * @see {@link AnnotationManifest} for manifest structure
+   */
   loadManifest(manifest) {
     if (!(manifest instanceof AnnotationManifest)) {
       throw new Error(
@@ -436,6 +405,37 @@ export class VideoAnnotator {
     return true;
   }
 
+  /**
+   * Adds a single annotation to the current manifest.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * @param {Annotation|Object} annotation - The annotation to add (Annotation instance or plain object)
+   * 
+   * @description Adds a new annotation to the current manifest. If no manifest exists,
+   * creates a new one. The annotation can be either an Annotation instance or a plain
+   * object that will be converted to an Annotation. Triggers a render if overlay is visible.
+   * 
+   * @example
+   * // Add as plain object
+   * annotator.addAnnotation({
+   *   id: "detection-1",
+   *   type: "detection", 
+   *   timeRange: { startMs: 1000, endMs: 5000 },
+   *   data: {
+   *     bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
+   *     confidence: 0.95,
+   *     class: "vehicle"
+   *   }
+   * });
+   * 
+   * @example
+   * // Add as Annotation instance
+   * const annotation = new Annotation({...});
+   * annotator.addAnnotation(annotation);
+   * 
+   * @see {@link Annotation} for annotation structure
+   */
   addAnnotation(annotation) {
     // Ensure we have a manifest
     if (!this.manifest) {
@@ -459,6 +459,25 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Removes an annotation by its ID.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * @param {string} id - The ID of the annotation to remove
+   * @returns {boolean} True if annotation was found and removed, false otherwise
+   * 
+   * @description Removes a specific annotation from the current manifest by its unique ID.
+   * Returns false if no manifest exists or the annotation is not found.
+   * Triggers a render if overlay is visible and annotation was removed.
+   * 
+   * @example
+   * // Remove annotation by ID
+   * const wasRemoved = annotator.removeAnnotation("detection-1");
+   * if (wasRemoved) {
+   *   console.log("Annotation removed successfully");
+   * }
+   */
   removeAnnotation(id) {
     if (!this.manifest) {
       return false;
@@ -477,6 +496,21 @@ export class VideoAnnotator {
     return removed;
   }
 
+  /**
+   * Clears all annotations from the current manifest.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * 
+   * @description Removes all annotations from the current manifest, effectively
+   * clearing the overlay of all rendered content. The manifest structure remains
+   * but all annotation items are removed. Triggers a render to clear the display.
+   * 
+   * @example
+   * // Clear all annotations
+   * annotator.clearAnnotations();
+   * console.log(annotator.annotations.length); // 0
+   */
   clearAnnotations() {
     if (this.manifest) {
       this.manifest.clear();
@@ -491,6 +525,21 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Shows the annotation overlay.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * 
+   * @description Makes the annotation overlay visible and triggers an initial render.
+   * The canvas element display is set to 'block' and the internal visibility state
+   * is updated. All existing annotations will be rendered immediately.
+   * 
+   * @example
+   * // Show the overlay
+   * annotator.show();
+   * console.log(annotator.isVisible); // true
+   */
   show() {
     this.isVisible = true;
     this.canvas.style.display = "block";
@@ -501,6 +550,22 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Hides the annotation overlay.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * 
+   * @description Makes the annotation overlay invisible by setting display to 'none'
+   * and updating the internal visibility state. Cancels any pending animation frames
+   * to stop rendering while hidden. Annotations remain in memory and will be
+   * rendered again when show() is called.
+   * 
+   * @example
+   * // Hide the overlay
+   * annotator.hide();
+   * console.log(annotator.isVisible); // false
+   */
   hide() {
     this.isVisible = false;
     this.canvas.style.display = "none";
@@ -515,6 +580,21 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Recalculates canvas positioning and dimensions.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * 
+   * @description Recalculates the canvas overlay position and size to match
+   * the current video element dimensions. This is automatically called when
+   * the video resizes (if autoResize is enabled), but can also be called
+   * manually when needed. Triggers a render if overlay is visible.
+   * 
+   * @example
+   * // Manually trigger resize recalculation
+   * annotator.resize();
+   */
   resize() {
     this.positionCanvas();
     if (this.isVisible) {
@@ -522,6 +602,26 @@ export class VideoAnnotator {
     }
   }
 
+  /**
+   * Renders all visible annotations to the canvas.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * @param {boolean} [forceRender=false] - Force rendering even if video time hasn't changed
+   * 
+   * @description Clears the canvas and renders all annotations that are visible at the
+   * current video time. Optimizes performance by skipping renders when the video time
+   * hasn't changed (unless forceRender is true). Each annotation is rendered using
+   * its corresponding registered renderer.
+   * 
+   * @example
+   * // Trigger manual render
+   * annotator.render();
+   * 
+   * @example
+   * // Force render even if time hasn't changed
+   * annotator.render(true);
+   */
   render(forceRender = false) {
     if (!this.isVisible || !this.ctx) return;
 
@@ -565,6 +665,18 @@ export class VideoAnnotator {
     this.lastRenderTime = currentTimeMs;
   }
 
+  /**
+   * Gets annotations that are visible at the specified time.
+   * 
+   * @private
+   * @memberof VideoAnnotator
+   * @param {number} currentTimeMs - Current video time in milliseconds
+   * @returns {Annotation[]} Array of annotations visible at the given time
+   * 
+   * @description Filters annotations based on their time ranges to return only
+   * those that should be visible at the current video playback time. Returns
+   * an empty array if no manifest is loaded.
+   */
   getVisibleAnnotations(currentTimeMs) {
     if (!this.manifest) {
       return [];
@@ -573,6 +685,24 @@ export class VideoAnnotator {
     return this.manifest.getItemsAtTime(currentTimeMs);
   }
 
+  /**
+   * Destroys the VideoAnnotator instance and cleans up resources.
+   * 
+   * @public
+   * @memberof VideoAnnotator
+   * 
+   * @description Performs complete cleanup of the VideoAnnotator instance:
+   * - Cancels any pending animation frames
+   * - Removes canvas element from DOM
+   * - Clears all references to prevent memory leaks
+   * - Clears renderer map
+   * After calling destroy(), the VideoAnnotator instance should not be used.
+   * 
+   * @example
+   * // Clean up when done
+   * annotator.destroy();
+   * annotator = null;
+   */
   destroy() {
     // Clean up event listeners
     if (this.animationFrameId) {
@@ -595,3 +725,5 @@ export class VideoAnnotator {
     }
   }
 }
+
+export { VideoAnnotator }

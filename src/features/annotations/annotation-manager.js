@@ -1,131 +1,68 @@
 /**
- * ANNOTATION MANAGER
+ * @fileoverview AnnotationManager - Central manager for video annotation overlays 
+ * that automatically detects and enhances video elements with ML model detection 
+ * visualization capabilities.
+ * @module AnnotationManager
+ */
+
+/**
+ * Central manager for video annotation overlays. Automatically detects videos
+ * and creates annotation layers for ML detection visualization.
  *
- * Central manager for video annotation overlays that automatically detects and enhances
- * video elements with ML model detection visualization capabilities.
+ * @namespace AnnotationManager
+ * @description Auto-discovers video elements and creates VideoAnnotator instances
+ * for each one. Manages annotation data lifecycle and rendering coordination.
  *
- * OVERVIEW:
- * This manager acts as the coordination layer between video elements and annotation
- * rendering systems. It automatically discovers video elements on the page, creates
- * canvas overlays for each video, and manages the lifecycle of annotation data.
+ * ## High-Level Flow
+ * 1. **init()** - Sets up MutationObserver to watch for video elements
+ * 2. **createAnnotatorForVideo()** - Creates VideoAnnotator for each video found
+ * 3. **VideoAnnotator** - Creates canvas overlay and listens to video timeupdate events
+ * 4. **loadManifest()** - Loads annotation data into specific annotators
+ * 5. **Automatic Rendering** - Annotations appear/disappear based on video playback time
  *
- * CORE FEATURES:
- * • Automatic video detection using MutationObserver
- * • Canvas overlay creation with precise positioning
- * • Annotation data loading and validation
- * • Multiple video support with independent canvases
- * • Real-time rendering synchronized with video playback
- * • Debug visualization tools for development
- *
- * ANNOTATION SYSTEM ARCHITECTURE:
- * ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
- * │AnnotationManager│ -> │ VideoAnnotator  │ -> │ Specialized     │
- * │(Coordination)   │    │(Canvas Overlay) │    │ Renderers       │
- * └─────────────────┘    └─────────────────┘    └─────────────────┘
- *          |                       |                       |
- *          v                       v                       v
- * • Video detection        • Canvas overlay        • DetectionRenderer
- * • Lifecycle management   • Event handling        • TextRenderer
- * • Data validation        • Positioning           • GraphRenderer
- * • Debug utilities        • Rendering loop        • TrajectoryRenderer
- *
- * COORDINATE SYSTEM:
- * All annotations use normalized coordinates (0.0 - 1.0) for resolution independence:
- * • x: 0.0 = left edge, 1.0 = right edge
- * • y: 0.0 = top edge, 1.0 = bottom edge
- * • width/height: proportion of video dimensions
- *
- * TIMING SYSTEM:
- * Annotations use millisecond timestamps for precise ML model synchronization:
- * • startMs: When annotation becomes visible
- * • endMs: When annotation disappears
- * • Synchronized with video.currentTime * 1000
- *
- * USAGE EXAMPLES:
- *
- * Basic initialization:
- * ```javascript
- * await AnnotationManager.init();
- * ```
- *
- * Load sample annotations for testing:
- * ```javascript
- * import { AnnotationManifest } from './annotation-manifest.js';
- *
- * const manifest = AnnotationManifest.fromDetections([
- *   {
- *     bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
- *     confidence: 0.95,
- *     class: "vehicle",
- *     timeRange: { startMs: 1000, endMs: 5000 }
- *   }
- * ]);
- *
- * AnnotationManager.annotators.forEach((annotator, video) => {
- *   annotator.loadManifest(manifest);
- *   annotator.show();
- * });
- * ```
- *
- * Debug visualization:
- * ```javascript
- * AnnotationManager.showDebugBorders();  // Show canvas boundaries
- * AnnotationManager.getDebugInfo();      // Get positioning data
- * ```
- *
- * INTEGRATION WITH ML MODELS:
- * When integrating with ML detection systems, create an AnnotationManifest:
- * ```javascript
- * import { AnnotationManifest, Annotation } from './annotation-manifest.js';
- *
- * const manifest = new AnnotationManifest({
- *   version: "1.0",
- *   metadata: { alertId: "detection-123" },
- *   items: [
- *     new Annotation({
- *       id: "detection-1",
- *       type: "detection",
- *       timeRange: { startMs: 1000, endMs: 5000 },
- *       data: {
- *         bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
- *         confidence: 0.95,
- *         class: "vehicle"
- *       }
- *     })
- *   ]
- * });
- *
- * const annotator = AnnotationManager.enhanceVideo(videoElement);
+ * @example
+ * await AnnotationManager.init();  // Auto-detects all videos
+ * const annotator = AnnotationManager.getAnnotatorForVideo(video);
  * annotator.loadManifest(manifest);
- * ```
+ * annotator.show();
  *
- * CONSOLE DEBUGGING:
- * Access via window.AlertDebugAnnotations in browser console:
- * • loadSample() - Load test annotations
- * • showDebugBorders() - Visualize canvas positioning
- * • getVideoCount() - Count enhanced videos
- * • listVideos() - Show video details table
- *
- * @see VideoAnnotator for canvas rendering details
- * @see AnnotationManifest for data models and validation
- * @see BaseRenderer for renderer architecture
+ * @see {@link VideoAnnotator}
+ * @see {@link AnnotationManifest}
  */
 
 import { Utils } from "../../utils/utils.js";
 import { VideoAnnotator } from "./video-annotator.js";
 import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
+import { MetadataManager } from "../../services/metadata.js";
+import { MetadataToAnnotationConverter } from "../../services/metadata-to-annotation-converter.js";
 
 // ========================================
 // ANNOTATION MANAGER
 // ========================================
 const AnnotationManager = {
-  annotators: new Map(), // video element -> annotator instance
+  /**
+   * @type {Map<HTMLVideoElement, VideoAnnotator>}
+   * @description Map of video elements to their VideoAnnotator instances
+   */
+  annotators: new Map(),
 
+  /**
+   * Initialize the annotation manager and start watching for videos.
+   * 
+   * @async
+   * @memberof AnnotationManager
+   */
   async init() {
     this.setupVideoObserver();
     Utils.log("Annotation Manager initialized");
   },
 
+  /**
+   * Set up MutationObserver to detect video elements.
+   * 
+   * @private
+   * @memberof AnnotationManager
+   */
   setupVideoObserver() {
     // Watch for video elements and enhance them with annotation support
     const observer = new MutationObserver((mutations) => {
@@ -136,7 +73,7 @@ const AnnotationManager = {
               node.tagName === "VIDEO"
                 ? [node]
                 : node.querySelectorAll("video");
-            videos.forEach((video) => this.enhanceVideo(video));
+            videos.forEach((video) => this.createAnnotatorForVideo(video));
           }
         });
       });
@@ -149,10 +86,17 @@ const AnnotationManager = {
 
     // Enhance existing videos
     const existingVideos = document.querySelectorAll("video");
-    existingVideos.forEach((video) => this.enhanceVideo(video));
+    existingVideos.forEach((video) => this.createAnnotatorForVideo(video));
   },
 
-  enhanceVideo(videoElement) {
+  /**
+   * Create a VideoAnnotator instance for a video element.
+   * 
+   * @memberof AnnotationManager
+   * @param {HTMLVideoElement} videoElement - Video to create annotator for
+   * @returns {VideoAnnotator} The annotator instance for this video
+   */
+  createAnnotatorForVideo(videoElement) {
     if (this.annotators.has(videoElement)) {
       return this.annotators.get(videoElement);
     }
@@ -172,29 +116,51 @@ const AnnotationManager = {
     return annotator;
   },
 
-  async loadAnnotationsForAlert(alertId) {
+  /**
+   * Load annotations for a specific alert ID.
+   * 
+   * @async
+   * @memberof AnnotationManager
+   * @param {string} alertId - Alert identifier to load annotations for
+   * @param {Array<string>} [detectors=['detection']] - List of detection types to process
+   * @returns {Promise<boolean>} True if annotations were loaded successfully
+   */
+  async loadAnnotationsForAlert(alertId, detectors = ['detection']) {
     try {
-      // This will be implemented when we integrate with MetadataManager
-      const annotationData = await this.getAnnotationsFromMetadata(alertId);
+      // Get metadata from MetadataManager
+      const metadata = await this.getMetadataFromManager(alertId);
 
-      if (!annotationData) {
-        Utils.log(`No annotations found for alert ${alertId}`);
+      if (!metadata) {
+        Utils.log(`No metadata found for alert ${alertId}`);
         return false;
       }
 
-      // Convert to AnnotationManifest
-      const manifest = AnnotationManifest.fromJSON(annotationData);
+      // Convert metadata to AnnotationManifest using the converter
+      const manifest = MetadataToAnnotationConverter.convertToManifest(
+        metadata, 
+        detectors,
+        { debugMode: false }
+      );
+
+      if (!manifest) {
+        Utils.log(`Failed to convert metadata to annotation manifest for alert ${alertId}`);
+        return false;
+      }
 
       // Apply annotations to all active video elements
       const videoElement = Utils.getVideoElement();
       if (videoElement) {
-        const annotator = this.enhanceVideo(videoElement);
+        const annotator = this.createAnnotatorForVideo(videoElement);
         annotator.loadManifest(manifest);
         annotator.show();
-        Utils.log(`Loaded annotations for alert ${alertId}`);
+        
+        const typeCount = manifest.getCountsByType();
+        const totalCount = manifest.count;
+        Utils.log(`Loaded ${totalCount} annotations for alert ${alertId}:`, typeCount);
         return true;
       }
 
+      Utils.log(`No video element found to load annotations for alert ${alertId}`);
       return false;
     } catch (error) {
       Utils.log(
@@ -204,44 +170,81 @@ const AnnotationManager = {
     }
   },
 
-  async getAnnotationsFromMetadata(alertId) {
-    // Placeholder for metadata integration
-    // This will connect to MetadataManager when ready
+  /**
+   * Get metadata from MetadataManager.
+   * 
+   * @async
+   * @private
+   * @memberof AnnotationManager
+   * @param {string} alertId - Alert identifier
+   * @returns {Promise<Object|null>} Metadata object or null
+   */
+  async getMetadataFromManager(alertId) {
     try {
-      // For now, return null - will be implemented in Phase 4
-      return null;
+      // Get metadata from MetadataManager
+      const metadata = await MetadataManager.getMetadata(alertId);
+
+      if (!metadata) {
+        Utils.log(`No metadata found for alert ${alertId}`);
+        return null;
+      }
+
+      Utils.log(`Successfully retrieved metadata for alert ${alertId}`);
+      return metadata;
+
     } catch (error) {
-      Utils.log(`Error fetching annotations from metadata: ${error.message}`);
+      Utils.log(`Error fetching metadata from MetadataManager: ${error.message}`);
       return null;
     }
   },
 
-  clearAnnotations() {
+  /**
+   * Clear annotations from all videos.
+   * @memberof AnnotationManager
+   */
+  clearAllAnnotations() {
     this.annotators.forEach((annotator, videoElement) => {
       annotator.clearAnnotations();
     });
     Utils.log("Cleared all annotations");
   },
 
-  hideAnnotations() {
+  /**
+   * Hide annotation overlays on all videos.
+   * @memberof AnnotationManager
+   */
+  hideAllAnnotations() {
     this.annotators.forEach((annotator) => {
       annotator.hide();
     });
     Utils.log("Hidden all annotations");
   },
 
-  showAnnotations() {
+  /**
+   * Show annotation overlays on all videos.
+   * @memberof AnnotationManager
+   */
+  showAllAnnotations() {
     this.annotators.forEach((annotator) => {
       annotator.show();
     });
     Utils.log("Shown all annotations");
   },
 
+  /**
+   * Get the VideoAnnotator instance for a specific video element.
+   * @memberof AnnotationManager
+   * @param {HTMLVideoElement} videoElement - The video element
+   * @returns {VideoAnnotator|undefined} The annotator instance or undefined
+   */
   getAnnotatorForVideo(videoElement) {
     return this.annotators.get(videoElement);
   },
 
-  // Debug helper functions
+  /**
+   * Show debug borders on all annotation canvases.
+   * @memberof AnnotationManager
+   */
   showDebugBorders() {
     this.annotators.forEach((annotator) => {
       if (annotator.canvas) {
@@ -252,6 +255,10 @@ const AnnotationManager = {
     Utils.log("Debug borders enabled for all annotation canvases");
   },
 
+  /**
+   * Hide debug borders on all annotation canvases.
+   * @memberof AnnotationManager
+   */
   hideDebugBorders() {
     this.annotators.forEach((annotator) => {
       if (annotator.canvas) {
@@ -262,6 +269,10 @@ const AnnotationManager = {
     Utils.log("Debug borders disabled for all annotation canvases");
   },
 
+  /**
+   * Toggle debug borders on all annotation canvases.
+   * @memberof AnnotationManager
+   */
   toggleDebugBorders() {
     const firstCanvas = Array.from(this.annotators.values())[0]?.canvas;
     if (
@@ -275,7 +286,11 @@ const AnnotationManager = {
     }
   },
 
-  // Debug info
+  /**
+   * Get debug information about all annotators.
+   * @memberof AnnotationManager
+   * @returns {Object} Debug information object
+   */
   getDebugInfo() {
     const info = {
       totalAnnotators: this.annotators.size,
@@ -303,6 +318,10 @@ const AnnotationManager = {
     return info;
   },
 
+  /**
+   * Destroy all annotators and clean up resources.
+   * @memberof AnnotationManager
+   */
   destroy() {
     this.annotators.forEach((annotator) => {
       annotator.destroy();

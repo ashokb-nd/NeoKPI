@@ -1,6 +1,8 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { AnnotationManager } from "../src/features/annotations/annotation-manager.js";
 import { VideoAnnotator } from "../src/features/annotations/video-annotator.js";
+import { MetadataManager } from "../src/services/metadata.js";
+import { MetadataToAnnotationConverter } from "../src/services/metadata-to-annotation-converter.js";
 import { Utils } from "../src/utils/utils.js";
 
 // Mock Utils
@@ -8,6 +10,20 @@ vi.mock("../src/utils/utils.js", () => ({
   Utils: {
     log: vi.fn(),
     getVideoElement: vi.fn(),
+  },
+}));
+
+// Mock MetadataManager
+vi.mock("../src/services/metadata.js", () => ({
+  MetadataManager: {
+    getMetadata: vi.fn(),
+  },
+}));
+
+// Mock MetadataToAnnotationConverter
+vi.mock("../src/services/metadata-to-annotation-converter.js", () => ({
+  MetadataToAnnotationConverter: {
+    convertToManifest: vi.fn(),
   },
 }));
 
@@ -20,7 +36,15 @@ vi.mock("../src/features/annotations/video-annotator.js", () => {
     clearAnnotations: vi.fn(),
     destroy: vi.fn(),
     isVisible: true,
-    canvas: { style: {} },
+    canvas: { 
+      style: {},
+      getBoundingClientRect: vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 640,
+        height: 480,
+      }))
+    },
   });
 
   return {
@@ -28,10 +52,16 @@ vi.mock("../src/features/annotations/video-annotator.js", () => {
   };
 });
 
-describe("AnnotationManager", () => {
+describe("AnnotationManager Public API", () => {
   let mockVideoElement;
 
   beforeEach(() => {
+    // Reset all mocks
+    vi.clearAllMocks();
+    
+    // Clear internal state
+    AnnotationManager.annotators.clear();
+
     // Create mock video element
     mockVideoElement = {
       src: "test-video.mp4",
@@ -49,6 +79,8 @@ describe("AnnotationManager", () => {
         appendChild: vi.fn(),
         querySelector: vi.fn(),
       },
+      tagName: "VIDEO",
+      nodeType: 1,
     };
 
     // Setup Utils mock to return the mockVideoElement
@@ -62,25 +94,16 @@ describe("AnnotationManager", () => {
       },
       querySelectorAll: vi.fn(() => [mockVideoElement]),
       querySelector: vi.fn(),
-      createElement: vi.fn(() => ({
-        style: {},
-        getContext: vi.fn(() => ({})),
-        addEventListener: vi.fn(),
-      })),
     };
 
-    global.MutationObserver = vi.fn(() => ({
+    global.MutationObserver = vi.fn().mockImplementation((callback) => ({
       observe: vi.fn(),
       disconnect: vi.fn(),
     }));
 
-    global.ResizeObserver = vi.fn(() => ({
-      observe: vi.fn(),
-      disconnect: vi.fn(),
-    }));
-
-    // Clear all mocks
-    vi.clearAllMocks();
+    global.Node = {
+      ELEMENT_NODE: 1,
+    };
   });
 
   afterEach(() => {
@@ -91,158 +114,241 @@ describe("AnnotationManager", () => {
     test("should initialize successfully", async () => {
       await AnnotationManager.init();
 
+      expect(Utils.log).toHaveBeenCalledWith("Annotation Manager initialized");
       expect(global.MutationObserver).toHaveBeenCalled();
-      expect(global.document.querySelectorAll).toHaveBeenCalledWith("video");
     });
 
-    test("should enhance existing video elements", async () => {
+    test("should enhance existing video elements on initialization", async () => {
       await AnnotationManager.init();
 
-      expect(VideoAnnotator).toHaveBeenCalledWith(
-        mockVideoElement,
-        expect.objectContaining({
-          autoResize: true,
-          renderOnVideoTimeUpdate: true,
-          debugMode: false,
-        }),
-      );
-    });
-  });
-
-  describe("enhanceVideo", () => {
-    test("should create annotator for new video element", () => {
-      const drawer = AnnotationManager.enhanceVideo(mockVideoElement);
-
-      expect(VideoAnnotator).toHaveBeenCalledWith(
-        mockVideoElement,
-        expect.any(Object),
-      );
-      expect(AnnotationManager.annotators.has(mockVideoElement)).toBe(true);
-      expect(drawer).toBeDefined();
-    });
-
-    test("should return existing annotator for already enhanced video", () => {
-      const drawer1 = AnnotationManager.enhanceVideo(mockVideoElement);
-      const drawer2 = AnnotationManager.enhanceVideo(mockVideoElement);
-
-      expect(drawer1).toBe(drawer2);
-      expect(VideoAnnotator).toHaveBeenCalledTimes(1);
+      expect(global.document.querySelectorAll).toHaveBeenCalledWith("video");
+      // Since init creates annotators for existing videos, we should have one
+      expect(AnnotationManager.annotators.size).toBe(1);
     });
   });
 
   describe("loadAnnotationsForAlert", () => {
-    test("should handle missing annotations gracefully", async () => {
-      // Mock the method directly
-      AnnotationManager.getAnnotationsFromMetadata = vi
-        .fn()
-        .mockResolvedValue(null);
+    beforeEach(async () => {
+      await AnnotationManager.init();
+    });
 
-      const result =
-        await AnnotationManager.loadAnnotationsForAlert("test-alert");
+    test("should handle missing metadata gracefully", async () => {
+      MetadataManager.getMetadata.mockResolvedValue(null);
+
+      const result = await AnnotationManager.loadAnnotationsForAlert("test-alert");
 
       expect(result).toBe(false);
+      expect(Utils.log).toHaveBeenCalledWith("No metadata found for alert test-alert");
     });
 
-    test("should load annotations when available", async () => {
-      const mockAnnotations = { 
-        version: "1.0",
-        metadata: {},
-        items: []
+    test("should handle conversion failure gracefully", async () => {
+      const mockMetadata = { test: "data" };
+      MetadataManager.getMetadata.mockResolvedValue(mockMetadata);
+      MetadataToAnnotationConverter.convertToManifest.mockReturnValue(null);
+
+      const result = await AnnotationManager.loadAnnotationsForAlert("test-alert");
+
+      expect(result).toBe(false);
+      expect(Utils.log).toHaveBeenCalledWith("Failed to convert metadata to annotation manifest for alert test-alert");
+    });
+
+    test("should load annotations successfully when all data is available", async () => {
+      const mockMetadata = { test: "data" };
+      const mockManifest = {
+        getCountsByType: vi.fn().mockReturnValue({ detection: 2 }),
+        count: 2,
       };
-      AnnotationManager.getAnnotationsFromMetadata = vi
-        .fn()
-        .mockResolvedValue(mockAnnotations);
+      
+      MetadataManager.getMetadata.mockResolvedValue(mockMetadata);
+      MetadataToAnnotationConverter.convertToManifest.mockReturnValue(mockManifest);
 
-      // Mock Utils.getVideoElement to return our mock video element
-      Utils.getVideoElement.mockReturnValue(mockVideoElement);
-
-      const result =
-        await AnnotationManager.loadAnnotationsForAlert("test-alert");
+      const result = await AnnotationManager.loadAnnotationsForAlert("test-alert");
 
       expect(result).toBe(true);
+      expect(MetadataToAnnotationConverter.convertToManifest).toHaveBeenCalledWith(
+        mockMetadata,
+        ['detection'],
+        { debugMode: false }
+      );
+      // Should call show on the annotator
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.loadManifest).toHaveBeenCalledWith(mockManifest);
+      expect(annotator.show).toHaveBeenCalled();
+    });
+
+    test("should handle custom detectors", async () => {
+      const mockMetadata = { test: "data" };
+      const mockManifest = {
+        getCountsByType: vi.fn().mockReturnValue({ weather: 1, speed: 3 }),
+        count: 4,
+      };
+      
+      MetadataManager.getMetadata.mockResolvedValue(mockMetadata);
+      MetadataToAnnotationConverter.convertToManifest.mockReturnValue(mockManifest);
+
+      const result = await AnnotationManager.loadAnnotationsForAlert("test-alert", ["weather", "speed"]);
+
+      expect(result).toBe(true);
+      expect(MetadataToAnnotationConverter.convertToManifest).toHaveBeenCalledWith(
+        mockMetadata,
+        ["weather", "speed"],
+        { debugMode: false }
+      );
+    });
+
+    test("should handle no video element available", async () => {
+      const mockMetadata = { test: "data" };
+      const mockManifest = { getCountsByType: vi.fn(), count: 1 };
+      
+      Utils.getVideoElement.mockReturnValue(null);
+      MetadataManager.getMetadata.mockResolvedValue(mockMetadata);
+      MetadataToAnnotationConverter.convertToManifest.mockReturnValue(mockManifest);
+
+      const result = await AnnotationManager.loadAnnotationsForAlert("test-alert");
+
+      expect(result).toBe(false);
+      expect(Utils.log).toHaveBeenCalledWith("No video element found to load annotations for alert test-alert");
     });
   });
 
-  describe("clearAnnotations", () => {
-    test("should clear annotations from all annotators", () => {
-      const mockAnnotator = {
-        clearAnnotations: vi.fn(),
-        destroy: vi.fn(),
-        hide: vi.fn(),
-        show: vi.fn(),
-      };
-      AnnotationManager.annotators.set(mockVideoElement, mockAnnotator);
+  describe("clearAllAnnotations", () => {
+    test("should clear annotations from all annotators", async () => {
+      await AnnotationManager.init();
+      
+      AnnotationManager.clearAllAnnotations();
 
-      AnnotationManager.clearAnnotations();
-
-      expect(mockAnnotator.clearAnnotations).toHaveBeenCalled();
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.clearAnnotations).toHaveBeenCalled();
+      expect(Utils.log).toHaveBeenCalledWith("Cleared all annotations");
     });
   });
 
-  describe("hideAnnotations", () => {
-    test("should hide all annotators", () => {
-      const mockAnnotator = {
-        hide: vi.fn(),
-        destroy: vi.fn(),
-        clearAnnotations: vi.fn(),
-        show: vi.fn(),
-      };
-      AnnotationManager.annotators.set(mockVideoElement, mockAnnotator);
+  describe("hideAllAnnotations", () => {
+    test("should hide all annotators", async () => {
+      await AnnotationManager.init();
 
-      AnnotationManager.hideAnnotations();
+      AnnotationManager.hideAllAnnotations();
 
-      expect(mockAnnotator.hide).toHaveBeenCalled();
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.hide).toHaveBeenCalled();
+      expect(Utils.log).toHaveBeenCalledWith("Hidden all annotations");
     });
   });
 
-  describe("showAnnotations", () => {
-    test("should show all annotators", () => {
-      const mockAnnotator = {
-        show: vi.fn(),
-        destroy: vi.fn(),
-        hide: vi.fn(),
-        clearAnnotations: vi.fn(),
-      };
-      AnnotationManager.annotators.set(mockVideoElement, mockAnnotator);
+  describe("showAllAnnotations", () => {
+    test("should show all annotators", async () => {
+      await AnnotationManager.init();
 
-      AnnotationManager.showAnnotations();
+      AnnotationManager.showAllAnnotations();
 
-      expect(mockAnnotator.show).toHaveBeenCalled();
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.show).toHaveBeenCalled();
+      expect(Utils.log).toHaveBeenCalledWith("Shown all annotations");
     });
   });
 
   describe("getAnnotatorForVideo", () => {
-    test("should return correct annotator for video element", () => {
-      const mockAnnotator = {
-        test: "annotator",
-        destroy: vi.fn(),
-        hide: vi.fn(),
-        show: vi.fn(),
-        clearAnnotations: vi.fn(),
-      };
-      AnnotationManager.annotators.set(mockVideoElement, mockAnnotator);
+    test("should return correct annotator for video element", async () => {
+      await AnnotationManager.init();
 
-      const result = AnnotationManager.getAnnotatorForVideo(mockVideoElement);
+      const annotator = AnnotationManager.getAnnotatorForVideo(mockVideoElement);
 
-      expect(result).toBe(mockAnnotator);
+      expect(annotator).toBeDefined();
+      expect(annotator).toBe(AnnotationManager.annotators.get(mockVideoElement));
     });
 
     test("should return undefined for non-enhanced video", () => {
-      const result = AnnotationManager.getAnnotatorForVideo(mockVideoElement);
+      const otherVideo = { src: "other.mp4" };
+      
+      const annotator = AnnotationManager.getAnnotatorForVideo(otherVideo);
+      
+      expect(annotator).toBeUndefined();
+    });
+  });
 
-      expect(result).toBeUndefined();
+  describe("showDebugBorders", () => {
+    test("should enable debug borders on all canvases", async () => {
+      await AnnotationManager.init();
+
+      AnnotationManager.showDebugBorders();
+
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.canvas.style.border).toBe("2px solid rgba(0, 255, 0, 0.3)");
+      expect(annotator.canvas.style.boxShadow).toBe("0 0 10px rgba(0, 255, 0, 0.2)");
+      expect(Utils.log).toHaveBeenCalledWith("Debug borders enabled for all annotation canvases");
+    });
+  });
+
+  describe("hideDebugBorders", () => {
+    test("should disable debug borders on all canvases", async () => {
+      await AnnotationManager.init();
+
+      AnnotationManager.hideDebugBorders();
+
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      expect(annotator.canvas.style.border).toBe("none");
+      expect(annotator.canvas.style.boxShadow).toBe("none");
+      expect(Utils.log).toHaveBeenCalledWith("Debug borders disabled for all annotation canvases");
+    });
+  });
+
+  describe("toggleDebugBorders", () => {
+    test("should toggle debug borders from off to on", async () => {
+      await AnnotationManager.init();
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      annotator.canvas.style.border = "none";
+
+      AnnotationManager.toggleDebugBorders();
+
+      expect(annotator.canvas.style.border).toBe("2px solid rgba(0, 255, 0, 0.3)");
+    });
+
+    test("should toggle debug borders from on to off", async () => {
+      await AnnotationManager.init();
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
+      annotator.canvas.style.border = "2px solid rgba(0, 255, 0, 0.3)";
+
+      AnnotationManager.toggleDebugBorders();
+
+      expect(annotator.canvas.style.border).toBe("none");
+    });
+  });
+
+  describe("getDebugInfo", () => {
+    test("should return debug information about annotators", async () => {
+      await AnnotationManager.init();
+
+      const debugInfo = AnnotationManager.getDebugInfo();
+
+      expect(debugInfo).toEqual({
+        totalAnnotators: 1,
+        visibleCanvases: 1,
+        canvasPositions: [{
+          videoSrc: "test-video.mp4",
+          position: {
+            x: 0,
+            y: 0,
+            width: 640,
+            height: 480,
+          },
+        }],
+      });
+      expect(Utils.log).toHaveBeenCalledWith("Annotation Debug Info:", debugInfo);
     });
   });
 
   describe("destroy", () => {
-    test("should destroy all annotators and clear map", () => {
-      const mockAnnotator = { destroy: vi.fn() };
-      AnnotationManager.annotators.set(mockVideoElement, mockAnnotator);
+    test("should destroy all annotators and clear map", async () => {
+      await AnnotationManager.init();
+      
+      // Get reference to annotator before destroy
+      const annotator = AnnotationManager.annotators.get(mockVideoElement);
 
       AnnotationManager.destroy();
 
-      expect(mockAnnotator.destroy).toHaveBeenCalled();
+      expect(annotator.destroy).toHaveBeenCalled();
       expect(AnnotationManager.annotators.size).toBe(0);
+      expect(Utils.log).toHaveBeenCalledWith("Annotation Manager destroyed");
     });
   });
 });

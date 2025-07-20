@@ -10,14 +10,16 @@
  * @example
  * const manifest = new AnnotationManifest({
  *   metadata: { videoId: "abc123" },
- *   items: [
- *     new Annotation({
- *       id: "detection-1",
- *       type: "detection",
- *       timeRange: { startMs: 1000, endMs: 5000 },
- *       data: { bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 }, confidence: 0.95 }
- *     })
- *   ]
+ *   items: {
+ *     "detection": [
+ *       new Annotation({
+ *         id: "detection-1",
+ *         type: "detection",
+ *         timeRange: { startMs: 1000, endMs: 5000 },
+ *         data: { bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 }, confidence: 0.95 }
+ *       })
+ *     ]
+ *   }
  * });
  */
 
@@ -193,13 +195,16 @@ export class Annotation {
  * @class AnnotationManifest
  * @property {string} version - Schema version
  * @property {object} metadata - Document metadata
- * @property {Annotation[]} items - Annotation collection
+ * @property {Object<string, Annotation[]>} items - Annotation collection organized by type
  * 
  * @example
  * const manifest = new AnnotationManifest({
  *   version: "1.0",
  *   metadata: { videoId: "abc123" },
- *   items: [annotation1, annotation2]
+ *   items: {
+ *     "detection": [annotation1, annotation2],
+ *     "car_speed": [speedAnnotation1]
+ *   }
  * });
  */
 export class AnnotationManifest {
@@ -209,19 +214,35 @@ export class AnnotationManifest {
    * @param {object} [data={}] - Manifest configuration
    * @param {string} [data.version="1.0"] - Schema version
    * @param {object} [data.metadata={}] - Document metadata
-   * @param {Annotation[]|object[]} [data.items=[]] - Annotations array
+   * @param {Object<string, Annotation[]>} [data.items={}] - Annotations map by type
    */
   constructor(data = {}) {
     this.version = data.version || "1.0";
     this.metadata = data.metadata || {};
-    this.items = [];
+    this.items = {};
 
-    // Process items array
-    if (data.items && Array.isArray(data.items)) {
-      this.items = data.items.map((item) =>
-        item instanceof Annotation ? item : new Annotation(item),
+    // Process items map
+    if (data.items && typeof data.items === 'object') {
+      this.items = this._processItemsMap(data.items);
+    }
+  }
+
+  /**
+   * Process items map to ensure proper Annotation instances
+   * @private
+   * @param {Object<string, Annotation[]>} itemsMap - Map of annotation arrays by type
+   * @returns {Object<string, Annotation[]>} Processed map
+   */
+  _processItemsMap(itemsMap) {
+    const processedMap = {};
+    
+    for (const [type, annotations] of Object.entries(itemsMap)) {
+      processedMap[type] = annotations.map(item =>
+        item instanceof Annotation ? item : new Annotation(item)
       );
     }
+    
+    return processedMap;
   }
 
   /**
@@ -234,7 +255,11 @@ export class AnnotationManifest {
         ? annotation
         : new Annotation(annotation);
 
-    this.items.push(annotationObj);
+    const type = annotationObj.type;
+    if (!this.items[type]) {
+      this.items[type] = [];
+    }
+    this.items[type].push(annotationObj);
   }
 
   /**
@@ -243,9 +268,23 @@ export class AnnotationManifest {
    * @returns {boolean} - True if removed, false if not found
    */
   removeItem(id) {
-    const initialLength = this.items.length;
-    this.items = this.items.filter((item) => item.id !== id);
-    return this.items.length < initialLength;
+    let found = false;
+    
+    for (const [type, annotations] of Object.entries(this.items)) {
+      const initialLength = annotations.length;
+      this.items[type] = annotations.filter((item) => item.id !== id);
+      
+      if (this.items[type].length < initialLength) {
+        found = true;
+        // Remove empty type arrays
+        if (this.items[type].length === 0) {
+          delete this.items[type];
+        }
+        break;
+      }
+    }
+    
+    return found;
   }
 
   /**
@@ -254,7 +293,13 @@ export class AnnotationManifest {
    * @returns {Annotation[]}
    */
   getItemsAtTime(timeMs) {
-    return this.items.filter((item) => item.isVisibleAt(timeMs));
+    const visibleItems = [];
+    
+    for (const annotations of Object.values(this.items)) {
+      visibleItems.push(...annotations.filter(item => item.isVisibleAt(timeMs)));
+    }
+    
+    return visibleItems;
   }
 
   /**
@@ -263,7 +308,11 @@ export class AnnotationManifest {
    * @returns {Annotation|null}
    */
   findById(id) {
-    return this.items.find((item) => item.id === id) || null;
+    for (const annotations of Object.values(this.items)) {
+      const found = annotations.find(item => item.id === id);
+      if (found) return found;
+    }
+    return null;
   }
 
   /**
@@ -272,14 +321,22 @@ export class AnnotationManifest {
    * @returns {Annotation[]}
    */
   getItemsByType(type) {
-    return this.items.filter((item) => item.type === type);
+    return this.items[type] || [];
+  }
+
+  /**
+   * Get all annotation types in manifest
+   * @returns {string[]} Array of annotation types
+   */
+  getTypes() {
+    return Object.keys(this.items);
   }
 
   /**
    * Clear all annotations
    */
   clear() {
-    this.items = [];
+    this.items = {};
   }
 
   /**
@@ -287,7 +344,19 @@ export class AnnotationManifest {
    * @returns {number}
    */
   get count() {
-    return this.items.length;
+    return Object.values(this.items).reduce((sum, annotations) => sum + annotations.length, 0);
+  }
+
+  /**
+   * Get count of annotations by type
+   * @returns {Object<string, number>} Map of type to count
+   */
+  getCountsByType() {
+    const counts = {};
+    for (const [type, annotations] of Object.entries(this.items)) {
+      counts[type] = annotations.length;
+    }
+    return counts;
   }
 
   /**
@@ -300,14 +369,20 @@ export class AnnotationManifest {
         throw new Error("Invalid manifest version");
       }
 
-      if (!Array.isArray(this.items)) {
-        throw new Error("Items must be an array");
+      if (typeof this.items !== 'object' || this.items === null) {
+        throw new Error("Items must be an object");
       }
 
-      // Validate each annotation
-      for (const item of this.items) {
-        if (!item.validate()) {
-          return false;
+      // Validate each annotation in each type
+      for (const [type, annotations] of Object.entries(this.items)) {
+        if (!Array.isArray(annotations)) {
+          throw new Error(`Annotations for type '${type}' must be an array`);
+        }
+        
+        for (const item of annotations) {
+          if (!item.validate()) {
+            return false;
+          }
         }
       }
 
@@ -323,10 +398,16 @@ export class AnnotationManifest {
    * @returns {object}
    */
   toJSON() {
+    const itemsJson = {};
+    
+    for (const [type, annotations] of Object.entries(this.items)) {
+      itemsJson[type] = annotations.map(item => item.toJSON());
+    }
+    
     return {
       version: this.version,
       metadata: this.metadata,
-      items: this.items.map((item) => item.toJSON()),
+      items: itemsJson,
     };
   }
 
@@ -348,7 +429,7 @@ export class AnnotationManifest {
     return new AnnotationManifest({
       version: "1.0",
       metadata,
-      items: [],
+      items: {},
     });
   }
 

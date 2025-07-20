@@ -168,23 +168,62 @@ export const MetadataManager = {
       if (!this.db) await this.init();
 
       const result = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA_URLS);
-
-      // Convert array to object for backwards compatibility
-      const urlsObject = {};
-      result.forEach((item) => {
-        urlsObject[item.alertId] = {
-          url: item.url,
-          timestamp: item.timestamp,
-          downloaded: item.downloaded,
-        };
-      });
-
-      return urlsObject;
+      return result;
     } catch (error) {
       Utils.log(
         `Error getting all metadata URLs from IndexedDB: ${error.message}`,
       );
       throw error;
+    }
+  },
+
+  /**
+   * Get metadata content for a specific alert ID from IndexedDB.
+   * 
+   * @async
+   * @param {string} alertId - Alert identifier
+   * @returns {Promise<Object|null>} Parsed metadata content or null if not found
+   */
+  async getMetadata(alertId) {
+    try {
+      if (!this.db) await this.init();
+
+      // Normalize alertId to string
+      const normalizedAlertId = this.normalizeAlertId(alertId);
+      if (!normalizedAlertId) {
+        Utils.log(`Invalid alertId: ${alertId}. Cannot retrieve metadata.`);
+        return null;
+      }
+
+      // Get metadata from IndexedDB
+      const cachedMetadata = await this.db.get(
+        CONFIG.DATABASE.STORES.METADATA,
+        normalizedAlertId,
+      );
+
+      if (!cachedMetadata) {
+        Utils.log(`No metadata found for alert ID: ${normalizedAlertId}`);
+        return null;
+      }
+
+      // Try to parse as JSON if the content looks like JSON
+      const content = cachedMetadata.content;
+      if (content && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
+        try {
+          return JSON.parse(content);
+        } catch (e) {
+          Utils.log(`Failed to parse metadata as JSON for alert ${normalizedAlertId}: ${e.message}`);
+          // Return raw content if JSON parsing fails
+          return { content };
+        }
+      }
+
+      // Return raw content wrapped in an object if it's not JSON
+      return content ? { content } : null;
+
+    } catch (error) {
+      Utils.log(`Error getting metadata for alert ${alertId}: ${error.message}`);
+      return null;
     }
   },
 

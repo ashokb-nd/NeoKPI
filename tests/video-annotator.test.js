@@ -202,14 +202,16 @@ describe("VideoAnnotator", () => {
       const manifest = new AnnotationManifest({
         version: "1.0",
         metadata: { test: "data" },
-        items: [
-          new Annotation({
-            id: "test-1",
-            type: "detection",
-            timeRange: { startMs: 1000, endMs: 5000 },
-            data: {}
-          })
-        ]
+        items: {
+          detection: [
+            new Annotation({
+              id: "test-1",
+              type: "detection",
+              timeRange: { startMs: 1000, endMs: 5000 },
+              data: {}
+            })
+          ]
+        }
       });
 
       const result = drawer.loadManifest(manifest);
