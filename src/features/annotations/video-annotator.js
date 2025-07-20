@@ -18,6 +18,7 @@ import { TextRenderer } from "./renderers/text-renderer.js";
 import { GraphRenderer } from "./renderers/graph-renderer.js";
 import { TrajectoryRenderer } from "./renderers/trajectory-renderer.js";
 import { CrossRenderer } from "./renderers/cross-renderer.js";
+import { HelloRenderer } from "./renderers/hello-renderer.js";
 import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
 
 // ========================================
@@ -82,7 +83,7 @@ class VideoAnnotator {
     /**
      * @type {Map<string, BaseRenderer>}
      * @private
-     * @description Map of registered renderers by annotation type
+     * @description Map of registered renderers by annotation category
      */
     this.renderers = new Map();
     
@@ -125,7 +126,7 @@ class VideoAnnotator {
    * 
    * @readonly
    * @memberof VideoAnnotator
-   * @returns {Annotation[]} Array of all annotations from all types
+   * @returns {Annotation[]} Array of all annotations from all categories
    * 
    * @example
    * const annotations = annotator.annotations;
@@ -228,12 +229,13 @@ class VideoAnnotator {
    * 
    * @private
    * @memberof VideoAnnotator
-   * @description Sets up the default set of renderers for different annotation types:
+   * @description Sets up the default set of renderers for different annotation categories:
    * - DetectionRenderer: For bounding boxes and object detection results
    * - TextRenderer: For text overlays and labels
    * - GraphRenderer: For charts and data visualizations
    * - TrajectoryRenderer: For motion paths and tracking
    * - CrossRenderer: For crosshair and point annotations
+   * - HelloRenderer: For simple message display (testing)
    */
   setupRenderers() {
     // Register default renderers
@@ -242,17 +244,18 @@ class VideoAnnotator {
     this.registerRenderer(new GraphRenderer(this));
     this.registerRenderer(new TrajectoryRenderer(this));
     this.registerRenderer(new CrossRenderer(this));
+    this.registerRenderer(new HelloRenderer(this));
   }
 
   /**
-   * Registers a custom renderer for a specific annotation type.
+   * Registers a custom renderer for a specific annotation category.
    * 
    * @public
    * @memberof VideoAnnotator
    * @param {BaseRenderer} renderer - The renderer instance to register
    * @throws {Error} If renderer doesn't extend BaseRenderer
    * 
-   * @description Adds a new renderer to handle a specific annotation type.
+   * @description Adds a new renderer to handle a specific annotation category.
    * The renderer must extend BaseRenderer and implement the required methods.
    * If a renderer for the same type already exists, it will be replaced.
    * 
@@ -381,7 +384,13 @@ class VideoAnnotator {
    * @see {@link AnnotationManifest} for manifest structure
    */
   loadManifest(manifest) {
-    if (!(manifest instanceof AnnotationManifest)) {
+    // Check if it's an AnnotationManifest instance or has the right structure
+    const isValidManifest = (manifest instanceof AnnotationManifest) || 
+                           (manifest && typeof manifest.validate === 'function' && 
+                            typeof manifest.getCountsByCategory === 'function' &&
+                            manifest.items !== undefined);
+    
+    if (!isValidManifest) {
       throw new Error(
         "Expected AnnotationManifest instance. Use new AnnotationManifest(data) or AnnotationManifest.fromJSON(data)",
       );
@@ -645,7 +654,7 @@ class VideoAnnotator {
     const visibleAnnotations = this.getVisibleAnnotations(currentTimeMs);
 
     for (const annotation of visibleAnnotations) {
-      const renderer = this.renderers.get(annotation.type);
+      const renderer = this.renderers.get(annotation.category);
 
       if (renderer) {
         try {
@@ -658,7 +667,7 @@ class VideoAnnotator {
           }
         }
       } else if (this.options.debugMode) {
-        Utils.log(`No renderer found for annotation type: ${annotation.type}`);
+        Utils.log(`No renderer found for annotation category: ${annotation.category}`);
       }
     }
 

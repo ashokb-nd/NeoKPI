@@ -27,7 +27,6 @@ export class Application {
    */
   async init() {
     try {
-      Utils.log(`Initializing Alert Debug UserScript v${this.VERSION}`);
 
       // Initialize beautiful fireworks on first load
       const fireworks = new FireworkShow();
@@ -35,7 +34,7 @@ export class Application {
 
       // Wait for required elements and initialize
       const elements = await Utils.waitForElements();
-      this.initializeFeatures(elements);
+      await this.initializeFeatures(elements);
     } catch (error) {
       console.error("Failed to initialize UserScript:", error);
       UIManager.showNotification("UserScript initialization failed", "error");
@@ -45,9 +44,8 @@ export class Application {
   /**
    * Initialize all application features once DOM elements are ready
    */
-  initializeFeatures(elements) {
+  async initializeFeatures(elements) {
     try {
-      Utils.log("Required elements found - activating features");
 
       // Initialize core services
       MetadataManager.init();
@@ -68,7 +66,8 @@ export class Application {
       // Auto-open notepad on page load
       this.autoOpenNotepad();
 
-      Utils.log("UserScript initialization complete");
+
+      Utils.log(`NeoKPI V${this.VERSION} initialized successfully 🚀`);
     } catch (error) {
       console.error("Failed to initialize features:", error);
       UIManager.showNotification("Feature initialization failed", "error");
@@ -94,11 +93,14 @@ export class Application {
   setupInputMonitoring(elements) {
     elements.input.addEventListener(
       "input",
-      Utils.debounce(() => {
-        if (AppState.notepad.isOpen) {
-          const alertId = elements.input.value.trim();
-          if (alertId && alertId !== AppState.notepad.currentAlertId) {
-            AppState.setCurrentAlert(alertId);
+      Utils.debounce(async () => {
+        const alertId = elements.input.value.trim();
+        if (alertId && alertId !== AppState.notepad.currentAlertId) {
+          // Always update current alert (for annotations)
+          await AppState.setCurrentAlert(alertId);
+          
+          // Update notepad only if open
+          if (AppState.notepad.isOpen) {
             NotepadUI.updateContent();
           }
         }

@@ -5,6 +5,7 @@ import { BulkProcessor } from "../features/bulk-processor.js";
 import { AppState } from "../core/app-state.js";
 import { MetadataManager } from "../services/metadata.js";
 import { NotesManager } from "../features/notes.js";
+import { AnnotationManager } from "../features/annotations/annotation-manager.js";
 
 /**
  * UIManager handles the main application UI components including
@@ -74,12 +75,12 @@ export const UIManager = {
     }
   },
 
-  loadAlertId(alertId, elements) {
-    Utils.log(`Loading alert ID: ${alertId}`);
+  async loadAlertId(alertId, elements) {
+    Utils.log(`Loading alerzt ID: ${alertId}`);
 
     // Update notepad if open
     if (AppState.notepad.isOpen) {
-      AppState.setCurrentAlert(alertId);
+      await AppState.setCurrentAlert(alertId);
       NotepadUI.updateContent();
     }
 
@@ -337,6 +338,11 @@ export const NotepadUI = {
         color: "#d16c02",
         action: () => this.clearBulkAlerts(),
       },
+      {
+        text: "🎯 Load Annotations",
+        color: "#17a2b8",
+        action: () => this.loadAnnotationsForCurrentAlert(),
+      },
       { text: "⚙️", color: "#6c757d", action: () => this.openSettings() },
       { text: "×", color: "#3c3c3c", action: () => this.toggle() },
     ];
@@ -437,7 +443,7 @@ export const NotepadUI = {
     return panel;
   },
 
-  toggle() {
+  async toggle() {
     let panel = document.querySelector("#notepad-panel");
 
     if (!panel) {
@@ -473,7 +479,7 @@ export const NotepadUI = {
       const elements = Utils.getRequiredElements();
       const alertId = elements.input?.value.trim();
       if (alertId) {
-        AppState.setCurrentAlert(alertId);
+        await AppState.setCurrentAlert(alertId);
       }
 
       this.updateContent().catch((error) => {
@@ -713,6 +719,35 @@ export const NotepadUI = {
     if (confirm("Are you sure you want to clear all bulk alerts?")) {
       BulkProcessor.clearBulkAlerts();
       UIManager.showBulkStatus("Bulk alerts cleared");
+    }
+  },
+
+  async loadAnnotationsForCurrentAlert() {
+    const alertId = AppState.notepad.currentAlertId;
+    
+    if (!alertId) {
+      UIManager.showNotification("No alert ID selected", "warning");
+      return;
+    }
+
+    try {
+      // Show loading notification
+      UIManager.showNotification("Loading annotations...", "info", 2000);
+      
+      // Load annotations with multiple categories for testing
+      const categories = ['hello', 'cross', 'text', 'detection'];
+      const success = await AnnotationManager.loadAnnotationsForAlert(alertId, categories);
+      
+      if (success) {
+        UIManager.showNotification(`✅ Annotations loaded for alert ${alertId}`, "success");
+        // Show debug borders to make it obvious
+        AnnotationManager.showDebugBorders();
+      } else {
+        UIManager.showNotification(`❌ Failed to load annotations for alert ${alertId}`, "error");
+      }
+    } catch (error) {
+      console.error("Error loading annotations:", error);
+      UIManager.showNotification(`Error loading annotations: ${error.message}`, "error");
     }
   },
 

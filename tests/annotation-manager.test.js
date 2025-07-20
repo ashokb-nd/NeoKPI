@@ -155,7 +155,7 @@ describe("AnnotationManager Public API", () => {
     test("should load annotations successfully when all data is available", async () => {
       const mockMetadata = { test: "data" };
       const mockManifest = {
-        getCountsByType: vi.fn().mockReturnValue({ detection: 2 }),
+        getCountsByCategory: vi.fn().mockReturnValue({ detection: 2 }),
         count: 2,
       };
       
@@ -179,7 +179,7 @@ describe("AnnotationManager Public API", () => {
     test("should handle custom detectors", async () => {
       const mockMetadata = { test: "data" };
       const mockManifest = {
-        getCountsByType: vi.fn().mockReturnValue({ weather: 1, speed: 3 }),
+        getCountsByCategory: vi.fn().mockReturnValue({ weather: 1, speed: 3 }),
         count: 4,
       };
       
@@ -198,7 +198,7 @@ describe("AnnotationManager Public API", () => {
 
     test("should handle no video element available", async () => {
       const mockMetadata = { test: "data" };
-      const mockManifest = { getCountsByType: vi.fn(), count: 1 };
+      const mockManifest = { getCountsByCategory: vi.fn(), count: 1 };
       
       Utils.getVideoElement.mockReturnValue(null);
       MetadataManager.getMetadata.mockResolvedValue(mockMetadata);

@@ -3,7 +3,7 @@
  * 
  * Provides core classes for managing video annotations:
  * - AnnotationManifest: Container for annotation collections with metadata
- * - Annotation: Individual annotation items with timing and type-specific data
+ * - Annotation: Individual annotation items with timing and category-specific data
  *
  * @module AnnotationManifest
  * 
@@ -14,7 +14,7 @@
  *     "detection": [
  *       new Annotation({
  *         id: "detection-1",
- *         type: "detection",
+ *         category: "detection",
  *         timeRange: { startMs: 1000, endMs: 5000 },
  *         data: { bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 }, confidence: 0.95 }
  *       })
@@ -24,18 +24,18 @@
  */
 
 /**
- * Individual annotation item with timing and type-specific data
+ * Individual annotation item with timing and category-specific data
  * 
  * @class Annotation
  * @property {string} id - Unique identifier
- * @property {string} type - Annotation type ('detection', 'text', 'graph', 'trajectory', 'cross')
+ * @property {string} category - Annotation category ('detection', 'text', 'graph', 'trajectory', 'cross')
  * @property {object} timeRange - Visibility window {startMs, endMs}
- * @property {object} data - Type-specific data
+ * @property {object} data - Category-specific data
  * 
  * @example
  * const detection = new Annotation({
  *   id: 'det_001',
- *   type: 'detection',
+ *   category: 'detection',
  *   timeRange: { startMs: 1000, endMs: 5000 },
  *   data: { bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 }, confidence: 0.95, class: 'vehicle' }
  * });
@@ -46,15 +46,15 @@ export class Annotation {
    * 
    * @param {object} data - Annotation configuration
    * @param {string} data.id - Unique identifier
-   * @param {string} data.type - Annotation type
+   * @param {string} data.category - Annotation category
    * @param {object} [data.timeRange={}] - Visibility range {startMs, endMs}
-   * @param {object} [data.data={}] - Type-specific data
+   * @param {object} [data.data={}] - Category-specific data
    * @throws {Error} When required fields are missing
    */
   constructor(data) {
     // Required fields
     this.id = data.id;
-    this.type = data.type;
+    this.category = data.category;
     this.timeRange = data.timeRange || {};
     this.data = data.data || {};
 
@@ -62,8 +62,8 @@ export class Annotation {
     if (!this.id) {
       throw new Error("Annotation must have an id");
     }
-    if (!this.type) {
-      throw new Error("Annotation must have a type");
+    if (!this.category) {
+      throw new Error("Annotation must have a category");
     }
   }
 
@@ -101,8 +101,8 @@ export class Annotation {
         throw new Error("Invalid annotation id");
       }
 
-      if (!this.type || typeof this.type !== "string") {
-        throw new Error("Invalid annotation type");
+      if (!this.category || typeof this.category !== "string") {
+        throw new Error("Invalid annotation category");
       }
 
       if (this.timeRange) {
@@ -134,7 +134,7 @@ export class Annotation {
   toJSON() {
     return {
       id: this.id,
-      type: this.type,
+      category: this.category,
       timeRange: this.timeRange,
       data: this.data,
     };
@@ -151,7 +151,7 @@ export class Annotation {
   static fromDetection(detection, id, timeRange) {
     return new Annotation({
       id,
-      type: "detection",
+      category: "detection",
       timeRange,
       data: {
         bbox: detection.bbox,
@@ -174,7 +174,7 @@ export class Annotation {
   static fromText(text, id, position, timeRange) {
     return new Annotation({
       id,
-      type: "text",
+      category: "text",
       timeRange,
       data: {
         text,
@@ -195,7 +195,7 @@ export class Annotation {
  * @class AnnotationManifest
  * @property {string} version - Schema version
  * @property {object} metadata - Document metadata
- * @property {Object<string, Annotation[]>} items - Annotation collection organized by type
+ * @property {Object<string, Annotation[]>} items - Annotation collection organized by category
  * 
  * @example
  * const manifest = new AnnotationManifest({
@@ -214,7 +214,7 @@ export class AnnotationManifest {
    * @param {object} [data={}] - Manifest configuration
    * @param {string} [data.version="1.0"] - Schema version
    * @param {object} [data.metadata={}] - Document metadata
-   * @param {Object<string, Annotation[]>} [data.items={}] - Annotations map by type
+   * @param {Object<string, Annotation[]>} [data.items={}] - Annotations map by category
    */
   constructor(data = {}) {
     this.version = data.version || "1.0";
@@ -230,14 +230,14 @@ export class AnnotationManifest {
   /**
    * Process items map to ensure proper Annotation instances
    * @private
-   * @param {Object<string, Annotation[]>} itemsMap - Map of annotation arrays by type
+   * @param {Object<string, Annotation[]>} itemsMap - Map of annotation arrays by category
    * @returns {Object<string, Annotation[]>} Processed map
    */
   _processItemsMap(itemsMap) {
     const processedMap = {};
     
-    for (const [type, annotations] of Object.entries(itemsMap)) {
-      processedMap[type] = annotations.map(item =>
+    for (const [category, annotations] of Object.entries(itemsMap)) {
+      processedMap[category] = annotations.map(item =>
         item instanceof Annotation ? item : new Annotation(item)
       );
     }
@@ -255,11 +255,11 @@ export class AnnotationManifest {
         ? annotation
         : new Annotation(annotation);
 
-    const type = annotationObj.type;
-    if (!this.items[type]) {
-      this.items[type] = [];
+    const category = annotationObj.category;
+    if (!this.items[category]) {
+      this.items[category] = [];
     }
-    this.items[type].push(annotationObj);
+    this.items[category].push(annotationObj);
   }
 
   /**
@@ -270,15 +270,15 @@ export class AnnotationManifest {
   removeItem(id) {
     let found = false;
     
-    for (const [type, annotations] of Object.entries(this.items)) {
+    for (const [category, annotations] of Object.entries(this.items)) {
       const initialLength = annotations.length;
-      this.items[type] = annotations.filter((item) => item.id !== id);
+      this.items[category] = annotations.filter((item) => item.id !== id);
       
-      if (this.items[type].length < initialLength) {
+      if (this.items[category].length < initialLength) {
         found = true;
-        // Remove empty type arrays
-        if (this.items[type].length === 0) {
-          delete this.items[type];
+        // Remove empty category arrays
+        if (this.items[category].length === 0) {
+          delete this.items[category];
         }
         break;
       }
@@ -316,19 +316,19 @@ export class AnnotationManifest {
   }
 
   /**
-   * Get all annotations of specific type
-   * @param {string} type - Annotation type
+   * Get all annotations of specific category
+   * @param {string} category - Annotation category
    * @returns {Annotation[]}
    */
-  getItemsByType(type) {
-    return this.items[type] || [];
+  getItemsByCategory(category) {
+    return this.items[category] || [];
   }
 
   /**
-   * Get all annotation types in manifest
-   * @returns {string[]} Array of annotation types
+   * Get all annotation categories in manifest
+   * @returns {string[]} Array of annotation categories
    */
-  getTypes() {
+  getCategories() {
     return Object.keys(this.items);
   }
 
@@ -348,13 +348,13 @@ export class AnnotationManifest {
   }
 
   /**
-   * Get count of annotations by type
-   * @returns {Object<string, number>} Map of type to count
+   * Get count of annotations by category
+   * @returns {Object<string, number>} Map of category to count
    */
-  getCountsByType() {
+  getCountsByCategory() {
     const counts = {};
-    for (const [type, annotations] of Object.entries(this.items)) {
-      counts[type] = annotations.length;
+    for (const [category, annotations] of Object.entries(this.items)) {
+      counts[category] = annotations.length;
     }
     return counts;
   }
@@ -373,10 +373,10 @@ export class AnnotationManifest {
         throw new Error("Items must be an object");
       }
 
-      // Validate each annotation in each type
-      for (const [type, annotations] of Object.entries(this.items)) {
+      // Validate each annotation in each category
+      for (const [category, annotations] of Object.entries(this.items)) {
         if (!Array.isArray(annotations)) {
-          throw new Error(`Annotations for type '${type}' must be an array`);
+          throw new Error(`Annotations for category '${category}' must be an array`);
         }
         
         for (const item of annotations) {
@@ -400,8 +400,8 @@ export class AnnotationManifest {
   toJSON() {
     const itemsJson = {};
     
-    for (const [type, annotations] of Object.entries(this.items)) {
-      itemsJson[type] = annotations.map(item => item.toJSON());
+    for (const [category, annotations] of Object.entries(this.items)) {
+      itemsJson[category] = annotations.map(item => item.toJSON());
     }
     
     return {

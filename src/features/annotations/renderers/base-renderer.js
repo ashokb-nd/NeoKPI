@@ -23,7 +23,7 @@ export class BaseRenderer {
    * Check if this renderer can render the given annotation
    */
   canRender(annotation) {
-    return annotation.type === this.getType();
+    return annotation.category === this.getType();
   }
 
   /**

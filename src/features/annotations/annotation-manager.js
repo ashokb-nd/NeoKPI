@@ -1,7 +1,5 @@
 /**
- * @fileoverview AnnotationManager - Central manager for video annotation overlays 
- * that automatically detects and enhances video elements with ML model detection 
- * visualization capabilities.
+ * @fileoverview AnnotationManager - Central manager for video annotation overlays for multiple videos
  * @module AnnotationManager
  */
 
@@ -14,7 +12,7 @@
  * for each one. Manages annotation data lifecycle and rendering coordination.
  *
  * ## High-Level Flow
- * 1. **init()** - Sets up MutationObserver to watch for video elements
+ * 1. **init()** - Sets up MutationObserver to watch for new video elements
  * 2. **createAnnotatorForVideo()** - Creates VideoAnnotator for each video found
  * 3. **VideoAnnotator** - Creates canvas overlay and listens to video timeupdate events
  * 4. **loadManifest()** - Loads annotation data into specific annotators
@@ -147,17 +145,38 @@ const AnnotationManager = {
         return false;
       }
 
+      Utils.log(`Manifest type check:`, manifest.constructor.name);
+      Utils.log(`Is AnnotationManifest instance:`, manifest instanceof AnnotationManifest);
+
       // Apply annotations to all active video elements
       const videoElement = Utils.getVideoElement();
       if (videoElement) {
         const annotator = this.createAnnotatorForVideo(videoElement);
-        annotator.loadManifest(manifest);
-        annotator.show();
         
-        const typeCount = manifest.getCountsByType();
-        const totalCount = manifest.count;
-        Utils.log(`Loaded ${totalCount} annotations for alert ${alertId}:`, typeCount);
-        return true;
+        try {
+          // If instanceof check fails due to bundling, try to create a new instance
+          let validManifest = manifest;
+          if (!(manifest instanceof AnnotationManifest)) {
+            Utils.log(`Manifest is not instance of AnnotationManifest, attempting to recreate...`);
+            validManifest = new AnnotationManifest({
+              version: manifest.version,
+              metadata: manifest.metadata,
+              items: manifest.items
+            });
+            Utils.log(`Recreated manifest:`, validManifest instanceof AnnotationManifest);
+          }
+          
+          annotator.loadManifest(validManifest);
+          annotator.show();
+          
+          const typeCount = validManifest.getCountsByCategory();
+          const totalCount = validManifest.count;
+          Utils.log(`Loaded ${totalCount} annotations for alert ${alertId}:`, typeCount);
+          return true;
+        } catch (loadError) {
+          Utils.log(`Error loading manifest into annotator: ${loadError.message}`);
+          return false;
+        }
       }
 
       Utils.log(`No video element found to load annotations for alert ${alertId}`);

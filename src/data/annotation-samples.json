@@ -1,0 +1,151 @@
+{
+  "fullSample": {
+    "metadata": {
+      "source": "debug-utils",
+      "created": "2025-01-01T00:00:00.000Z"
+    },
+    "items": {
+      "detection": [
+        {
+          "id": "detection-1",
+          "category": "detection",
+          "timeRange": { "startMs": 1000, "endMs": 5000 },
+          "data": {
+            "bbox": { "x": 0.1, "y": 0.1, "width": 0.2, "height": 0.3 },
+            "confidence": 0.95,
+            "class": "vehicle"
+          }
+        },
+        {
+          "id": "detection-2",
+          "category": "detection",
+          "timeRange": { "startMs": 2000, "endMs": 6000 },
+          "data": {
+            "bbox": { "x": 0.5, "y": 0.2, "width": 0.15, "height": 0.25 },
+            "confidence": 0.88,
+            "class": "person"
+          }
+        }
+      ],
+      "cross": [
+        {
+          "id": "debug-cross-1",
+          "category": "cross",
+          "timeRange": { "startMs": 0, "endMs": 10000 },
+          "data": {
+            "debugText": "DEBUG CROSS",
+            "includeCenterLines": false
+          }
+        }
+      ]
+    }
+  },
+  "detectionSample": {
+    "metadata": { "source": "debug-detections" },
+    "items": {
+      "detection": [
+        {
+          "id": "test-vehicle",
+          "category": "detection",
+          "timeRange": { "startMs": 0, "endMs": 8000 },
+          "data": {
+            "bbox": { "x": 0.2, "y": 0.3, "width": 0.3, "height": 0.4 },
+            "confidence": 0.92,
+            "class": "vehicle"
+          }
+        },
+        {
+          "id": "test-person",
+          "category": "detection",
+          "timeRange": { "startMs": 1000, "endMs": 7000 },
+          "data": {
+            "bbox": { "x": 0.6, "y": 0.1, "width": 0.2, "height": 0.5 },
+            "confidence": 0.85,
+            "class": "person"
+          }
+        }
+      ]
+    }
+  },
+  "crossSample": {
+    "metadata": { "source": "debug-cross" },
+    "items": {
+      "cross": [
+        {
+          "id": "corner-cross",
+          "category": "cross",
+          "timeRange": { "startMs": 0, "endMs": 15000 },
+          "data": {
+            "debugText": "CORNER TO CORNER",
+            "includeCenterLines": false
+          }
+        }
+      ]
+    }
+  },
+  "textSample": {
+    "metadata": { "source": "debug-text" },
+    "items": {
+      "text": [
+        {
+          "id": "debug-text-1",
+          "category": "text",
+          "timeRange": { "startMs": 0, "endMs": 10000 },
+          "data": {
+            "text": "Debug Text Overlay",
+            "position": { "x": 0.1, "y": 0.1 },
+            "anchor": "top-left"
+          }
+        }
+      ]
+    }
+  },
+  "timeBasedSample": {
+    "metadata": { "source": "debug-timing" },
+    "items": {
+      "detection": [
+        {
+          "id": "early-detection",
+          "category": "detection",
+          "timeRange": { "startMs": 0, "endMs": 3000 },
+          "data": {
+            "bbox": { "x": 0.1, "y": 0.1, "width": 0.2, "height": 0.2 },
+            "confidence": 0.9,
+            "class": "early"
+          }
+        },
+        {
+          "id": "middle-detection",
+          "category": "detection",
+          "timeRange": { "startMs": 2000, "endMs": 6000 },
+          "data": {
+            "bbox": { "x": 0.4, "y": 0.3, "width": 0.25, "height": 0.3 },
+            "confidence": 0.85,
+            "class": "middle"
+          }
+        },
+        {
+          "id": "late-detection",
+          "category": "detection",
+          "timeRange": { "startMs": 5000, "endMs": 8000 },
+          "data": {
+            "bbox": { "x": 0.7, "y": 0.6, "width": 0.2, "height": 0.25 },
+            "confidence": 0.88,
+            "class": "late"
+          }
+        }
+      ],
+      "cross": [
+        {
+          "id": "timing-cross",
+          "category": "cross",
+          "timeRange": { "startMs": 0, "endMs": 10000 },
+          "data": {
+            "debugText": "TIMING TEST",
+            "includeCenterLines": true
+          }
+        }
+      ]
+    }
+  }
+}

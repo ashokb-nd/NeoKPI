@@ -45,8 +45,13 @@ export const KeyboardManager = {
         elements.button.click();
         elements.input.blur();
 
+        // Always update current alert (for annotations)
+        AppState.setCurrentAlert(inputValue).catch(error => 
+          console.warn('Failed to set current alert:', error)
+        );
+        
+        // Update notepad only if open
         if (AppState.notepad.isOpen) {
-          AppState.setCurrentAlert(inputValue);
           NotepadUI.updateContent();
         }
 

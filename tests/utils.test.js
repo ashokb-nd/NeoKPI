@@ -240,7 +240,7 @@ describe("Utils Module", () => {
   });
 
   describe("debounce method", () => {
-    test("should debounce function calls", (done) => {
+    test("should debounce function calls", async () => {
       const mockFn = vi.fn();
       const debouncedFn = Utils.debounce(mockFn, 100);
 
@@ -253,17 +253,18 @@ describe("Utils Module", () => {
       expect(mockFn).not.toHaveBeenCalled();
 
       // Wait for debounce delay
-      setTimeout(() => {
-        expect(mockFn).toHaveBeenCalledTimes(1);
-        expect(mockFn).toHaveBeenCalledWith("arg3");
-        done();
-      }, 150);
+      await new Promise(resolve => {
+        setTimeout(() => {
+          expect(mockFn).toHaveBeenCalledTimes(1);
+          expect(mockFn).toHaveBeenCalledWith("arg3");
+          resolve();
+        }, 150);
+      });
     });
   });
 
   describe("waitForElements method", () => {
-    test("should call callback when elements are found", (done) => {
-      const callback = vi.fn();
+    test("should resolve with elements when they are found", async () => {
       const mockElements = {
         input: createMockElement("input"),
         button: createMockElement("button"),
@@ -280,12 +281,10 @@ describe("Utils Module", () => {
         return mockElements;
       });
 
-      Utils.waitForElements(callback);
+      const result = await Utils.waitForElements();
 
-      setTimeout(() => {
-        expect(callback).toHaveBeenCalledWith(mockElements);
-        done();
-      }, 400); // Wait longer than the interval
+      expect(result).toEqual(mockElements);
+      expect(Utils.getRequiredElements).toHaveBeenCalledTimes(2);
     });
   });
 });

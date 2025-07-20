@@ -234,7 +234,7 @@ class BaseRenderer {
   }
 
   canRender(annotation) {
-    return annotation.type === this.getType();
+    return annotation.category === this.getType();
   }
 
   render(annotation, currentTime, videoRect) {

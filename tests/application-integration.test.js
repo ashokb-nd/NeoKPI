@@ -6,12 +6,10 @@ import { GlobalScope } from "../src/core/global-scope.js";
 vi.mock("../src/utils/utils.js", () => ({
   Utils: {
     log: vi.fn(),
-    waitForElements: vi.fn((callback) => {
-      // Immediately call the callback with mock elements
-      callback({
-        input: { addEventListener: vi.fn(), value: "", focus: vi.fn() },
-        button: { click: vi.fn() },
-      });
+    waitForElements: vi.fn().mockResolvedValue({
+      input: { addEventListener: vi.fn(), value: "", focus: vi.fn() },
+      button: { click: vi.fn() },
+      typeDropdown: { value: "test-type" }
     }),
     debounce: vi.fn((fn) => fn),
     getRequiredElements: vi.fn(() => ({

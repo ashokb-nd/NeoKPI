@@ -206,7 +206,7 @@ describe("VideoAnnotator", () => {
           detection: [
             new Annotation({
               id: "test-1",
-              type: "detection",
+              category: "detection",
               timeRange: { startMs: 1000, endMs: 5000 },
               data: {}
             })
@@ -240,7 +240,7 @@ describe("VideoAnnotator", () => {
     test("should add valid annotation", () => {
       const annotation = new Annotation({
         id: "test-annotation",
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 1000, endMs: 5000 },
         data: {}
       });
@@ -253,7 +253,7 @@ describe("VideoAnnotator", () => {
 
     test("should throw error for annotation without id", () => {
       const annotation = {
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 1000, endMs: 5000 },
       };
 
@@ -262,7 +262,7 @@ describe("VideoAnnotator", () => {
       }).toThrow("Annotation must have an id");
     });
 
-    test("should throw error for annotation without type", () => {
+    test("should throw error for annotation without category", () => {
       const annotation = {
         id: "test-annotation",
         timeRange: { startMs: 1000, endMs: 5000 },
@@ -270,7 +270,7 @@ describe("VideoAnnotator", () => {
 
       expect(() => {
         drawer.addAnnotation(annotation);
-      }).toThrow("Annotation must have a type");
+      }).toThrow("Annotation must have a category");
     });
   });
 
@@ -279,13 +279,13 @@ describe("VideoAnnotator", () => {
       drawer = new VideoAnnotator(mockVideoElement);
       drawer.addAnnotation(new Annotation({
         id: "test-1",
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 1000, endMs: 5000 },
         data: {}
       }));
       drawer.addAnnotation(new Annotation({
         id: "test-2",
-        type: "text",
+        category: "text",
         timeRange: { startMs: 2000, endMs: 6000 },
         data: {}
       }));
@@ -312,7 +312,7 @@ describe("VideoAnnotator", () => {
       drawer = new VideoAnnotator(mockVideoElement);
       drawer.addAnnotation({
         id: "test-1",
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 1000, endMs: 5000 },
       });
     });
@@ -350,17 +350,17 @@ describe("VideoAnnotator", () => {
       drawer = new VideoAnnotator(mockVideoElement);
       drawer.addAnnotation({
         id: "visible-1",
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 1000, endMs: 6000 }, // Should be visible at 5000ms
       });
       drawer.addAnnotation({
         id: "not-visible",
-        type: "text",
+        category: "text",
         timeRange: { startMs: 7000, endMs: 10000 }, // Should not be visible at 5000ms
       });
       drawer.addAnnotation({
         id: "visible-2",
-        type: "graph",
+        category: "graph",
         timeRange: { startMs: 4000, endMs: 8000 }, // Should be visible at 5000ms
       });
     });
@@ -409,7 +409,7 @@ describe("VideoAnnotator", () => {
 
       drawer.addAnnotation({
         id: "test",
-        type: "detection",
+        category: "detection",
         timeRange: { startMs: 4000, endMs: 6000 },
       });
 

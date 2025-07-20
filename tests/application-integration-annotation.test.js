@@ -11,11 +11,10 @@ import { AnnotationManager } from "../src/features/annotations/annotation-manage
 vi.mock("../src/utils/utils.js", () => ({
   Utils: {
     log: vi.fn(),
-    waitForElements: vi.fn((callback) => {
-      // Simulate finding elements asynchronously
-      setTimeout(() => {
-        callback({ input: {}, button: {} });
-      }, 0);
+    waitForElements: vi.fn().mockResolvedValue({ 
+      input: {}, 
+      button: {},
+      typeDropdown: {} 
     }),
   },
 }));
@@ -82,24 +81,18 @@ describe("Application Integration", () => {
       await app.init();
 
       expect(Utils.log).toHaveBeenCalledWith(
-        expect.stringContaining("Initializing Alert Debug UserScript"),
+        expect.stringContaining("NeoKPI V0.9.0 initialized successfully"),
       );
     });
 
     test("should initialize annotation manager", async () => {
       await app.init();
 
-      // Wait a bit for the async callback to execute
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
       expect(AnnotationManager.init).toHaveBeenCalled();
     });
 
     test("should initialize all core services", async () => {
       await app.init();
-
-      // Wait a bit for the async callback to execute
-      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(MetadataManager.init).toHaveBeenCalled();
       expect(SettingsManager.init).toHaveBeenCalled();

@@ -11,7 +11,7 @@ import { CONFIG } from "../config/constants.js";
 /**
  * Global scope utilities for console access and development
  */
-export class GlobalScope {
+export class GlobalScope {  
   /**
    * Expose application utilities to global scope
    */
@@ -137,6 +137,26 @@ export class GlobalScope {
       debug: () => {
           return SystemDebug.logSystemStatus(AnnotationManager.annotators);
         },
+      
+      // Quick test function for loading annotations with specific categories
+      loadTestAnnotations: async (alertId, categories = ['hello']) => {
+        try {
+          console.log(`🔄 Loading test annotations for alert: ${alertId} with categories: [${categories.join(', ')}]`);
+          const success = await AnnotationManager.loadAnnotationsForAlert(alertId, categories);
+          
+          if (success) {
+            console.log(`✅ Successfully loaded annotations for alert ${alertId}`);
+            return true;
+          } else {
+            console.log(`❌ Failed to load annotations for alert ${alertId}`);
+            return false;
+          }
+        } catch (error) {
+          console.error(`💥 Error loading annotations:`, error);
+          return false;
+        }
+      },
+      
       testRender: () => {
         console.log("🎨 Testing manual canvas drawing...");
         AnnotationManager.annotators.forEach((annotator, video) => {
@@ -182,7 +202,7 @@ export class GlobalScope {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
           visibleAnnotations.forEach((annotation, i) => {
-            if (annotation.type === 'detection' && annotation.data.bbox) {
+            if (annotation.category === 'detection' && annotation.data.bbox) {
               const bbox = annotation.data.bbox;
               console.log(`Annotation ${i}: ${annotation.data.class}`);
               console.log(`  Normalized bbox:`, bbox);
@@ -270,6 +290,7 @@ export class GlobalScope {
     console.log("AlertDebugAnnotations.createTextSample() - Create text annotation sample");
     console.log("AlertDebugAnnotations.createTimeBasedSample() - Create time-based sample");
     console.log("AlertDebugAnnotations.loadSample() - Load sample annotation");
+    console.log("AlertDebugAnnotations.loadTestAnnotations(alertId, ['hello']) - Load test annotations");
     console.log("AlertDebugAnnotations.debug() - Debug annotation system state");
     console.log("AlertDebugAnnotations.testRender() - Test canvas drawing");
     console.log("AlertDebugAnnotations.testDetectionBoxes() - Test manual detection boxes");
@@ -302,6 +323,11 @@ export class GlobalScope {
     console.log(
       "AlertDebugApp.cleanup() - Clean up all UI elements and storage",
     );
+
+    console.log("%cUI Features:", "color: #E91E63; font-weight: bold;");
+    console.log("Notepad: 🎯 Load Annotations button - Load annotations for current alert");
+    console.log("Notepad: Button loads with categories: hello, cross, text, detection");
+    console.log("Debug borders automatically shown when loading via button");
 
     console.log(
       "%cAlert Debug Database Access:",
