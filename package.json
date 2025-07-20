@@ -12,7 +12,9 @@
     "test:ui": "vitest --ui",
     "docs:update": "node scripts/update-docs.js",
     "prebuild": "npm run docs:update",
-    "setup": "bash scripts/setup-dev.sh"
+    "setup": "bash scripts/setup-dev.sh",
+    "format": "prettier --write .",
+    "format:changed": "git diff --name-only --diff-filter=ACMR | grep -E '\\.(js|ts|json|md)$' | xargs -r prettier --write"
   },
   "keywords": [],
   "author": "",

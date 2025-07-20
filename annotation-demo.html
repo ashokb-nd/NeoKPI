@@ -1,365 +1,1217 @@
-<!DOCTYPE html>
+<!-- To start a server with this demo, use the following command:
+  npx http-server .
+    -->
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Video Annotation System Demo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        
-        .demo-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .video-container {
-            position: relative;
-            background: #333;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .mock-video {
-            width: 640px;
-            height: 360px;
-            background: linear-gradient(45deg, #2a2a2a, #4a4a4a);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #ccc;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            background: #1976D2;
-        }
-        
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-        
-        .status {
-            background: #333;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        
-        .annotation-info {
-            background: #2a2a2a;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .json-display {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            border: 1px solid #444;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        h1, h2 {
-            color: #4CAF50;
-        }
-        
-        .highlight {
-            color: #FFD700;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+
+      .demo-container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .video-container {
+        position: relative;
+        background: #333;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .mock-video {
+        width: 640px;
+        height: 360px;
+        background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
+        border: 2px solid #666;
+        position: relative;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ccc;
+        font-size: 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4caf50, #81c784);
+        transition: width 0.1s ease;
+        border-radius: 0 0 6px 6px;
+      }
+
+      /* Canvas overlay will be positioned dynamically by JavaScript */
+      .video-container canvas {
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      button {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:hover {
+        background: #1976d2;
+      }
+
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      .status {
+        background: #333;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .annotation-info {
+        background: #2a2a2a;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+
+      .json-display {
+        background: #1a1a1a;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        border: 1px solid #444;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .json-editor {
+        background: #1a1a1a;
+        color: #ffffff;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #444;
+        width: 100%;
+        height: 300px;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+
+      .json-editor:focus {
+        border-color: #4caf50;
+        outline: none;
+      }
+
+      h1,
+      h2 {
+        color: #4caf50;
+      }
+
+      .highlight {
+        color: #ffd700;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="demo-container">
-        <h1>🎯 Video Annotation System Demo</h1>
-        <p>This demo showcases the modular video annotation system with normalized coordinates and millisecond timing.</p>
-        
-        <div class="video-container">
-            <div class="mock-video" id="mockVideo">
-                📹 Mock Video Element (640x360)
-                <div style="position: absolute; bottom: 10px; right: 10px; font-size: 12px;">
-                    Time: <span id="videoTime">0.00</span>s
-                </div>
-            </div>
-        </div>
+      <h1>🎯 Video Annotation System Demo</h1>
+      <p>
+        This demo showcases the modular video annotation system with normalized
+        coordinates and millisecond timing.
+      </p>
 
-        <div class="controls">
-            <button onclick="createSampleAnnotations()">Create Sample Annotations</button>
-            <button onclick="showAnnotations()" id="showBtn">Show Annotations</button>
-            <button onclick="hideAnnotations()" id="hideBtn">Hide Annotations</button>
-            <button onclick="clearAnnotations()">Clear Annotations</button>
-            <button onclick="validateJson()">Validate JSON</button>
-            <button onclick="simulateVideoTime()">Simulate Video Playback</button>
+      <div class="video-container">
+        <div class="mock-video" id="mockVideo">
+          📹 Interactive Mock Video (640x360)
+          <div
+            style="
+              position: absolute;
+              top: 10px;
+              left: 10px;
+              font-size: 10px;
+              opacity: 0.7;
+            "
+          >
+            Canvas overlay renders here ↗️
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 10px;
+              right: 10px;
+              font-size: 12px;
+            "
+          >
+            Time: <span id="videoTime">0.00</span>s / 15.00s
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 10px;
+              left: 10px;
+              font-size: 10px;
+              opacity: 0.7;
+            "
+          >
+            Resolution: 1920x1080 → 640x360 (scaled)
+          </div>
+          <div class="progress-bar" id="progressBar" style="width: 0%"></div>
         </div>
+      </div>
 
-        <div class="status" id="status">
-            Ready. Click "Create Sample Annotations" to start.
-        </div>
+      <div class="controls">
+        <button onclick="createSampleAnnotations()">
+          Create Sample Annotations
+        </button>
+        <button onclick="showAnnotations()" id="showBtn">
+          Show Annotations
+        </button>
+        <button onclick="hideAnnotations()" id="hideBtn">
+          Hide Annotations
+        </button>
+        <button onclick="clearAnnotations()">Clear Annotations</button>
+        <button onclick="validateJson()">Validate JSON</button>
+        <button onclick="simulateVideoTime()">
+          ▶️ Simulate Video Playback
+        </button>
+        <button onclick="debugCanvas()" style="background: #ff6b35">
+          🐛 Debug Canvas
+        </button>
+        <button onclick="repositionCanvas()" style="background: #9c27b0">
+          📐 Reposition Canvas
+        </button>
+        <button
+          onclick="showPerformanceStats()"
+          style="background: #607d8b; font-size: 12px"
+        >
+          📊 Performance
+        </button>
+      </div>
 
-        <div class="annotation-info">
-            <h2>📋 Current Annotation Data</h2>
-            <div class="json-display" id="jsonDisplay">
-                No annotations loaded.
-            </div>
-        </div>
+      <div class="status" id="status">
+        Ready. Click "Create Sample Annotations" to start the demo.
+      </div>
 
-        <div class="annotation-info">
-            <h2>🚀 Key Features Demonstrated</h2>
-            <ul>
-                <li><span class="highlight">Normalized Coordinates (0.0-1.0)</span> - Automatically scales with video resize</li>
-                <li><span class="highlight">Millisecond Timing</span> - Precise synchronization with ML model outputs</li>
-                <li><span class="highlight">Static vs Dynamic Annotations</span> - Performance optimized rendering</li>
-                <li><span class="highlight">Multiple Annotation Types</span> - Detections, graphs, text, trajectories</li>
-                <li><span class="highlight">Modular Renderer System</span> - Easy to extend with new types</li>
-                <li><span class="highlight">Canvas-based Rendering</span> - Hardware accelerated performance</li>
-            </ul>
+      <div class="annotation-info">
+        <h2>🎮 Interactive Demo Instructions</h2>
+        <ol>
+          <li>
+            <strong>Create Sample Annotations</strong> - Generates comprehensive
+            test data with all annotation types
+          </li>
+          <li>
+            <strong>Show Annotations</strong> - Renders live canvas overlay with
+            bounding boxes, text, graphs, and trajectories
+          </li>
+          <li>
+            <strong>Simulate Video Playback</strong> - Watch annotations change
+            in real-time as video time progresses
+          </li>
+          <li>
+            <strong>Hide/Clear</strong> - Control annotation visibility and
+            cleanup
+          </li>
+          <li>
+            <strong>Validate JSON</strong> - Test the comprehensive validation
+            system
+          </li>
+        </ol>
+      </div>
+
+      <div class="annotation-info">
+        <h2>📋 Current Annotation Data</h2>
+        <div style="margin-bottom: 10px">
+          <button
+            onclick="toggleEditMode()"
+            id="editBtn"
+            style="background: #4caf50"
+          >
+            ✏️ Edit JSON
+          </button>
+          <button
+            onclick="submitAnnotations()"
+            id="submitBtn"
+            style="background: #ff9800; display: none"
+          >
+            🚀 Apply Changes
+          </button>
+          <button
+            onclick="cancelEdit()"
+            id="cancelBtn"
+            style="background: #f44336; display: none"
+          >
+            ❌ Cancel
+          </button>
+          <button
+            onclick="loadTemplate('simple')"
+            style="background: #9c27b0; font-size: 12px"
+          >
+            📝 Simple Template
+          </button>
+          <button
+            onclick="loadTemplate('complex')"
+            style="background: #3f51b5; font-size: 12px"
+          >
+            🎯 Complex Template
+          </button>
         </div>
+        <div class="json-display" id="jsonDisplay">No annotations loaded.</div>
+        <textarea
+          class="json-editor"
+          id="jsonEditor"
+          style="display: none"
+        ></textarea>
+      </div>
+
+      <div class="annotation-info">
+        <h2>🚀 Key Features Demonstrated</h2>
+        <ul>
+          <li>
+            <span class="highlight">Normalized Coordinates (0.0-1.0)</span> -
+            Automatically scales with video resize
+          </li>
+          <li>
+            <span class="highlight">Millisecond Timing</span> - Precise
+            synchronization with ML model outputs
+          </li>
+          <li>
+            <span class="highlight">Static vs Dynamic Annotations</span> -
+            Performance optimized rendering
+          </li>
+          <li>
+            <span class="highlight">Multiple Annotation Types</span> -
+            Detections, graphs, text, trajectories
+          </li>
+          <li>
+            <span class="highlight">Modular Renderer System</span> - Easy to
+            extend with new types
+          </li>
+          <li>
+            <span class="highlight">Canvas-based Rendering</span> - Hardware
+            accelerated performance
+          </li>
+        </ul>
+      </div>
     </div>
 
     <script type="module">
-        // Import our annotation system
-        import { AnnotationParser } from '/src/features/annotations/annotation-parser.js';
-        
-        let currentAnnotationData = null;
-        let videoTimeInterval = null;
-        let currentVideoTime = 0;
-        
-        // Make functions globally available
-        window.createSampleAnnotations = createSampleAnnotations;
-        window.showAnnotations = showAnnotations;
-        window.hideAnnotations = hideAnnotations;
-        window.clearAnnotations = clearAnnotations;
-        window.validateJson = validateJson;
-        window.simulateVideoTime = simulateVideoTime;
-        
-        function logStatus(message, type = 'info') {
-            const status = document.getElementById('status');
-            const timestamp = new Date().toLocaleTimeString();
-            const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
-            status.textContent = `${emoji} [${timestamp}] ${message}`;
-            console.log(`${emoji} ${message}`);
-        }
+      // Import our annotation system
+      import { AnnotationParser } from "/src/features/annotations/annotation-parser.js";
+      import { VideoAnnotator } from "/src/features/annotations/video-annotator.js";
 
-        function createSampleAnnotations() {
-            try {
-                // Create comprehensive sample with all annotation types
-                currentAnnotationData = {
-                    version: "1.0",
-                    alertId: "demo-alert-001",
-                    videoMetadata: {
-                        durationMs: 15000,
-                        fps: 30,
-                        resolution: { width: 1920, height: 1080 },
-                        videoStartTimeMs: Date.now()
+      let currentAnnotationData = null;
+      let videoTimeInterval = null;
+      let currentVideoTime = 0;
+      let annotationDrawer = null;
+      let mockVideoElement = null;
+
+      // Performance monitoring
+      let repositionCallCount = 0;
+      let renderCallCount = 0;
+
+      // Reusable throttle utility
+      function createThrottle(func, limit, context = null) {
+        let inThrottle;
+        let callCount = 0;
+        return function () {
+          const args = arguments;
+          const ctx = context || this;
+          callCount++;
+
+          if (!inThrottle) {
+            func.apply(ctx, args);
+            inThrottle = true;
+            setTimeout(() => {
+              inThrottle = false;
+              // Log throttle efficiency occasionally
+              if (callCount % 50 === 0) {
+                console.log(
+                  `Throttle efficiency: ${callCount} calls, function executed every ${limit}ms`,
+                );
+              }
+            }, limit);
+          }
+        };
+      }
+
+      // Make functions globally available
+      window.createSampleAnnotations = createSampleAnnotations;
+      window.showAnnotations = showAnnotations;
+      window.hideAnnotations = hideAnnotations;
+      window.clearAnnotations = clearAnnotations;
+      window.validateJson = validateJson;
+      window.simulateVideoTime = simulateVideoTime;
+      window.debugCanvas = debugCanvas;
+      window.toggleEditMode = toggleEditMode;
+      window.submitAnnotations = submitAnnotations;
+      window.cancelEdit = cancelEdit;
+      window.loadTemplate = loadTemplate;
+      window.repositionCanvas = repositionCanvas;
+      window.showPerformanceStats = showPerformanceStats;
+
+      function logStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        const timestamp = new Date().toLocaleTimeString();
+        const emoji =
+          type === "error" ? "❌" : type === "success" ? "✅" : "ℹ️";
+        status.textContent = `${emoji} [${timestamp}] ${message}`;
+        console.log(`${emoji} ${message}`);
+      }
+
+      function createSampleAnnotations() {
+        try {
+          // Create comprehensive sample with all annotation types
+          currentAnnotationData = {
+            version: "1.0",
+            alertId: "demo-alert-001",
+            videoMetadata: {
+              durationMs: 15000,
+              fps: 30,
+              resolution: { width: 1920, height: 1080 },
+              videoStartTimeMs: Date.now(),
+            },
+            annotations: [
+              {
+                id: "detection-1",
+                type: "detection",
+                timeRange: { startMs: 2000, endMs: 8000 },
+                isStatic: false,
+                data: {
+                  bbox: { x: 0.1, y: 0.1, width: 0.3, height: 0.4 },
+                  confidence: 0.95,
+                  class: "vehicle",
+                  trackId: "track_001",
+                },
+                style: {
+                  borderColor: "#ff0000",
+                  borderWidth: 3,
+                  showLabel: true,
+                  labelPosition: "top-left",
+                },
+              },
+              {
+                id: "text-overlay-1",
+                type: "text",
+                timeRange: { startMs: 1000, endMs: 12000 },
+                isStatic: true,
+                data: {
+                  text: "Critical Event Detected",
+                  position: { x: 0.5, y: 0.05 },
+                  anchor: "center",
+                },
+                style: {
+                  fontSize: 20,
+                  fontFamily: "Arial",
+                  color: "#ffffff",
+                  backgroundColor: "rgba(255,0,0,0.8)",
+                  padding: { x: 12, y: 6 },
+                  borderRadius: 6,
+                },
+              },
+              {
+                id: "speed-graph",
+                type: "graph",
+                timeRange: { startMs: 0, endMs: 15000 },
+                isStatic: true,
+                data: {
+                  graphType: "line",
+                  series: [
+                    {
+                      name: "Vehicle Speed",
+                      points: [
+                        { timeMs: 0, value: 25.5 },
+                        { timeMs: 3000, value: 32.1 },
+                        { timeMs: 6000, value: 28.7 },
+                        { timeMs: 9000, value: 35.2 },
+                        { timeMs: 12000, value: 30.8 },
+                        { timeMs: 15000, value: 27.3 },
+                      ],
+                      unit: "mph",
+                      color: "#00ff00",
                     },
-                    annotations: [
-                        {
-                            id: "detection-1",
-                            type: "detection",
-                            timeRange: { startMs: 2000, endMs: 8000 },
-                            isStatic: false,
-                            data: {
-                                bbox: { x: 0.1, y: 0.1, width: 0.3, height: 0.4 },
-                                confidence: 0.95,
-                                class: "vehicle",
-                                trackId: "track_001"
-                            },
-                            style: {
-                                borderColor: "#ff0000",
-                                borderWidth: 3,
-                                showLabel: true,
-                                labelPosition: "top-left"
-                            }
-                        },
-                        {
-                            id: "text-overlay-1",
-                            type: "text",
-                            timeRange: { startMs: 1000, endMs: 12000 },
-                            isStatic: true,
-                            data: {
-                                text: "Critical Event Detected",
-                                position: { x: 0.5, y: 0.05 },
-                                anchor: "center"
-                            },
-                            style: {
-                                fontSize: 20,
-                                fontFamily: "Arial",
-                                color: "#ffffff",
-                                backgroundColor: "rgba(255,0,0,0.8)",
-                                padding: { x: 12, y: 6 },
-                                borderRadius: 6
-                            }
-                        },
-                        {
-                            id: "speed-graph",
-                            type: "graph",
-                            timeRange: { startMs: 0, endMs: 15000 },
-                            isStatic: true,
-                            data: {
-                                graphType: "line",
-                                series: [
-                                    {
-                                        name: "Vehicle Speed",
-                                        points: [
-                                            { timeMs: 0, value: 25.5 },
-                                            { timeMs: 3000, value: 32.1 },
-                                            { timeMs: 6000, value: 28.7 },
-                                            { timeMs: 9000, value: 35.2 },
-                                            { timeMs: 12000, value: 30.8 },
-                                            { timeMs: 15000, value: 27.3 }
-                                        ],
-                                        unit: "mph",
-                                        color: "#00ff00"
-                                    }
-                                ],
-                                position: { x: 0.02, y: 0.65, width: 0.35, height: 0.3 }
-                            },
-                            style: {
-                                backgroundColor: "rgba(0,0,0,0.8)",
-                                gridLines: true,
-                                showAxes: true,
-                                fontSize: 10
-                            }
-                        },
-                        {
-                            id: "trajectory-1",
-                            type: "trajectory",
-                            timeRange: { startMs: 3000, endMs: 12000 },
-                            isStatic: false,
-                            data: {
-                                points: [
-                                    { timeMs: 3000, x: 0.2, y: 0.3 },
-                                    { timeMs: 5000, x: 0.35, y: 0.28 },
-                                    { timeMs: 7000, x: 0.5, y: 0.32 },
-                                    { timeMs: 9000, x: 0.65, y: 0.29 },
-                                    { timeMs: 11000, x: 0.8, y: 0.35 }
-                                ],
-                                interpolation: "linear",
-                                showHistory: true,
-                                historyLengthMs: 3000
-                            },
-                            style: {
-                                lineColor: "#ffff00",
-                                lineWidth: 4,
-                                pointRadius: 6,
-                                showDirection: true
-                            }
-                        }
-                    ]
-                };
+                  ],
+                  position: { x: 0.02, y: 0.65, width: 0.35, height: 0.3 },
+                },
+                style: {
+                  backgroundColor: "rgba(0,0,0,0.8)",
+                  gridLines: true,
+                  showAxes: true,
+                  fontSize: 10,
+                },
+              },
+              {
+                id: "trajectory-1",
+                type: "trajectory",
+                timeRange: { startMs: 3000, endMs: 12000 },
+                isStatic: false,
+                data: {
+                  points: [
+                    { timeMs: 3000, x: 0.2, y: 0.3 },
+                    { timeMs: 5000, x: 0.35, y: 0.28 },
+                    { timeMs: 7000, x: 0.5, y: 0.32 },
+                    { timeMs: 9000, x: 0.65, y: 0.29 },
+                    { timeMs: 11000, x: 0.8, y: 0.35 },
+                  ],
+                  interpolation: "linear",
+                  showHistory: true,
+                  historyLengthMs: 3000,
+                },
+                style: {
+                  lineColor: "#ffff00",
+                  lineWidth: 4,
+                  pointRadius: 6,
+                  showDirection: true,
+                },
+              },
+            ],
+          };
 
-                // Validate the created annotations
-                AnnotationParser.parse(currentAnnotationData);
-                
-                updateJsonDisplay();
-                logStatus(`Created ${currentAnnotationData.annotations.length} sample annotations`, 'success');
-                
-            } catch (error) {
-                logStatus(`Error creating annotations: ${error.message}`, 'error');
-            }
+          // Validate the created annotations
+          AnnotationParser.parse(currentAnnotationData);
+
+          updateJsonDisplay();
+          logStatus(
+            `Created ${currentAnnotationData.annotations.length} sample annotations`,
+            "success",
+          );
+        } catch (error) {
+          logStatus(`Error creating annotations: ${error.message}`, "error");
+        }
+      }
+
+      function showAnnotations() {
+        if (!currentAnnotationData) {
+          logStatus(
+            "⚠️ No annotations to show. Create sample annotations first.",
+            "warning",
+          );
+          return;
         }
 
-        function showAnnotations() {
-            if (!currentAnnotationData) {
-                logStatus('No annotations to show. Create sample annotations first.', 'error');
-                return;
+        try {
+          if (!annotationDrawer) {
+            logStatus("🔧 Initializing annotation system...", "info");
+            const initResult = initializeAnnotationSystem();
+            if (!initResult || !annotationDrawer) {
+              logStatus("❌ Failed to initialize annotation system", "error");
+              return;
             }
-            logStatus('Annotations shown (in real implementation, canvas overlay would be visible)', 'success');
+          }
+
+          // Double-check that annotationDrawer exists and has required methods
+          if (!annotationDrawer) {
+            logStatus(
+              "❌ Annotation drawer is null after initialization",
+              "error",
+            );
+            return;
+          }
+
+          if (typeof annotationDrawer.loadAnnotations !== "function") {
+            logStatus(
+              "❌ Annotation drawer missing loadAnnotations method",
+              "error",
+            );
+            console.error("AnnotationDrawer state:", annotationDrawer);
+            return;
+          }
+
+          if (typeof annotationDrawer.show !== "function") {
+            logStatus("❌ Annotation drawer missing show method", "error");
+            console.error("AnnotationDrawer state:", annotationDrawer);
+            return;
+          }
+
+          console.log("Loading annotations:", currentAnnotationData);
+          annotationDrawer.loadAnnotations(currentAnnotationData);
+          annotationDrawer.show();
+
+          // Verify the canvas was properly created and positioned
+          setTimeout(() => {
+            const canvas = document.querySelector(".video-annotation-overlay");
+            if (canvas) {
+              const canvasRect = canvas.getBoundingClientRect();
+              const mockVideoRect = document
+                .getElementById("mockVideo")
+                .getBoundingClientRect();
+              console.log("Canvas position check:", {
+                canvas: canvasRect,
+                mockVideo: mockVideoRect,
+                aligned: Math.abs(canvasRect.left - mockVideoRect.left) < 5,
+              });
+            }
+          }, 50);
+
+          logStatus(
+            "✨ Annotations are now visible on canvas overlay!",
+            "success",
+          );
+        } catch (error) {
+          logStatus(`❌ Error showing annotations: ${error.message}`, "error");
+          console.error("Full error:", error);
+          console.error("AnnotationDrawer state:", annotationDrawer);
+        }
+      }
+
+      function hideAnnotations() {
+        if (annotationDrawer) {
+          annotationDrawer.hide();
+          logStatus("Annotations hidden from canvas", "success");
+        } else {
+          logStatus("No annotation system initialized", "info");
+        }
+      }
+
+      function clearAnnotations() {
+        if (annotationDrawer) {
+          annotationDrawer.clearAnnotations();
+          annotationDrawer.hide();
+        }
+        currentAnnotationData = null;
+        updateJsonDisplay();
+        logStatus("All annotations cleared from canvas and memory", "success");
+      }
+
+      function validateJson() {
+        if (!currentAnnotationData) {
+          logStatus("No annotations to validate", "error");
+          return;
         }
 
-        function hideAnnotations() {
-            logStatus('Annotations hidden', 'success');
+        try {
+          AnnotationParser.parse(currentAnnotationData);
+          logStatus("JSON validation passed! ✨", "success");
+        } catch (error) {
+          logStatus(`Validation failed: ${error.message}`, "error");
+        }
+      }
+
+      function simulateVideoTime() {
+        if (videoTimeInterval) {
+          clearInterval(videoTimeInterval);
+          videoTimeInterval = null;
+          logStatus("Video simulation stopped");
+          return;
         }
 
-        function clearAnnotations() {
-            currentAnnotationData = null;
-            updateJsonDisplay();
-            logStatus('Annotations cleared', 'success');
+        if (!annotationDrawer) {
+          logStatus(
+            "Create and show annotations first to see real-time rendering!",
+            "info",
+          );
+          return;
         }
 
-        function validateJson() {
-            if (!currentAnnotationData) {
-                logStatus('No annotations to validate', 'error');
-                return;
-            }
+        currentVideoTime = 0;
+        mockVideoElement.currentTime = 0;
 
-            try {
-                AnnotationParser.parse(currentAnnotationData);
-                logStatus('JSON validation passed! ✨', 'success');
-            } catch (error) {
-                logStatus(`Validation failed: ${error.message}`, 'error');
-            }
-        }
+        // Throttle function for render updates
+        let lastRenderTime = 0;
+        const renderThrottle = 33; // ~30fps for rendering (33ms intervals)
 
-        function simulateVideoTime() {
-            if (videoTimeInterval) {
-                clearInterval(videoTimeInterval);
-                videoTimeInterval = null;
-                logStatus('Video simulation stopped');
-                return;
-            }
+        videoTimeInterval = setInterval(() => {
+          currentVideoTime += 100; // 100ms increments
+          mockVideoElement.currentTime = currentVideoTime / 1000;
+          const timeInSeconds = currentVideoTime / 1000;
+          document.getElementById("videoTime").textContent =
+            timeInSeconds.toFixed(2);
 
+          // Update progress bar
+          const progress = (timeInSeconds / 15) * 100;
+          document.getElementById("progressBar").style.width = `${progress}%`;
+
+          // Throttled annotation rendering
+          const now = Date.now();
+          if (
+            annotationDrawer &&
+            annotationDrawer.isVisible &&
+            now - lastRenderTime >= renderThrottle
+          ) {
+            annotationDrawer.render(true); // Force render
+            lastRenderTime = now;
+          }
+
+          if (currentVideoTime >= 15000) {
+            clearInterval(videoTimeInterval);
+            videoTimeInterval = null;
             currentVideoTime = 0;
-            videoTimeInterval = setInterval(() => {
-                currentVideoTime += 100; // 100ms increments
-                document.getElementById('videoTime').textContent = (currentVideoTime / 1000).toFixed(2);
-                
-                if (currentVideoTime >= 15000) {
-                    clearInterval(videoTimeInterval);
-                    videoTimeInterval = null;
-                    currentVideoTime = 0;
-                    logStatus('Video simulation completed', 'success');
-                }
-            }, 100);
-            
-            logStatus('Simulating video playback (15s)...');
+            mockVideoElement.currentTime = 0;
+            document.getElementById("progressBar").style.width = "0%";
+            logStatus(
+              "Video simulation completed - annotations updated in real-time! 🎬",
+              "success",
+            );
+          }
+        }, 100);
+
+        logStatus(
+          "🎬 Simulating video playback with throttled real-time annotation updates...",
+        );
+      }
+
+      function updateJsonDisplay() {
+        const display = document.getElementById("jsonDisplay");
+        if (currentAnnotationData) {
+          display.textContent = JSON.stringify(currentAnnotationData, null, 2);
+        } else {
+          display.textContent = "No annotations loaded.";
+        }
+      }
+
+      function debugCanvas() {
+        const canvas = document.querySelector(".video-annotation-overlay");
+        const container = document.querySelector(".video-container");
+        const mockVideo = document.querySelector(".mock-video");
+
+        console.log("=== CANVAS DEBUG INFO ===");
+        console.log("Canvas element:", canvas);
+        console.log("Canvas display:", canvas ? canvas.style.display : "N/A");
+        console.log(
+          "Canvas dimensions:",
+          canvas ? `${canvas.width}x${canvas.height}` : "N/A",
+        );
+        console.log(
+          "Canvas CSS dimensions:",
+          canvas ? `${canvas.style.width} x ${canvas.style.height}` : "N/A",
+        );
+        console.log(
+          "Canvas position:",
+          canvas
+            ? `left: ${canvas.style.left}, top: ${canvas.style.top}`
+            : "N/A",
+        );
+        console.log("Canvas parent:", canvas ? canvas.parentElement : "N/A");
+        console.log("Container element:", container);
+        console.log(
+          "Container rect:",
+          container ? container.getBoundingClientRect() : "N/A",
+        );
+        console.log("Mock video element:", mockVideo);
+        console.log(
+          "Mock video rect:",
+          mockVideo ? mockVideo.getBoundingClientRect() : "N/A",
+        );
+        console.log("AnnotationDrawer:", annotationDrawer);
+        console.log(
+          "IsVisible:",
+          annotationDrawer ? annotationDrawer.isVisible : "N/A",
+        );
+        console.log(
+          "Annotations count:",
+          annotationDrawer ? annotationDrawer.annotations.length : "N/A",
+        );
+
+        if (canvas) {
+          // Test draw something simple
+          const ctx = canvas.getContext("2d");
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(50, 50, 100, 100);
+          ctx.fillStyle = "yellow";
+          ctx.fillText("TEST DRAW", 60, 80);
+          logStatus("🎨 Drew test rectangle on canvas", "success");
         }
 
-        function updateJsonDisplay() {
-            const display = document.getElementById('jsonDisplay');
-            if (currentAnnotationData) {
-                display.textContent = JSON.stringify(currentAnnotationData, null, 2);
-            } else {
-                display.textContent = 'No annotations loaded.';
+        if (annotationDrawer) {
+          logStatus("🔍 Check browser console for detailed debug info", "info");
+          annotationDrawer.render(true); // Force render
+        } else {
+          logStatus("❌ No annotation drawer found", "error");
+        }
+      }
+
+      function toggleEditMode() {
+        const jsonDisplay = document.getElementById("jsonDisplay");
+        const jsonEditor = document.getElementById("jsonEditor");
+        const editBtn = document.getElementById("editBtn");
+        const submitBtn = document.getElementById("submitBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+
+        if (jsonEditor.style.display === "none") {
+          // Enter edit mode
+          if (!currentAnnotationData) {
+            logStatus(
+              "No annotations to edit. Create sample annotations first.",
+              "error",
+            );
+            return;
+          }
+
+          jsonEditor.value = JSON.stringify(currentAnnotationData, null, 2);
+          jsonDisplay.style.display = "none";
+          jsonEditor.style.display = "block";
+          editBtn.style.display = "none";
+          submitBtn.style.display = "inline-block";
+          cancelBtn.style.display = "inline-block";
+          editBtn.textContent = "✏️ Edit JSON";
+          logStatus(
+            "📝 Edit mode enabled - modify JSON and click Apply Changes",
+            "info",
+          );
+        }
+      }
+
+      function cancelEdit() {
+        const jsonDisplay = document.getElementById("jsonDisplay");
+        const jsonEditor = document.getElementById("jsonEditor");
+        const editBtn = document.getElementById("editBtn");
+        const submitBtn = document.getElementById("submitBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+
+        // Exit edit mode without saving
+        jsonDisplay.style.display = "block";
+        jsonEditor.style.display = "none";
+        editBtn.style.display = "inline-block";
+        submitBtn.style.display = "none";
+        cancelBtn.style.display = "none";
+        logStatus("❌ Edit cancelled - no changes applied", "info");
+      }
+
+      function submitAnnotations() {
+        const jsonEditor = document.getElementById("jsonEditor");
+        const jsonDisplay = document.getElementById("jsonDisplay");
+        const editBtn = document.getElementById("editBtn");
+        const submitBtn = document.getElementById("submitBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+
+        try {
+          // Parse the edited JSON
+          const editedData = JSON.parse(jsonEditor.value);
+
+          // Validate the annotations
+          AnnotationParser.parse(editedData);
+
+          // Update current annotation data
+          currentAnnotationData = editedData;
+
+          // Exit edit mode
+          jsonDisplay.style.display = "block";
+          jsonEditor.style.display = "none";
+          editBtn.style.display = "inline-block";
+          submitBtn.style.display = "none";
+          cancelBtn.style.display = "none";
+
+          // Update display
+          updateJsonDisplay();
+
+          // If annotations are currently visible, reload them
+          if (annotationDrawer && annotationDrawer.isVisible) {
+            annotationDrawer.loadAnnotations(currentAnnotationData);
+            annotationDrawer.render(true);
+            logStatus("✅ Custom annotations applied and rendered!", "success");
+          } else {
+            logStatus(
+              '✅ Custom annotations saved! Click "Show Annotations" to see them.',
+              "success",
+            );
+          }
+        } catch (error) {
+          logStatus(
+            `❌ Invalid JSON or validation failed: ${error.message}`,
+            "error",
+          );
+          console.error("Annotation submission error:", error);
+        }
+      }
+
+      function loadTemplate(templateType) {
+        let templateData;
+
+        if (templateType === "simple") {
+          templateData = {
+            version: "1.0",
+            alertId: "simple-demo",
+            videoMetadata: {
+              durationMs: 10000,
+              fps: 30,
+              resolution: { width: 1920, height: 1080 },
+              videoStartTimeMs: Date.now(),
+            },
+            annotations: [
+              {
+                id: "simple-text",
+                type: "text",
+                timeRange: { startMs: 0, endMs: 10000 },
+                isStatic: true,
+                data: {
+                  text: "Hello World!",
+                  position: { x: 0.5, y: 0.5 },
+                  anchor: "center",
+                },
+                style: {
+                  fontSize: 24,
+                  color: "#00ff00",
+                  backgroundColor: "rgba(0,0,0,0.8)",
+                },
+              },
+              {
+                id: "simple-detection",
+                type: "detection",
+                timeRange: { startMs: 2000, endMs: 8000 },
+                isStatic: false,
+                data: {
+                  bbox: { x: 0.2, y: 0.2, width: 0.6, height: 0.6 },
+                  confidence: 0.85,
+                  class: "object",
+                },
+                style: {
+                  borderColor: "#ff0000",
+                  borderWidth: 2,
+                },
+              },
+            ],
+          };
+        } else if (templateType === "complex") {
+          templateData = {
+            version: "1.0",
+            alertId: "complex-demo",
+            videoMetadata: {
+              durationMs: 20000,
+              fps: 30,
+              resolution: { width: 1920, height: 1080 },
+              videoStartTimeMs: Date.now(),
+            },
+            annotations: [
+              {
+                id: "moving-box",
+                type: "detection",
+                timeRange: { startMs: 1000, endMs: 15000 },
+                isStatic: false,
+                data: {
+                  bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.3 },
+                  confidence: 0.92,
+                  class: "person",
+                  trackId: "track_001",
+                },
+                style: {
+                  borderColor: "#00ff00",
+                  borderWidth: 3,
+                  showLabel: true,
+                  labelPosition: "top-left",
+                },
+              },
+              {
+                id: "warning-text",
+                type: "text",
+                timeRange: { startMs: 5000, endMs: 12000 },
+                isStatic: true,
+                data: {
+                  text: "⚠️ ALERT: Motion Detected",
+                  position: { x: 0.5, y: 0.1 },
+                  anchor: "center",
+                },
+                style: {
+                  fontSize: 18,
+                  color: "#ffffff",
+                  backgroundColor: "rgba(255,165,0,0.9)",
+                  padding: { x: 15, y: 8 },
+                  borderRadius: 8,
+                },
+              },
+              {
+                id: "path-trail",
+                type: "trajectory",
+                timeRange: { startMs: 3000, endMs: 18000 },
+                isStatic: false,
+                data: {
+                  points: [
+                    { timeMs: 3000, x: 0.15, y: 0.25 },
+                    { timeMs: 6000, x: 0.35, y: 0.3 },
+                    { timeMs: 9000, x: 0.55, y: 0.25 },
+                    { timeMs: 12000, x: 0.75, y: 0.4 },
+                    { timeMs: 15000, x: 0.85, y: 0.3 },
+                  ],
+                  showHistory: true,
+                  historyLengthMs: 4000,
+                },
+                style: {
+                  lineColor: "#ffff00",
+                  lineWidth: 3,
+                  pointRadius: 4,
+                },
+              },
+            ],
+          };
+        }
+
+        currentAnnotationData = templateData;
+        updateJsonDisplay();
+        logStatus(
+          `📝 Loaded ${templateType} template with ${templateData.annotations.length} annotations`,
+          "success",
+        );
+      }
+
+      function repositionCanvas() {
+        if (!annotationDrawer) {
+          logStatus("No annotation system initialized", "error");
+          return;
+        }
+
+        const canvas = document.querySelector(".video-annotation-overlay");
+        const mockVideoDiv = document.getElementById("mockVideo");
+
+        console.log("=== REPOSITIONING CANVAS ===");
+        console.log(
+          "Mock video rect before:",
+          mockVideoDiv.getBoundingClientRect(),
+        );
+        console.log(
+          "Canvas position before:",
+          canvas
+            ? {
+                left: canvas.style.left,
+                top: canvas.style.top,
+                width: canvas.style.width,
+                height: canvas.style.height,
+              }
+            : "Canvas not found",
+        );
+
+        // Force reposition
+        annotationDrawer.positionCanvas();
+
+        console.log(
+          "Canvas position after:",
+          canvas
+            ? {
+                left: canvas.style.left,
+                top: canvas.style.top,
+                width: canvas.style.width,
+                height: canvas.style.height,
+                canvasWidth: canvas.width,
+                canvasHeight: canvas.height,
+              }
+            : "Canvas not found",
+        );
+
+        // Re-render if visible
+        if (annotationDrawer.isVisible) {
+          annotationDrawer.render(true);
+          logStatus("📐 Canvas repositioned and re-rendered!", "success");
+        } else {
+          logStatus("📐 Canvas repositioned!", "success");
+        }
+      }
+
+      function showPerformanceStats() {
+        const stats = {
+          repositionRequests: repositionCallCount,
+          renderCalls: renderCallCount,
+          efficiency:
+            repositionCallCount > 0
+              ? `${((renderCallCount / repositionCallCount) * 100).toFixed(1)}%`
+              : "N/A",
+          annotationsCount: annotationDrawer
+            ? annotationDrawer.annotations.length
+            : 0,
+          canvasVisible: annotationDrawer ? annotationDrawer.isVisible : false,
+        };
+
+        console.log("=== PERFORMANCE STATS ===");
+        console.log("Reposition requests:", stats.repositionRequests);
+        console.log("Actual renders executed:", stats.renderCalls);
+        console.log(
+          "Throttle efficiency:",
+          stats.efficiency,
+          "(renders/requests)",
+        );
+        console.log("Annotations loaded:", stats.annotationsCount);
+        console.log("Canvas visible:", stats.canvasVisible);
+        console.log("========================");
+
+        logStatus(
+          `📊 Performance: ${stats.repositionRequests} requests → ${stats.renderCalls} renders (${stats.efficiency} efficiency)`,
+          "info",
+        );
+      }
+
+      function initializeAnnotationSystem() {
+        try {
+          const mockVideoDiv = document.getElementById("mockVideo");
+          const videoContainer = document.querySelector(".video-container");
+
+          if (!mockVideoDiv) {
+            throw new Error("Mock video element not found");
+          }
+          if (!videoContainer) {
+            throw new Error("Video container not found");
+          }
+
+          console.log("Found DOM elements:", {
+            mockVideoDiv: !!mockVideoDiv,
+            videoContainer: !!videoContainer,
+          });
+
+          // Create a mock video element with required properties
+          mockVideoElement = {
+            currentTime: 0,
+            duration: 15,
+            src: "demo-video.mp4",
+            getBoundingClientRect: () => {
+              // Return the actual bounding rect of the mock video div
+              return mockVideoDiv.getBoundingClientRect();
+            },
+            addEventListener: () => {},
+            parentElement: videoContainer,
+          };
+
+          console.log("Created mock video element:", mockVideoElement);
+
+          // Initialize the annotation drawer
+          annotationDrawer = new VideoAnnotator(mockVideoElement, {
+            autoResize: true, // Enable automatic resizing
+            renderOnVideoTimeUpdate: false, // We'll control rendering manually
+            debugMode: true,
+            opacity: 0.9,
+          });
+
+          console.log("VideoAnnotator created:", annotationDrawer);
+
+          // Verify the drawer was created successfully
+          if (!annotationDrawer) {
+            throw new Error("Failed to create VideoAnnotator");
+          }
+          if (typeof annotationDrawer.loadAnnotations !== "function") {
+            throw new Error("VideoAnnotator missing loadAnnotations method");
+          }
+
+          // Canvas position update function with performance monitoring
+          const updateCanvasPositionBase = () => {
+            repositionCallCount++;
+            if (annotationDrawer && annotationDrawer.canvas) {
+              annotationDrawer.positionCanvas();
+              if (annotationDrawer.isVisible) {
+                renderCallCount++;
+                annotationDrawer.render(true);
+              }
             }
-        }
+          };
 
-        // Initialize
-        logStatus('Video Annotation System Demo Ready! 🚀');
-        
+          // Create throttled versions for different events
+          const updateCanvasPosition = createThrottle(
+            updateCanvasPositionBase,
+            16,
+          ); // ~60fps for scroll
+          const updateCanvasPositionResize = createThrottle(
+            updateCanvasPositionBase,
+            100,
+          ); // ~10fps for resize
+
+          // Handle window resize (less frequent updates)
+          window.addEventListener("resize", updateCanvasPositionResize);
+
+          // Handle window scroll (more frequent updates for smooth scrolling)
+          window.addEventListener("scroll", updateCanvasPosition, {
+            passive: true,
+          });
+
+          // Use ResizeObserver to watch for container size changes
+          if (window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(
+              updateCanvasPositionResize,
+            );
+
+            // Only observe elements that actually exist
+            if (mockVideoDiv) {
+              resizeObserver.observe(mockVideoDiv);
+              console.log("ResizeObserver: Watching mock video div");
+            }
+            if (videoContainer) {
+              resizeObserver.observe(videoContainer);
+              console.log("ResizeObserver: Watching video container");
+            }
+
+            if (!mockVideoDiv && !videoContainer) {
+              console.warn("ResizeObserver: No elements found to observe");
+            }
+          }
+
+          // Store cleanup function for later
+          window.cleanupAnnotationSystem = () => {
+            window.removeEventListener("resize", updateCanvasPositionResize);
+            window.removeEventListener("scroll", updateCanvasPosition);
+            console.log(
+              `Performance stats: ${repositionCallCount} reposition requests, ${renderCallCount} renders executed`,
+            );
+          };
+
+          // Debug: Check if canvas was created and positioned
+          setTimeout(() => {
+            const canvas = document.querySelector(".video-annotation-overlay");
+            if (canvas) {
+              console.log("Canvas found:", canvas);
+              console.log("Canvas styles:", canvas.style.cssText);
+              console.log("Canvas parent:", canvas.parentElement);
+              console.log(
+                "Mock video rect:",
+                mockVideoDiv.getBoundingClientRect(),
+              );
+              console.log(
+                "Canvas dimensions:",
+                `${canvas.width}x${canvas.height}`,
+              );
+
+              // Make sure canvas is visible and positioned correctly
+              canvas.style.border = "2px solid lime"; // Debug border
+              canvas.style.backgroundColor = "rgba(255,255,0,0.1)"; // Debug background
+            } else {
+              console.error("Canvas not found!");
+            }
+          }, 100);
+
+          logStatus("🎯 Annotation system initialized and ready!", "success");
+          return true;
+        } catch (error) {
+          console.error("Initialization error details:", error);
+          logStatus(
+            `Failed to initialize annotation system: ${error.message}`,
+            "error",
+          );
+          // Reset annotationDrawer to null on failure
+          annotationDrawer = null;
+          return false;
+        }
+      }
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        logStatus("Video Annotation System Demo Ready! 🚀");
+      });
+
+      // Initialize
+      logStatus("Video Annotation System Demo Ready! 🚀");
     </script>
-</body>
+  </body>
 </html>

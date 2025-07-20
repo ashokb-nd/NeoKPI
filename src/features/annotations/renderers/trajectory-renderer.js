@@ -1,24 +1,24 @@
-import { BaseRenderer } from './base-renderer.js';
+import { BaseRenderer } from "./base-renderer.js";
 
 // ========================================
 // TRAJECTORY RENDERER - Paths and motion trails
 // ========================================
 export class TrajectoryRenderer extends BaseRenderer {
   getType() {
-    return 'trajectory';
+    return "trajectory";
   }
 
   getDefaultOptions() {
     return {
-      defaultLineColor: '#ffff00',
+      defaultLineColor: "#ffff00",
       defaultLineWidth: 3,
       defaultPointRadius: 4,
       defaultShowDirection: true,
       defaultShowHistory: true,
       defaultHistoryLengthMs: 2000,
-      defaultInterpolation: 'linear',
+      defaultInterpolation: "linear",
       defaultTrailOpacity: 0.6,
-      defaultArrowSize: 8
+      defaultArrowSize: 8,
     };
   }
 
@@ -26,30 +26,48 @@ export class TrajectoryRenderer extends BaseRenderer {
     if (!this.isVisible(annotation, currentTimeMs)) return;
 
     const { data, style = {} } = annotation;
-    
-    if (!data.points || !Array.isArray(data.points) || data.points.length === 0) {
-      console.warn('Trajectory annotation missing points data');
+
+    if (
+      !data.points ||
+      !Array.isArray(data.points) ||
+      data.points.length === 0
+    ) {
+      console.warn("Trajectory annotation missing points data");
       return;
     }
 
     // Get current interpolated position
-    const interpolation = data.interpolation || this.options.defaultInterpolation;
-    const currentPosition = this.getInterpolatedPosition(data.points, currentTimeMs, interpolation);
-    
+    const interpolation =
+      data.interpolation || this.options.defaultInterpolation;
+    const currentPosition = this.getInterpolatedPosition(
+      data.points,
+      currentTimeMs,
+      interpolation,
+    );
+
     if (!currentPosition) return;
 
     // Convert all points to pixel coordinates
-    const pixelPoints = data.points.map(point => ({
+    const pixelPoints = data.points.map((point) => ({
       ...point,
-      ...this.normalizedToPixels(point, videoRect)
+      ...this.denormalizePoint(point, videoRect),
     }));
 
-    const currentPixelPosition = this.normalizedToPixels(currentPosition, videoRect);
+    const currentPixelPosition = this.denormalizePoint(
+      currentPosition,
+      videoRect,
+    );
 
     // Draw trajectory history if enabled
     if (data.showHistory !== false && this.options.defaultShowHistory) {
-      const historyLengthMs = data.historyLengthMs || this.options.defaultHistoryLengthMs;
-      this.drawTrajectoryHistory(pixelPoints, currentTimeMs, historyLengthMs, style);
+      const historyLengthMs =
+        data.historyLengthMs || this.options.defaultHistoryLengthMs;
+      this.drawTrajectoryHistory(
+        pixelPoints,
+        currentTimeMs,
+        historyLengthMs,
+        style,
+      );
     }
 
     // Draw the full path (faded)
@@ -60,7 +78,12 @@ export class TrajectoryRenderer extends BaseRenderer {
 
     // Draw direction arrow if enabled
     if (data.showDirection !== false && this.options.defaultShowDirection) {
-      this.drawDirectionArrow(pixelPoints, currentTimeMs, currentPixelPosition, style);
+      this.drawDirectionArrow(
+        pixelPoints,
+        currentTimeMs,
+        currentPixelPosition,
+        style,
+      );
     }
 
     // Draw future path (dotted) if enabled
@@ -83,11 +106,11 @@ export class TrajectoryRenderer extends BaseRenderer {
 
     this.ctx.beginPath();
     this.ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
-    
+
     for (let i = 1; i < pixelPoints.length; i++) {
       this.ctx.lineTo(pixelPoints[i].x, pixelPoints[i].y);
     }
-    
+
     this.ctx.stroke();
     this.ctx.restore();
   }
@@ -99,8 +122,9 @@ export class TrajectoryRenderer extends BaseRenderer {
 
     // Filter points within history window
     const historyStartTime = currentTimeMs - historyLengthMs;
-    const historyPoints = pixelPoints.filter(point => 
-      point.timeMs >= historyStartTime && point.timeMs <= currentTimeMs
+    const historyPoints = pixelPoints.filter(
+      (point) =>
+        point.timeMs >= historyStartTime && point.timeMs <= currentTimeMs,
     );
 
     if (historyPoints.length < 2) return;
@@ -111,14 +135,14 @@ export class TrajectoryRenderer extends BaseRenderer {
     for (let i = 1; i < historyPoints.length; i++) {
       const point1 = historyPoints[i - 1];
       const point2 = historyPoints[i];
-      
+
       // Calculate opacity based on time distance from current
       const timeFactor = (point2.timeMs - historyStartTime) / historyLengthMs;
       const segmentOpacity = trailOpacity * timeFactor;
-      
+
       this.ctx.strokeStyle = this.addOpacityToColor(lineColor, segmentOpacity);
       this.ctx.lineWidth = lineWidth * timeFactor;
-      
+
       this.ctx.beginPath();
       this.ctx.moveTo(point1.x, point1.y);
       this.ctx.lineTo(point2.x, point2.y);
@@ -129,7 +153,8 @@ export class TrajectoryRenderer extends BaseRenderer {
   }
 
   drawCurrentPosition(currentPosition, style) {
-    const pointColor = style.pointColor || style.lineColor || this.options.defaultLineColor;
+    const pointColor =
+      style.pointColor || style.lineColor || this.options.defaultLineColor;
     const pointRadius = style.pointRadius || this.options.defaultPointRadius;
     const glowColor = style.glowColor || pointColor;
 
@@ -144,13 +169,25 @@ export class TrajectoryRenderer extends BaseRenderer {
     // Draw main point
     this.ctx.fillStyle = pointColor;
     this.ctx.beginPath();
-    this.ctx.arc(currentPosition.x, currentPosition.y, pointRadius, 0, 2 * Math.PI);
+    this.ctx.arc(
+      currentPosition.x,
+      currentPosition.y,
+      pointRadius,
+      0,
+      2 * Math.PI,
+    );
     this.ctx.fill();
 
     // Draw inner highlight
-    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillStyle = "#ffffff";
     this.ctx.beginPath();
-    this.ctx.arc(currentPosition.x, currentPosition.y, pointRadius * 0.3, 0, 2 * Math.PI);
+    this.ctx.arc(
+      currentPosition.x,
+      currentPosition.y,
+      pointRadius * 0.3,
+      0,
+      2 * Math.PI,
+    );
     this.ctx.fill();
 
     this.ctx.restore();
@@ -159,11 +196,12 @@ export class TrajectoryRenderer extends BaseRenderer {
   drawDirectionArrow(pixelPoints, currentTimeMs, currentPosition, style) {
     // Find direction by looking at nearby points
     const direction = this.calculateDirection(pixelPoints, currentTimeMs);
-    
+
     if (!direction) return;
 
     const arrowSize = style.arrowSize || this.options.defaultArrowSize;
-    const arrowColor = style.arrowColor || style.lineColor || this.options.defaultLineColor;
+    const arrowColor =
+      style.arrowColor || style.lineColor || this.options.defaultLineColor;
 
     this.ctx.save();
     this.ctx.fillStyle = arrowColor;
@@ -174,17 +212,17 @@ export class TrajectoryRenderer extends BaseRenderer {
     const angle = Math.atan2(direction.y, direction.x);
     const arrowTip = {
       x: currentPosition.x + Math.cos(angle) * arrowSize,
-      y: currentPosition.y + Math.sin(angle) * arrowSize
+      y: currentPosition.y + Math.sin(angle) * arrowSize,
     };
 
     const arrowBase1 = {
       x: arrowTip.x - Math.cos(angle - Math.PI * 0.8) * arrowSize * 0.6,
-      y: arrowTip.y - Math.sin(angle - Math.PI * 0.8) * arrowSize * 0.6
+      y: arrowTip.y - Math.sin(angle - Math.PI * 0.8) * arrowSize * 0.6,
     };
 
     const arrowBase2 = {
       x: arrowTip.x - Math.cos(angle + Math.PI * 0.8) * arrowSize * 0.6,
-      y: arrowTip.y - Math.sin(angle + Math.PI * 0.8) * arrowSize * 0.6
+      y: arrowTip.y - Math.sin(angle + Math.PI * 0.8) * arrowSize * 0.6,
     };
 
     // Draw arrow
@@ -199,8 +237,10 @@ export class TrajectoryRenderer extends BaseRenderer {
   }
 
   drawFuturePath(pixelPoints, currentTimeMs, style) {
-    const futurePoints = pixelPoints.filter(point => point.timeMs > currentTimeMs);
-    
+    const futurePoints = pixelPoints.filter(
+      (point) => point.timeMs > currentTimeMs,
+    );
+
     if (futurePoints.length < 2) return;
 
     const lineColor = style.lineColor || this.options.defaultLineColor;
@@ -213,11 +253,11 @@ export class TrajectoryRenderer extends BaseRenderer {
 
     this.ctx.beginPath();
     this.ctx.moveTo(futurePoints[0].x, futurePoints[0].y);
-    
+
     for (let i = 1; i < futurePoints.length; i++) {
       this.ctx.lineTo(futurePoints[i].x, futurePoints[i].y);
     }
-    
+
     this.ctx.stroke();
     this.ctx.restore();
   }
@@ -225,8 +265,8 @@ export class TrajectoryRenderer extends BaseRenderer {
   calculateDirection(pixelPoints, currentTimeMs) {
     // Find two points around current time for direction calculation
     const windowMs = 500; // 500ms window
-    const nearbyPoints = pixelPoints.filter(point => 
-      Math.abs(point.timeMs - currentTimeMs) <= windowMs
+    const nearbyPoints = pixelPoints.filter(
+      (point) => Math.abs(point.timeMs - currentTimeMs) <= windowMs,
     );
 
     if (nearbyPoints.length < 2) return null;
@@ -247,14 +287,14 @@ export class TrajectoryRenderer extends BaseRenderer {
 
   addOpacityToColor(color, opacity) {
     // Simple color parsing - handles hex colors
-    if (color.startsWith('#')) {
+    if (color.startsWith("#")) {
       const hex = color.slice(1);
       const r = parseInt(hex.substr(0, 2), 16);
       const g = parseInt(hex.substr(2, 2), 16);
       const b = parseInt(hex.substr(4, 2), 16);
       return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     }
-    
+
     // If already rgba/rgb, assume it's correctly formatted
     return color;
   }

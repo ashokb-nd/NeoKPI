@@ -1,162 +1,214 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UIManager Test Page</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        
-        .test-controls {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .test-button {
-            background: #007acc;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-            font-size: 14px;
-        }
-        
-        .test-button:hover {
-            background: #005a9e;
-        }
-        
-        .test-input {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin: 5px;
-            font-size: 14px;
-        }
-        
-        .test-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        
-        .status {
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .status.info { background: #e3f2fd; color: #1976d2; }
-        .status.success { background: #e8f5e8; color: #2e7d32; }
-        .status.error { background: #ffebee; color: #c62828; }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .test-controls {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .test-button {
+        background: #007acc;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+        font-size: 14px;
+      }
+
+      .test-button:hover {
+        background: #005a9e;
+      }
+
+      .test-input {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 5px;
+        font-size: 14px;
+      }
+
+      .test-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+
+      .status.info {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+      .status.success {
+        background: #e8f5e8;
+        color: #2e7d32;
+      }
+      .status.error {
+        background: #ffebee;
+        color: #c62828;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="test-controls">
-        <h2>UIManager Test Controls</h2>
-        
-        <div>
-            <input type="text" id="alert-input" class="test-input" placeholder="Enter Alert ID" value="TEST-ALERT-123">
-            <button class="test-button" onclick="testLoadAlert()">Test Load Alert</button>
-        </div>
-        
-        <div>
-            <input type="text" id="notification-input" class="test-input" placeholder="Notification message" value="Test notification message">
-            <select id="notification-type" class="test-input">
-                <option value="info">Info</option>
-                <option value="success">Success</option>
-                <option value="warning">Warning</option>
-                <option value="error">Error</option>
-            </select>
-            <button class="test-button" onclick="testNotification()">Test Notification</button>
-        </div>
-        
-        <div>
-            <input type="text" id="bulk-status-input" class="test-input" placeholder="Bulk status message" value="Processing 5/10 alerts...">
-            <button class="test-button" onclick="testBulkStatus()">Test Bulk Status</button>
-        </div>
-        
-        <div>
-            <button class="test-button" onclick="testNotepadToggle()">Toggle Notepad</button>
-            <button class="test-button" onclick="testLoadingSpinner()">Test Loading Spinner</button>
-            <button class="test-button" onclick="testFireworks()">🎆 Test Fireworks</button>
-        </div>
-        
-        <div>
-            <button class="test-button" onclick="testBulkDialog()">Test Bulk Dialog</button>
-            <button class="test-button" onclick="testSettingsModal()">Test Settings Modal</button>
-            <button class="test-button" onclick="testImportDialog()">Test Import Dialog</button>
-        </div>
+      <h2>UIManager Test Controls</h2>
+
+      <div>
+        <input
+          type="text"
+          id="alert-input"
+          class="test-input"
+          placeholder="Enter Alert ID"
+          value="TEST-ALERT-123"
+        />
+        <button class="test-button" onclick="testLoadAlert()">
+          Test Load Alert
+        </button>
+      </div>
+
+      <div>
+        <input
+          type="text"
+          id="notification-input"
+          class="test-input"
+          placeholder="Notification message"
+          value="Test notification message"
+        />
+        <select id="notification-type" class="test-input">
+          <option value="info">Info</option>
+          <option value="success">Success</option>
+          <option value="warning">Warning</option>
+          <option value="error">Error</option>
+        </select>
+        <button class="test-button" onclick="testNotification()">
+          Test Notification
+        </button>
+      </div>
+
+      <div>
+        <input
+          type="text"
+          id="bulk-status-input"
+          class="test-input"
+          placeholder="Bulk status message"
+          value="Processing 5/10 alerts..."
+        />
+        <button class="test-button" onclick="testBulkStatus()">
+          Test Bulk Status
+        </button>
+      </div>
+
+      <div>
+        <button class="test-button" onclick="testNotepadToggle()">
+          Toggle Notepad
+        </button>
+        <button class="test-button" onclick="testLoadingSpinner()">
+          Test Loading Spinner
+        </button>
+        <button class="test-button" onclick="testFireworks()">
+          🎆 Test Fireworks
+        </button>
+      </div>
+
+      <div>
+        <button class="test-button" onclick="testBulkDialog()">
+          Test Bulk Dialog
+        </button>
+        <button class="test-button" onclick="testSettingsModal()">
+          Test Settings Modal
+        </button>
+        <button class="test-button" onclick="testImportDialog()">
+          Test Import Dialog
+        </button>
+      </div>
     </div>
-    
+
     <div class="test-section">
-        <h2>Mock Dash Input Elements</h2>
-        <p>These simulate the Dash application inputs that UIManager expects:</p>
-        <input type="text" id="_dash-app-input" class="test-input" placeholder="Dash Alert Input" style="width: 300px;">
-        <button id="_dash-app-button" class="test-button">Submit Alert</button>
-        
-        <div style="margin-top: 10px;">
-            <select id="alert-type-dropdown" class="test-input">
-                <option value="">Select Alert Type</option>
-                <option value="critical">Critical</option>
-                <option value="warning">Warning</option>
-                <option value="info">Info</option>
-            </select>
-        </div>
+      <h2>Mock Dash Input Elements</h2>
+      <p>These simulate the Dash application inputs that UIManager expects:</p>
+      <input
+        type="text"
+        id="_dash-app-input"
+        class="test-input"
+        placeholder="Dash Alert Input"
+        style="width: 300px"
+      />
+      <button id="_dash-app-button" class="test-button">Submit Alert</button>
+
+      <div style="margin-top: 10px">
+        <select id="alert-type-dropdown" class="test-input">
+          <option value="">Select Alert Type</option>
+          <option value="critical">Critical</option>
+          <option value="warning">Warning</option>
+          <option value="info">Info</option>
+        </select>
+      </div>
     </div>
-    
+
     <div id="status-log" class="test-section">
-        <h2>Test Status Log</h2>
-        <div id="log-content"></div>
+      <h2>Test Status Log</h2>
+      <div id="log-content"></div>
     </div>
 
     <!-- Mock dependencies and configurations -->
     <script type="module">
-        // Mock CONFIG
-        window.CONFIG = {
-            UI: {
-                PANEL_DEFAULT_HEIGHT: 400,
-                PANEL_MIN_HEIGHT: 200,
-                PANEL_MAX_HEIGHT_RATIO: 0.8,
-                TAGS_DEFAULT_WIDTH: 300,
-                TAGS_MIN_WIDTH: 200
-            },
-            STORAGE_KEYS: {
-                PANEL_HEIGHT: 'panel_height',
-                PANEL_WIDTH: 'panel_width'
-            },
-            TAGS: {
-                HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g
-            }
-        };
+      // Mock CONFIG
+      window.CONFIG = {
+        UI: {
+          PANEL_DEFAULT_HEIGHT: 400,
+          PANEL_MIN_HEIGHT: 200,
+          PANEL_MAX_HEIGHT_RATIO: 0.8,
+          TAGS_DEFAULT_WIDTH: 300,
+          TAGS_MIN_WIDTH: 200,
+        },
+        STORAGE_KEYS: {
+          PANEL_HEIGHT: "panel_height",
+          PANEL_WIDTH: "panel_width",
+        },
+        TAGS: {
+          HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g,
+        },
+      };
 
-        // Mock Utils
-        window.Utils = {
-            log: (message) => {
-                console.log('[Mock Utils]', message);
-                logToStatus('Utils: ' + message, 'info');
-            },
-            
-            createButton: (text, color, action) => {
-                const button = document.createElement('button');
-                button.textContent = text;
-                button.style.cssText = `
+      // Mock Utils
+      window.Utils = {
+        log: (message) => {
+          console.log("[Mock Utils]", message);
+          logToStatus("Utils: " + message, "info");
+        },
+
+        createButton: (text, color, action) => {
+          const button = document.createElement("button");
+          button.textContent = text;
+          button.style.cssText = `
                     background: ${color};
                     color: white;
                     border: none;
@@ -166,180 +218,190 @@
                     font-size: 12px;
                     margin: 2px;
                 `;
-                button.onclick = action;
-                return button;
-            },
-            
-            getRequiredElements: () => ({
-                input: document.getElementById('_dash-app-input'),
-                button: document.getElementById('_dash-app-button')
-            }),
-            
-            isNotepadFocused: () => {
-                const activeEl = document.activeElement;
-                return activeEl && (
-                    activeEl.id === 'notepad-textarea' || 
-                    activeEl.closest('#notepad-panel')
-                );
-            },
-            
-            getCurrentVideoTimestamp: () => {
-                return `@${new Date().toLocaleTimeString()}`;
-            },
-            
-            getCurrentAlertType: () => {
-                const dropdown = document.getElementById('alert-type-dropdown');
-                return dropdown ? dropdown.value : null;
-            }
-        };
+          button.onclick = action;
+          return button;
+        },
 
-        // Mock AppState
-        window.AppState = {
-            notepad: {
-                isOpen: false,
-                currentAlertId: null
-            },
-            
-            toggleNotepad: () => {
-                window.AppState.notepad.isOpen = !window.AppState.notepad.isOpen;
-                logToStatus(`Notepad ${window.AppState.notepad.isOpen ? 'opened' : 'closed'}`, 'info');
-            },
-            
-            setCurrentAlert: (alertId) => {
-                window.AppState.notepad.currentAlertId = alertId;
-                logToStatus(`Current alert set to: ${alertId}`, 'info');
-            }
-        };
+        getRequiredElements: () => ({
+          input: document.getElementById("_dash-app-input"),
+          button: document.getElementById("_dash-app-button"),
+        }),
 
-        // Mock BulkProcessor
-        window.BulkProcessor = {
-            state: { isProcessing: false },
-            clearBulkAlerts: () => {
-                logToStatus('Bulk alerts cleared (mock)', 'success');
-            }
-        };
+        isNotepadFocused: () => {
+          const activeEl = document.activeElement;
+          return (
+            activeEl &&
+            (activeEl.id === "notepad-textarea" ||
+              activeEl.closest("#notepad-panel"))
+          );
+        },
 
-        // Mock Storage Manager
-        window.StorageManager = {
-            data: {},
-            get: (key) => window.StorageManager.data[key],
-            set: (key, value) => {
-                window.StorageManager.data[key] = value;
-                logToStatus(`Stored ${key}: ${value}`, 'info');
-            }
-        };
+        getCurrentVideoTimestamp: () => {
+          return `@${new Date().toLocaleTimeString()}`;
+        },
 
-        // Mock NotesManager
-        window.NotesManager = {
-            getAllNotes: async () => ({
-                'TEST-ALERT-123': {
-                    text: 'This is a test note with #hashtag',
-                    alertType: 'critical',
-                    tags: ['manual-tag']
-                }
-            }),
-            
-            getNote: async (alertId) => {
-                const notes = await window.NotesManager.getAllNotes();
-                return notes[alertId]?.text || '';
-            },
-            
-            getTags: async (alertId) => {
-                const notes = await window.NotesManager.getAllNotes();
-                return notes[alertId]?.tags || [];
-            },
-            
-            saveNote: async (alertId, text, tags) => {
-                logToStatus(`Saved note for ${alertId}: "${text.substring(0, 50)}..."`, 'success');
-            },
-            
-            clearAllNotes: async () => {
-                logToStatus('All notes cleared (mock)', 'success');
-            },
-            
-            exportToCsv: async () => {
-                logToStatus('CSV export completed (mock)', 'success');
-            }
-        };
+        getCurrentAlertType: () => {
+          const dropdown = document.getElementById("alert-type-dropdown");
+          return dropdown ? dropdown.value : null;
+        },
+      };
 
-        // Mock MetadataManager
-        window.MetadataManager = {
-            downloadCurrentMetadata: () => {
-                logToStatus('Metadata downloaded (mock)', 'success');
-            }
-        };
+      // Mock AppState
+      window.AppState = {
+        notepad: {
+          isOpen: false,
+          currentAlertId: null,
+        },
 
-        // Mock TagManager
-        window.TagManager = {
-            extractHashtagsFromText: (text) => {
-                if (!text) return [];
-                const hashtags = [];
-                const regex = /(?:^|\s)#([a-zA-Z0-9_-]+)/g;
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    hashtags.push(match[1].toLowerCase());
-                }
-                return hashtags;
-            }
-        };
+        toggleNotepad: () => {
+          window.AppState.notepad.isOpen = !window.AppState.notepad.isOpen;
+          logToStatus(
+            `Notepad ${window.AppState.notepad.isOpen ? "opened" : "closed"}`,
+            "info",
+          );
+        },
 
-        // Mock FilterManager
-        window.FilterManager = {
-            state: {
-                selectedTags: new Set(),
-                excludeHashtags: false,
-                logic: 'OR',
-                searchText: ''
-            },
-            
-            updateFilter: (updates) => {
-                Object.assign(window.FilterManager.state, updates);
-                logToStatus('Filter updated', 'info');
-            },
-            
-            clearAll: () => {
-                window.FilterManager.state.selectedTags.clear();
-                window.FilterManager.state.searchText = '';
-                logToStatus('Filter cleared', 'info');
-            },
-            
-            toggleTag: (tag) => {
-                if (window.FilterManager.state.selectedTags.has(tag)) {
-                    window.FilterManager.state.selectedTags.delete(tag);
-                } else {
-                    window.FilterManager.state.selectedTags.add(tag);
-                }
-                logToStatus(`Toggled tag: ${tag}`, 'info');
-            }
-        };
+        setCurrentAlert: (alertId) => {
+          window.AppState.notepad.currentAlertId = alertId;
+          logToStatus(`Current alert set to: ${alertId}`, "info");
+        },
+      };
 
-        // Mock SettingsManager
-        window.SettingsManager = {
-            settings: {
-                presignerUrl: 'https://your-presigner-server.com',
-                autoSaveNotes: true,
-                showKeyboardHints: true,
-                enableFireworks: true
-            },
-            
-            getSettings: () => {
-                return { ...window.SettingsManager.settings };
-            },
-            
-            updateSettings: (newSettings) => {
-                Object.assign(window.SettingsManager.settings, newSettings);
-                logToStatus('Settings updated: ' + JSON.stringify(newSettings), 'success');
-            },
-            
-            getSetting: (key) => {
-                return window.SettingsManager.settings[key];
-            }
-        };
+      // Mock BulkProcessor
+      window.BulkProcessor = {
+        state: { isProcessing: false },
+        clearBulkAlerts: () => {
+          logToStatus("Bulk alerts cleared (mock)", "success");
+        },
+      };
 
-        // Mock KeyboardHelpGenerator
-        window.KeyboardHelpGenerator = {
-            generateHelpContent: () => {
-                return `
+      // Mock Storage Manager
+      window.StorageManager = {
+        data: {},
+        get: (key) => window.StorageManager.data[key],
+        set: (key, value) => {
+          window.StorageManager.data[key] = value;
+          logToStatus(`Stored ${key}: ${value}`, "info");
+        },
+      };
+
+      // Mock NotesManager
+      window.NotesManager = {
+        getAllNotes: async () => ({
+          "TEST-ALERT-123": {
+            text: "This is a test note with #hashtag",
+            alertType: "critical",
+            tags: ["manual-tag"],
+          },
+        }),
+
+        getNote: async (alertId) => {
+          const notes = await window.NotesManager.getAllNotes();
+          return notes[alertId]?.text || "";
+        },
+
+        getTags: async (alertId) => {
+          const notes = await window.NotesManager.getAllNotes();
+          return notes[alertId]?.tags || [];
+        },
+
+        saveNote: async (alertId, text, tags) => {
+          logToStatus(
+            `Saved note for ${alertId}: "${text.substring(0, 50)}..."`,
+            "success",
+          );
+        },
+
+        clearAllNotes: async () => {
+          logToStatus("All notes cleared (mock)", "success");
+        },
+
+        exportToCsv: async () => {
+          logToStatus("CSV export completed (mock)", "success");
+        },
+      };
+
+      // Mock MetadataManager
+      window.MetadataManager = {
+        downloadCurrentMetadata: () => {
+          logToStatus("Metadata downloaded (mock)", "success");
+        },
+      };
+
+      // Mock TagManager
+      window.TagManager = {
+        extractHashtagsFromText: (text) => {
+          if (!text) return [];
+          const hashtags = [];
+          const regex = /(?:^|\s)#([a-zA-Z0-9_-]+)/g;
+          let match;
+          while ((match = regex.exec(text)) !== null) {
+            hashtags.push(match[1].toLowerCase());
+          }
+          return hashtags;
+        },
+      };
+
+      // Mock FilterManager
+      window.FilterManager = {
+        state: {
+          selectedTags: new Set(),
+          excludeHashtags: false,
+          logic: "OR",
+          searchText: "",
+        },
+
+        updateFilter: (updates) => {
+          Object.assign(window.FilterManager.state, updates);
+          logToStatus("Filter updated", "info");
+        },
+
+        clearAll: () => {
+          window.FilterManager.state.selectedTags.clear();
+          window.FilterManager.state.searchText = "";
+          logToStatus("Filter cleared", "info");
+        },
+
+        toggleTag: (tag) => {
+          if (window.FilterManager.state.selectedTags.has(tag)) {
+            window.FilterManager.state.selectedTags.delete(tag);
+          } else {
+            window.FilterManager.state.selectedTags.add(tag);
+          }
+          logToStatus(`Toggled tag: ${tag}`, "info");
+        },
+      };
+
+      // Mock SettingsManager
+      window.SettingsManager = {
+        settings: {
+          presignerUrl: "https://your-presigner-server.com",
+          autoSaveNotes: true,
+          showKeyboardHints: true,
+          enableFireworks: true,
+        },
+
+        getSettings: () => {
+          return { ...window.SettingsManager.settings };
+        },
+
+        updateSettings: (newSettings) => {
+          Object.assign(window.SettingsManager.settings, newSettings);
+          logToStatus(
+            "Settings updated: " + JSON.stringify(newSettings),
+            "success",
+          );
+        },
+
+        getSetting: (key) => {
+          return window.SettingsManager.settings[key];
+        },
+      };
+
+      // Mock KeyboardHelpGenerator
+      window.KeyboardHelpGenerator = {
+        generateHelpContent: () => {
+          return `
                     <div style="color: #333; line-height: 1.6;">
                         <h4>🎯 Main Controls</h4>
                         <p><kbd>Ctrl+Shift+N</kbd> - Toggle Notepad</p>
@@ -355,140 +417,149 @@
                         <p><kbd>Ctrl+I</kbd> - Import CSV</p>
                     </div>
                 `;
-            }
-        };
+        },
+      };
 
-        // Helper function to log status
-        function logToStatus(message, type = 'info') {
-            const logContent = document.getElementById('log-content');
-            const logEntry = document.createElement('div');
-            logEntry.className = `status ${type}`;
-            logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            logContent.appendChild(logEntry);
-            logContent.scrollTop = logContent.scrollHeight;
+      // Helper function to log status
+      function logToStatus(message, type = "info") {
+        const logContent = document.getElementById("log-content");
+        const logEntry = document.createElement("div");
+        logEntry.className = `status ${type}`;
+        logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+      }
+
+      // Now import and initialize all UI modules
+      const loadUIManager = async () => {
+        try {
+          // Import all the UI modules
+          const { UIManager, NotepadUI } = await import(
+            "./src/ui/ui-manager.js"
+          );
+          const { TagsUI } = await import("./src/ui/tags-ui.js");
+          const { ModalManager } = await import("./src/ui/modal-manager.js");
+          const { FireworkShow } = await import("./src/ui/fireworks.js");
+
+          // Make them globally available for testing
+          window.UIManager = UIManager;
+          window.NotepadUI = NotepadUI;
+          window.TagsUI = TagsUI;
+          window.ModalManager = ModalManager;
+          window.SettingsModal = {
+            show: () => ModalManager.showSettingsDialog(),
+          };
+          window.FireworkShow = FireworkShow;
+
+          logToStatus("All UI modules loaded successfully!", "success");
+
+          // Set up mock Dash button listener
+          document
+            .getElementById("_dash-app-button")
+            .addEventListener("click", () => {
+              const input = document.getElementById("_dash-app-input");
+              logToStatus(
+                `Dash button clicked with value: ${input.value}`,
+                "info",
+              );
+            });
+        } catch (error) {
+          logToStatus(`Error loading modules: ${error.message}`, "error");
+          console.error("Module load error:", error);
         }
+      };
 
-        // Now import and initialize all UI modules
-        const loadUIManager = async () => {
-            try {
-                // Import all the UI modules
-                const { UIManager, NotepadUI } = await import('./src/ui/ui-manager.js');
-                const { TagsUI } = await import('./src/ui/tags-ui.js');
-                const { ModalManager } = await import('./src/ui/modal-manager.js');
-                const { FireworkShow } = await import('./src/ui/fireworks.js');
+      // Global test functions
+      window.testLoadAlert = () => {
+        const alertId = document.getElementById("alert-input").value;
+        const elements = window.Utils.getRequiredElements();
+        window.UIManager.loadAlertId(alertId, elements);
+      };
 
-                // Make them globally available for testing
-                window.UIManager = UIManager;
-                window.NotepadUI = NotepadUI;
-                window.TagsUI = TagsUI;
-                window.ModalManager = ModalManager;
-                window.SettingsModal = {
-                    show: () => ModalManager.showSettingsDialog()
-                };
-                window.FireworkShow = FireworkShow;
-                
-                logToStatus('All UI modules loaded successfully!', 'success');
-                
-                // Set up mock Dash button listener
-                document.getElementById('_dash-app-button').addEventListener('click', () => {
-                    const input = document.getElementById('_dash-app-input');
-                    logToStatus(`Dash button clicked with value: ${input.value}`, 'info');
-                });
-                
-            } catch (error) {
-                logToStatus(`Error loading modules: ${error.message}`, 'error');
-                console.error('Module load error:', error);
-            }
-        };
+      window.testNotification = () => {
+        const message = document.getElementById("notification-input").value;
+        const type = document.getElementById("notification-type").value;
+        window.UIManager.showNotification(message, type);
+      };
 
-        // Global test functions
-        window.testLoadAlert = () => {
-            const alertId = document.getElementById('alert-input').value;
-            const elements = window.Utils.getRequiredElements();
-            window.UIManager.loadAlertId(alertId, elements);
-        };
+      window.testBulkStatus = () => {
+        const message = document.getElementById("bulk-status-input").value;
+        window.UIManager.showBulkStatus(message);
+      };
 
-        window.testNotification = () => {
-            const message = document.getElementById('notification-input').value;
-            const type = document.getElementById('notification-type').value;
-            window.UIManager.showNotification(message, type);
-        };
+      window.testNotepadToggle = () => {
+        if (window.NotepadUI) {
+          window.NotepadUI.toggle();
+        } else {
+          logToStatus("NotepadUI not loaded yet", "error");
+        }
+      };
 
-        window.testBulkStatus = () => {
-            const message = document.getElementById('bulk-status-input').value;
-            window.UIManager.showBulkStatus(message);
-        };
+      window.testLoadingSpinner = () => {
+        const spinner = window.UIManager.createLoadingSpinner();
+        const testSection = document.getElementById("status-log");
+        testSection.appendChild(spinner);
 
-        window.testNotepadToggle = () => {
-            if (window.NotepadUI) {
-                window.NotepadUI.toggle();
-            } else {
-                logToStatus('NotepadUI not loaded yet', 'error');
-            }
-        };
+        setTimeout(() => {
+          if (spinner.parentNode) {
+            spinner.parentNode.removeChild(spinner);
+          }
+          logToStatus("Loading spinner removed", "info");
+        }, 3000);
 
-        window.testLoadingSpinner = () => {
-            const spinner = window.UIManager.createLoadingSpinner();
-            const testSection = document.getElementById('status-log');
-            testSection.appendChild(spinner);
-            
-            setTimeout(() => {
-                if (spinner.parentNode) {
-                    spinner.parentNode.removeChild(spinner);
-                }
-                logToStatus('Loading spinner removed', 'info');
-            }, 3000);
-            
-            logToStatus('Loading spinner added for 3 seconds', 'info');
-        };
+        logToStatus("Loading spinner added for 3 seconds", "info");
+      };
 
-        window.testBulkDialog = () => {
-            if (window.ModalManager) {
-                window.ModalManager.showBulkDialog();
-                logToStatus('Bulk dialog opened', 'info');
-            } else {
-                logToStatus('ModalManager not loaded yet', 'error');
-            }
-        };
+      window.testBulkDialog = () => {
+        if (window.ModalManager) {
+          window.ModalManager.showBulkDialog();
+          logToStatus("Bulk dialog opened", "info");
+        } else {
+          logToStatus("ModalManager not loaded yet", "error");
+        }
+      };
 
-        window.testSettingsModal = () => {
-            try {
-                if (window.SettingsModal) {
-                    console.log('Testing SettingsModal...');
-                    console.log('ModalManager available:', !!window.ModalManager);
-                    console.log('ModalManager.showSettingsDialog:', typeof window.ModalManager?.showSettingsDialog);
-                    window.SettingsModal.show();
-                    logToStatus('Settings modal opened', 'info');
-                } else {
-                    logToStatus('SettingsModal not loaded yet', 'error');
-                }
-            } catch (err) {
-                console.error('Error opening settings modal:', err);
-                logToStatus(`Settings modal error: ${err.message}`, 'error');
-            }
-        };
+      window.testSettingsModal = () => {
+        try {
+          if (window.SettingsModal) {
+            console.log("Testing SettingsModal...");
+            console.log("ModalManager available:", !!window.ModalManager);
+            console.log(
+              "ModalManager.showSettingsDialog:",
+              typeof window.ModalManager?.showSettingsDialog,
+            );
+            window.SettingsModal.show();
+            logToStatus("Settings modal opened", "info");
+          } else {
+            logToStatus("SettingsModal not loaded yet", "error");
+          }
+        } catch (err) {
+          console.error("Error opening settings modal:", err);
+          logToStatus(`Settings modal error: ${err.message}`, "error");
+        }
+      };
 
-        window.testImportDialog = () => {
-            if (window.ModalManager) {
-                window.ModalManager.showImportDialog();
-                logToStatus('Import dialog opened', 'info');
-            } else {
-                logToStatus('ModalManager not loaded yet', 'error');
-            }
-        };
+      window.testImportDialog = () => {
+        if (window.ModalManager) {
+          window.ModalManager.showImportDialog();
+          logToStatus("Import dialog opened", "info");
+        } else {
+          logToStatus("ModalManager not loaded yet", "error");
+        }
+      };
 
-        window.testFireworks = () => {
-            if (window.FireworkShow) {
-                const fireworksInstance = new window.FireworkShow();
-                fireworksInstance.init();
-                logToStatus('🎆 Fireworks display started!', 'success');
-            } else {
-                logToStatus('FireworkShow not loaded yet', 'error');
-            }
-        };
+      window.testFireworks = () => {
+        if (window.FireworkShow) {
+          const fireworksInstance = new window.FireworkShow();
+          fireworksInstance.init();
+          logToStatus("🎆 Fireworks display started!", "success");
+        } else {
+          logToStatus("FireworkShow not loaded yet", "error");
+        }
+      };
 
-        // Load UIManager when page loads
-        loadUIManager();
+      // Load UIManager when page loads
+      loadUIManager();
     </script>
-</body>
+  </body>
 </html>

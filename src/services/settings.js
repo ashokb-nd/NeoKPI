@@ -1,14 +1,14 @@
-import { CONFIG } from '../config/constants.js';
-import { StorageManager } from '../utils/storage.js';
-import { Utils } from '../utils/utils.js';
+import { CONFIG } from "../config/constants.js";
+import { StorageManager } from "../utils/storage.js";
+import { Utils } from "../utils/utils.js";
 
 export const SettingsManager = {
   // Default settings
   defaultSettings: {
-    presignerUrl: 'http://localhost:8080',
+    presignerUrl: "http://localhost:8080",
     autoSaveNotes: true,
     showKeyboardHints: true,
-    enableFireworks: true
+    enableFireworks: true,
   },
 
   getSettings() {
@@ -24,23 +24,23 @@ export const SettingsManager = {
   setSetting(key, value) {
     const settings = this.getSettings();
     settings[key] = value;
-    
+
     // Update CONFIG if it's the presigner URL
-    if (key === 'presignerUrl') {
+    if (key === "presignerUrl") {
       CONFIG.S3_PRESIGNER.LOCAL_SERVER_URL = value;
     }
-    
+
     return StorageManager.set(CONFIG.STORAGE_KEYS.SETTINGS, settings);
   },
 
   setSettings(newSettings) {
     const settings = { ...this.getSettings(), ...newSettings };
-    
+
     // Update CONFIG if presigner URL changed
     if (newSettings.presignerUrl) {
       CONFIG.S3_PRESIGNER.LOCAL_SERVER_URL = newSettings.presignerUrl;
     }
-    
+
     return StorageManager.set(CONFIG.STORAGE_KEYS.SETTINGS, settings);
   },
 
@@ -53,12 +53,12 @@ export const SettingsManager = {
   // Initialize settings on startup
   init() {
     const settings = this.getSettings();
-    
+
     // Apply settings to CONFIG
     if (settings.presignerUrl) {
       CONFIG.S3_PRESIGNER.LOCAL_SERVER_URL = settings.presignerUrl;
     }
-    
-    Utils.log('Settings manager initialized');
-  }
+
+    Utils.log("Settings manager initialized");
+  },
 };

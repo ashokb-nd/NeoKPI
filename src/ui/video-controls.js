@@ -1,5 +1,5 @@
-import { CONFIG } from '../config/constants.js';
-import { Utils } from '../utils/utils.js';
+import { CONFIG } from "../config/constants.js";
+import { Utils } from "../utils/utils.js";
 
 export const VideoControlsManager = {
   init() {
@@ -9,10 +9,10 @@ export const VideoControlsManager = {
   },
 
   injectStyles() {
-    if (document.querySelector('#video-controls-styles')) return;
-    
-    const style = document.createElement('style');
-    style.id = 'video-controls-styles';
+    if (document.querySelector("#video-controls-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "video-controls-styles";
     style.textContent = this.getVideoControlsCSS();
     document.head.appendChild(style);
   },
@@ -157,156 +157,159 @@ export const VideoControlsManager = {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const videos = node.tagName === 'VIDEO' ? [node] : node.querySelectorAll('video');
-            videos.forEach(video => this.enhanceVideo(video));
+            const videos =
+              node.tagName === "VIDEO"
+                ? [node]
+                : node.querySelectorAll("video");
+            videos.forEach((video) => this.enhanceVideo(video));
           }
         });
       });
     });
-    
+
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   },
 
   enhanceExistingVideos() {
     // Enhance all existing videos on the page
-    const videos = document.querySelectorAll('video');
-    videos.forEach(video => this.enhanceVideo(video));
+    const videos = document.querySelectorAll("video");
+    videos.forEach((video) => this.enhanceVideo(video));
   },
 
   enhanceVideo(video) {
     if (video.dataset.controlsEnhanced) return;
-    
+
     const container = video.parentElement;
     if (!container) return;
-    
+
     // Mark as enhanced
-    video.dataset.controlsEnhanced = 'true';
-    container.classList.add('video-controls-enhanced');
-    
+    video.dataset.controlsEnhanced = "true";
+    container.classList.add("video-controls-enhanced");
+
     // Remove native controls
     video.controls = false;
-    
+
     // Create custom controls
     const controlsPanel = this.createCustomControls(video);
     container.appendChild(controlsPanel);
-    
+
     // Add keyboard shortcuts hint
     this.addKeyboardHint(container);
-    
+
     // Setup enhanced keyboard controls
     this.setupKeyboardControls(video);
-    
+
     // Setup progress and volume updates
     this.setupVideoEvents(video, controlsPanel);
-    
-    Utils.log(`Enhanced video controls for video: ${video.src || 'unknown'}`);
+
+    Utils.log(`Enhanced video controls for video: ${video.src || "unknown"}`);
   },
 
   createCustomControls(video) {
-    const controls = document.createElement('div');
-    controls.className = 'custom-video-controls';
-    
+    const controls = document.createElement("div");
+    controls.className = "custom-video-controls";
+
     const leftSection = this.createLeftSection(video);
     const progressContainer = this.createProgressContainer(video);
     const rightSection = this.createRightSection(video);
-    
+
     controls.appendChild(leftSection);
     controls.appendChild(progressContainer);
     controls.appendChild(rightSection);
-    
+
     return controls;
   },
 
   createLeftSection(video) {
-    const leftSection = document.createElement('div');
-    leftSection.className = 'custom-video-controls-left';
-    
+    const leftSection = document.createElement("div");
+    leftSection.className = "custom-video-controls-left";
+
     // Play/Pause button
-    const playButton = document.createElement('button');
-    playButton.className = 'video-control-button';
-    playButton.innerHTML = '▶';
-    playButton.addEventListener('click', () => {
+    const playButton = document.createElement("button");
+    playButton.className = "video-control-button";
+    playButton.innerHTML = "▶";
+    playButton.addEventListener("click", () => {
       if (video.paused) {
         video.play();
       } else {
         video.pause();
       }
     });
-    
+
     // Time display
-    const timeDisplay = document.createElement('span');
-    timeDisplay.className = 'video-time-display';
-    timeDisplay.textContent = '0:00 / 0:00';
-    
+    const timeDisplay = document.createElement("span");
+    timeDisplay.className = "video-time-display";
+    timeDisplay.textContent = "0:00 / 0:00";
+
     leftSection.appendChild(playButton);
     leftSection.appendChild(timeDisplay);
-    
+
     return leftSection;
   },
 
   createProgressContainer(video) {
-    const progressContainer = document.createElement('div');
-    progressContainer.className = 'video-progress-container';
-    
-    const progressBar = document.createElement('div');
-    progressBar.className = 'video-progress-bar';
-    
-    const progressFill = document.createElement('div');
-    progressFill.className = 'video-progress-fill';
-    
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "video-progress-container";
+
+    const progressBar = document.createElement("div");
+    progressBar.className = "video-progress-bar";
+
+    const progressFill = document.createElement("div");
+    progressFill.className = "video-progress-fill";
+
     progressBar.appendChild(progressFill);
     progressContainer.appendChild(progressBar);
-    
+
     // Progress bar interaction
-    progressBar.addEventListener('click', (e) => {
+    progressBar.addEventListener("click", (e) => {
       const rect = progressBar.getBoundingClientRect();
       const percent = (e.clientX - rect.left) / rect.width;
       video.currentTime = percent * video.duration;
     });
-    
+
     return progressContainer;
   },
 
   createRightSection(video) {
-    const rightSection = document.createElement('div');
-    rightSection.className = 'custom-video-controls-right';
-    
+    const rightSection = document.createElement("div");
+    rightSection.className = "custom-video-controls-right";
+
     // Fullscreen button
-    const fullscreenButton = document.createElement('button');
-    fullscreenButton.className = 'video-control-button';
-    fullscreenButton.innerHTML = '⛶';
-    fullscreenButton.addEventListener('click', () => {
+    const fullscreenButton = document.createElement("button");
+    fullscreenButton.className = "video-control-button";
+    fullscreenButton.innerHTML = "⛶";
+    fullscreenButton.addEventListener("click", () => {
       if (video.requestFullscreen) {
         video.requestFullscreen();
       }
     });
-    
+
     rightSection.appendChild(fullscreenButton);
-    
+
     return rightSection;
   },
 
   setupVideoEvents(video, controlsPanel) {
-    const playButton = controlsPanel.querySelector('.video-control-button');
-    const timeDisplay = controlsPanel.querySelector('.video-time-display');
-    const progressFill = controlsPanel.querySelector('.video-progress-fill');
-    
+    const playButton = controlsPanel.querySelector(".video-control-button");
+    const timeDisplay = controlsPanel.querySelector(".video-time-display");
+    const progressFill = controlsPanel.querySelector(".video-progress-fill");
+
     // Update play button
     const updatePlayButton = () => {
-      playButton.innerHTML = video.paused ? '▶' : '⏸';
-      playButton.classList.toggle('active', !video.paused);
+      playButton.innerHTML = video.paused ? "▶" : "⏸";
+      playButton.classList.toggle("active", !video.paused);
     };
-    
+
     // Update time display
     const updateTimeDisplay = () => {
       const current = Utils.formatTime(video.currentTime);
       const duration = Utils.formatTime(video.duration);
       timeDisplay.textContent = `${current} / ${duration}`;
     };
-    
+
     // Update progress bar
     const updateProgress = () => {
       if (video.duration) {
@@ -314,16 +317,19 @@ export const VideoControlsManager = {
         progressFill.style.width = `${percent}%`;
       }
     };
-    
+
     // Event listeners
-    video.addEventListener('play', updatePlayButton);
-    video.addEventListener('pause', updatePlayButton);
-    video.addEventListener('timeupdate', Utils.debounce(() => {
-      updateTimeDisplay();
-      updateProgress();
-    }, 100));
-    video.addEventListener('loadedmetadata', updateTimeDisplay);
-    
+    video.addEventListener("play", updatePlayButton);
+    video.addEventListener("pause", updatePlayButton);
+    video.addEventListener(
+      "timeupdate",
+      Utils.debounce(() => {
+        updateTimeDisplay();
+        updateProgress();
+      }, 100),
+    );
+    video.addEventListener("loadedmetadata", updateTimeDisplay);
+
     // Initial state
     updatePlayButton();
     updateTimeDisplay();
@@ -331,33 +337,39 @@ export const VideoControlsManager = {
   },
 
   addKeyboardHint(container) {
-    if (container.querySelector('.video-keyboard-hint')) return;
-    
-    const hint = document.createElement('div');
-    hint.className = 'video-keyboard-hint';
-    hint.textContent = 'Space: Play/Pause • ←/→: Seek • F: Fullscreen';
+    if (container.querySelector(".video-keyboard-hint")) return;
+
+    const hint = document.createElement("div");
+    hint.className = "video-keyboard-hint";
+    hint.textContent = "Space: Play/Pause • ←/→: Seek • F: Fullscreen";
     container.appendChild(hint);
   },
 
   setupKeyboardControls(video) {
     // Enhanced keyboard controls for individual videos
-    video.addEventListener('keydown', (e) => {
+    video.addEventListener("keydown", (e) => {
       if (e.target !== video) return;
-      
+
       switch (e.key) {
-        case ' ':
+        case " ":
           e.preventDefault();
           video.paused ? video.play() : video.pause();
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - CONFIG.TIMING.VIDEO_SEEK_SECONDS);
+          video.currentTime = Math.max(
+            0,
+            video.currentTime - CONFIG.TIMING.VIDEO_SEEK_SECONDS,
+          );
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + CONFIG.TIMING.VIDEO_SEEK_SECONDS);
+          video.currentTime = Math.min(
+            video.duration,
+            video.currentTime + CONFIG.TIMING.VIDEO_SEEK_SECONDS,
+          );
           break;
-        case 'f':
+        case "f":
           e.preventDefault();
           if (video.requestFullscreen) {
             video.requestFullscreen();
@@ -365,8 +377,8 @@ export const VideoControlsManager = {
           break;
       }
     });
-    
+
     // Make video focusable for keyboard controls
-    video.setAttribute('tabindex', '0');
-  }
+    video.setAttribute("tabindex", "0");
+  },
 };

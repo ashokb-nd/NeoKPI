@@ -1,7 +1,7 @@
-import { CONFIG } from '../config/constants.js';
-import { Utils } from '../utils/utils.js';
-import { StorageManager } from '../utils/storage.js';
-import { FilterManager } from './filter.js';
+import { CONFIG } from "../config/constants.js";
+import { Utils } from "../utils/utils.js";
+import { StorageManager } from "../utils/storage.js";
+import { FilterManager } from "./filter.js";
 
 // ========================================
 // BULK PROCESSOR
@@ -11,16 +11,16 @@ export const BulkProcessor = {
     alertIds: [],
     currentIndex: -1,
     isProcessing: false,
-    alertType: null
+    alertType: null,
   },
 
   parseAlertIds(input) {
     if (!input) return [];
-    
+
     return input
       .split(/[\s,\n]+/)
-      .map(id => id.trim())
-      .filter(id => id.length > 0);
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
   },
 
   loadAlertIds(input) {
@@ -51,7 +51,7 @@ export const BulkProcessor = {
       alertIds: [],
       currentIndex: -1,
       isProcessing: false,
-      alertType: null
+      alertType: null,
     };
     return StorageManager.remove(CONFIG.STORAGE_KEYS.BULK_ALERTS);
   },
@@ -87,7 +87,7 @@ export const BulkProcessor = {
   },
 
   getProgress() {
-    if (!this.state.isProcessing) return '';
+    if (!this.state.isProcessing) return "";
     return `[${this.state.currentIndex + 1}/${this.state.alertIds.length}]`;
   },
 
@@ -96,8 +96,13 @@ export const BulkProcessor = {
     return {
       current: this.state.currentIndex + 1,
       total: this.state.alertIds.length,
-      percentage: this.state.alertIds.length > 0 ? 
-        Math.round(((this.state.currentIndex + 1) / this.state.alertIds.length) * 100) : 0
+      percentage:
+        this.state.alertIds.length > 0
+          ? Math.round(
+              ((this.state.currentIndex + 1) / this.state.alertIds.length) *
+                100,
+            )
+          : 0,
     };
   },
 
@@ -115,11 +120,15 @@ export const BulkProcessor = {
     if (!filterTags || filterTags.length === 0) {
       return this.nextAlert();
     }
-    
-    const filteredIds = FilterManager.getFilteredAlertIds(filterTags, logic, includeHashtags);
+
+    const filteredIds = FilterManager.getFilteredAlertIds(
+      filterTags,
+      logic,
+      includeHashtags,
+    );
     const currentAlert = this.getCurrentAlert();
     const currentIndex = filteredIds.indexOf(currentAlert);
-    
+
     if (currentIndex !== -1 && currentIndex < filteredIds.length - 1) {
       const nextAlert = filteredIds[currentIndex + 1];
       const nextIndex = this.state.alertIds.indexOf(nextAlert);
@@ -129,7 +138,7 @@ export const BulkProcessor = {
         return nextAlert;
       }
     }
-    
+
     return null;
   },
 
@@ -137,11 +146,15 @@ export const BulkProcessor = {
     if (!filterTags || filterTags.length === 0) {
       return this.prevAlert();
     }
-    
-    const filteredIds = FilterManager.getFilteredAlertIds(filterTags, logic, includeHashtags);
+
+    const filteredIds = FilterManager.getFilteredAlertIds(
+      filterTags,
+      logic,
+      includeHashtags,
+    );
     const currentAlert = this.getCurrentAlert();
     const currentIndex = filteredIds.indexOf(currentAlert);
-    
+
     if (currentIndex > 0) {
       const prevAlert = filteredIds[currentIndex - 1];
       const prevIndex = this.state.alertIds.indexOf(prevAlert);
@@ -151,7 +164,7 @@ export const BulkProcessor = {
         return prevAlert;
       }
     }
-    
+
     return null;
-  }
+  },
 };

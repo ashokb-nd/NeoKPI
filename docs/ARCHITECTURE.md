@@ -41,25 +41,30 @@ tests/                     # Comprehensive test suite
 The project follows a modular architecture with clear separation of concerns:
 
 ### Core Layer
+
 - **Application initialization** - Bootstrap process and module coordination
 - **State management** - Centralized application state
 - **Keyboard handling** - Event management and shortcut processing
 
-### Features Layer  
+### Features Layer
+
 - **Business logic** - Notes, tags, bulk processing, filtering
 - **Domain models** - Data structures and operations
 - **Feature coordination** - Inter-feature communication
 
 ### Services Layer
+
 - **External integrations** - Metadata services, settings persistence
 - **Cross-cutting concerns** - Logging, configuration, utilities
 
 ### UI Layer
+
 - **Visual components** - Panels, modals, controls
 - **User interactions** - Event handling, state updates
 - **Rendering logic** - DOM manipulation, styling
 
 ### Utils Layer
+
 - **Shared utilities** - Common functions, helpers
 - **Storage abstraction** - Local storage operations
 - **Cross-platform compatibility** - Browser-specific handling

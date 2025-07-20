@@ -1,4 +1,4 @@
-import { CONFIG } from '../config/constants.js';
+import { CONFIG } from "../config/constants.js";
 
 // ========================================
 // STORAGE MANAGER
@@ -37,6 +37,6 @@ export const StorageManager = {
   // Clear all storage related to this script
   clear() {
     const keys = Object.values(CONFIG.STORAGE_KEYS);
-    keys.forEach(key => this.remove(key));
-  }
+    keys.forEach((key) => this.remove(key));
+  },
 };

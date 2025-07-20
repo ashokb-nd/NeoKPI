@@ -7,7 +7,7 @@ This document outlines the design for a modular video annotation system that ove
 ## 🎯 Core Requirements
 
 - **Modular & Extensible**: Easy to add new annotation types
-- **Performance**: Smooth rendering at video playback speeds  
+- **Performance**: Smooth rendering at video playback speeds
 - **Metadata Integration**: Leverages existing MetadataManager
 - **Standard JSON Format**: Consistent intermediate representation
 - **Canvas-based**: Hardware-accelerated rendering
@@ -29,6 +29,7 @@ This document outlines the design for a modular video annotation system that ove
 ## 📋 Standard JSON Format
 
 ### Core Structure
+
 ```json
 {
   "version": "1.0",
@@ -43,14 +44,20 @@ This document outlines the design for a modular video annotation system that ove
     {
       "id": "unique-id",
       "type": "detection|graph|text|polygon|trajectory",
-      "timeRange": { 
-        "startMs": 5200, 
-        "endMs": 8700 
+      "timeRange": {
+        "startMs": 5200,
+        "endMs": 8700
       },
       "isStatic": false,
-      "data": { /* type-specific data - uses normalized coordinates 0.0-1.0 */ },
-      "style": { /* visual styling */ },
-      "metadata": { /* additional info */ }
+      "data": {
+        /* type-specific data - uses normalized coordinates 0.0-1.0 */
+      },
+      "style": {
+        /* visual styling */
+      },
+      "metadata": {
+        /* additional info */
+      }
     }
   ]
 }
@@ -59,17 +66,18 @@ This document outlines the design for a modular video annotation system that ove
 ### Annotation Types
 
 #### 1. Object Detection
+
 ```json
 {
   "type": "detection",
   "timeRange": { "startMs": 2000, "endMs": 5000 },
   "isStatic": false,
   "data": {
-    "bbox": { 
-      "x": 0.052, 
-      "y": 0.139, 
-      "width": 0.104, 
-      "height": 0.167 
+    "bbox": {
+      "x": 0.052,
+      "y": 0.139,
+      "width": 0.104,
+      "height": 0.167
     },
     "confidence": 0.87,
     "class": "vehicle",
@@ -86,6 +94,7 @@ This document outlines the design for a modular video annotation system that ove
 ```
 
 #### 2. Time-series Graph
+
 ```json
 {
   "type": "graph",
@@ -116,6 +125,7 @@ This document outlines the design for a modular video annotation system that ove
 ```
 
 #### 3. Trajectory/Path
+
 ```json
 {
   "type": "trajectory",
@@ -141,6 +151,7 @@ This document outlines the design for a modular video annotation system that ove
 ```
 
 #### 4. Text/Label Annotation
+
 ```json
 {
   "type": "text",
@@ -165,12 +176,13 @@ This document outlines the design for a modular video annotation system that ove
 ## 🎨 Canvas Drawer API Design
 
 ### Core Interface
+
 ```javascript
 class VideoAnnotationDrawer {
   constructor(videoElement, options = {}) {
     this.video = videoElement;
     this.canvas = this.createOverlayCanvas();
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext("2d");
     this.annotations = [];
     this.renderers = new Map(); // Type-specific renderers
     this.isPlaying = false;
@@ -178,21 +190,40 @@ class VideoAnnotationDrawer {
   }
 
   // Public API
-  loadAnnotations(annotationJson) { /* Load and validate annotations */ }
-  addAnnotation(annotation) { /* Add single annotation */ }
-  removeAnnotation(id) { /* Remove by ID */ }
-  setTimeRange(start, end) { /* Filter by time */ }
-  show() { /* Show canvas overlay */ }
-  hide() { /* Hide canvas overlay */ }
-  destroy() { /* Cleanup resources */ }
+  loadAnnotations(annotationJson) {
+    /* Load and validate annotations */
+  }
+  addAnnotation(annotation) {
+    /* Add single annotation */
+  }
+  removeAnnotation(id) {
+    /* Remove by ID */
+  }
+  setTimeRange(start, end) {
+    /* Filter by time */
+  }
+  show() {
+    /* Show canvas overlay */
+  }
+  hide() {
+    /* Hide canvas overlay */
+  }
+  destroy() {
+    /* Cleanup resources */
+  }
 
   // Rendering
-  render(currentTime) { /* Main render loop */ }
-  resize() { /* Handle video resize */ }
+  render(currentTime) {
+    /* Main render loop */
+  }
+  resize() {
+    /* Handle video resize */
+  }
 }
 ```
 
 ### Renderer Plugin System
+
 ```javascript
 // Base renderer interface
 class BaseRenderer {
@@ -213,36 +244,47 @@ class BaseRenderer {
   isVisible(annotation, currentTime) {
     // Static annotations are always visible within their time range
     if (annotation.isStatic) {
-      return currentTime >= annotation.timeRange.startMs && 
-             currentTime <= annotation.timeRange.endMs;
+      return (
+        currentTime >= annotation.timeRange.startMs &&
+        currentTime <= annotation.timeRange.endMs
+      );
     }
-    
+
     // Dynamic annotations may have additional visibility logic
-    return currentTime >= annotation.timeRange.startMs && 
-           currentTime <= annotation.timeRange.endMs;
+    return (
+      currentTime >= annotation.timeRange.startMs &&
+      currentTime <= annotation.timeRange.endMs
+    );
   }
 
   getType() {
-    throw new Error('Must implement getType()');
+    throw new Error("Must implement getType()");
   }
 }
 
 // Specific renderers
 class DetectionRenderer extends BaseRenderer {
-  getType() { return 'detection'; }
-  
+  getType() {
+    return "detection";
+  }
+
   render(annotation, currentTime, videoRect) {
     const { bbox } = annotation.data;
     const { borderColor, borderWidth } = annotation.style;
-    
+
     // Scale bbox to current video dimensions
     const scaledBbox = this.scaleCoordinates(bbox, videoRect);
-    
+
     // Draw detection box
     this.ctx.strokeStyle = borderColor;
     this.ctx.lineWidth = borderWidth;
-    this.ctx.strokeRect(scaledBbox.x, scaledBbox.y, scaledBbox.width, scaledBbox.height);
-    
+    this.ctx.strokeRect(
+      scaledBbox.x,
+      scaledBbox.y,
+      scaledBbox.width,
+      scaledBbox.height,
+    );
+
     // Draw label if enabled
     if (annotation.style.showLabel) {
       this.drawLabel(annotation, scaledBbox);
@@ -254,6 +296,7 @@ class DetectionRenderer extends BaseRenderer {
 ## 🔗 Integration Points
 
 ### 1. MetadataManager Integration
+
 ```javascript
 // Extend existing MetadataManager
 const AnnotationMetadataManager = {
@@ -265,11 +308,12 @@ const AnnotationMetadataManager = {
   parseAnnotationsFromMetadata(rawMetadata) {
     // Transform raw metadata to standard annotation JSON
     // This is where custom parsing logic goes for different formats
-  }
+  },
 };
 ```
 
 ### 2. Video Controls Integration
+
 ```javascript
 // Extend VideoControlsManager to include annotation controls
 const AnnotationControls = {
@@ -279,51 +323,61 @@ const AnnotationControls = {
   },
 
   attachToVideoControls(videoElement) {
-    const existingControls = videoElement.parentElement.querySelector('.custom-video-controls');
+    const existingControls = videoElement.parentElement.querySelector(
+      ".custom-video-controls",
+    );
     const annotationPanel = this.createAnnotationPanel();
     existingControls.appendChild(annotationPanel);
-  }
+  },
 };
 ```
 
 ### 3. Storage Integration
+
 ```javascript
 // Use existing IndexedDB structure
 const AnnotationStorage = {
   async storeAnnotations(alertId, annotations) {
     await MetadataManager.storeMetadataInIndexedDB(
-      `${alertId}_annotations`, 
-      JSON.stringify(annotations), 
-      'processed'
+      `${alertId}_annotations`,
+      JSON.stringify(annotations),
+      "processed",
     );
   },
 
   async getStoredAnnotations(alertId) {
-    const stored = await MetadataManager.db.get('metadata', `${alertId}_annotations`);
+    const stored = await MetadataManager.db.get(
+      "metadata",
+      `${alertId}_annotations`,
+    );
     return stored ? JSON.parse(stored.content) : null;
-  }
+  },
 };
 ```
 
 ## 📝 Implementation Phases
 
 ### Phase 1: Core Framework
+
 1. **Canvas Overlay System** - Basic canvas positioning and video sync
 2. **Annotation JSON Parser** - Validation and loading
 3. **Base Renderer** - Core rendering interface
 4. **Time Synchronization** - Video time to annotation mapping
 
-### Phase 2: Basic Renderers  
+### Phase 2: Basic Renderers
+
 1. **Detection Renderer** - Bounding boxes with labels
 2. **Text Renderer** - Simple text overlays
 3. **Basic Graph Renderer** - Simple line/bar charts
 
 ### Phase 3: Advanced Features
+
 1. **Trajectory Renderer** - Path visualization with history
 2. **Advanced Graph Types** - Multi-series, real-time updates
 3. **Interactive Elements** - Click handlers, hover effects
 
 ### Phase 4: Integration & Polish
+
 1. **MetadataManager Integration** - Automatic annotation parsing
 2. **UI Controls** - Annotation visibility toggles
 3. **Performance Optimization** - Efficient rendering pipeline
@@ -332,12 +386,14 @@ const AnnotationStorage = {
 ## ⚡ Performance Considerations
 
 ### Canvas Optimization
+
 - **Dirty Rectangle Updates** - Only redraw changed regions
-- **Layer Separation** - Static vs dynamic content on separate canvases  
+- **Layer Separation** - Static vs dynamic content on separate canvases
 - **RAF Throttling** - Use requestAnimationFrame for smooth rendering
 - **Object Pooling** - Reuse rendering objects to reduce GC pressure
 
 ### Memory Management
+
 - **Annotation Culling** - Only keep visible time range in memory
 - **Texture Caching** - Cache rendered elements for reuse
 - **Resource Cleanup** - Proper cleanup on video navigation
@@ -345,39 +401,48 @@ const AnnotationStorage = {
 ## 🎛 Pros & Cons Analysis
 
 ### Canvas Approach ✅
+
 **Pros:**
+
 - Hardware acceleration via GPU
-- Pixel-perfect rendering control  
+- Pixel-perfect rendering control
 - Excellent performance for complex graphics
 - No DOM manipulation overhead
 - Scales well with annotation density
 
 **Cons:**
+
 - More complex hit testing for interactions
 - Higher initial development complexity
 - Accessibility considerations (screen readers)
 
 ### Alternative: SVG Overlay ❌
+
 **Pros:**
+
 - DOM-based, easier debugging
 - Built-in interaction handling
 - Better accessibility support
 - CSS styling integration
 
 **Cons:**
+
 - Performance degradation with many elements
 - Browser compatibility issues
 - Memory overhead for complex scenes
 
-### Alternative: WebGL ❌  
+### Alternative: WebGL ❌
+
 **Pros:**
+
 - Maximum performance potential
 - Advanced shader effects possible
 - Excellent for 3D visualizations
 
 **Cons:**
+
 - Significant complexity increase
-- Learning curve and maintenance burden  
+- Learning curve and maintenance burden
 - Overkill for 2D annotations
 
 ## 🔧 Usage Example
@@ -387,7 +452,7 @@ const AnnotationStorage = {
 const drawer = new VideoAnnotationDrawer(videoElement, {
   autoResize: true,
   renderOnVideoTimeUpdate: true,
-  debugMode: false
+  debugMode: false,
 });
 
 // Load annotations from metadata

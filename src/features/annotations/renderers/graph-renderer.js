@@ -1,24 +1,24 @@
-import { BaseRenderer } from './base-renderer.js';
+import { BaseRenderer } from "./base-renderer.js";
 
 // ========================================
 // GRAPH RENDERER - Charts and time-series data
 // ========================================
 export class GraphRenderer extends BaseRenderer {
   getType() {
-    return 'graph';
+    return "graph";
   }
 
   getDefaultOptions() {
     return {
-      defaultBackgroundColor: 'rgba(0,0,0,0.7)',
-      defaultGridColor: 'rgba(255,255,255,0.2)',
-      defaultAxisColor: 'rgba(255,255,255,0.5)',
+      defaultBackgroundColor: "rgba(0,0,0,0.7)",
+      defaultGridColor: "rgba(255,255,255,0.2)",
+      defaultAxisColor: "rgba(255,255,255,0.5)",
       defaultFontSize: 10,
-      defaultFontFamily: 'Arial',
-      defaultTextColor: '#ffffff',
+      defaultFontFamily: "Arial",
+      defaultTextColor: "#ffffff",
       defaultMargin: { top: 20, right: 20, bottom: 30, left: 40 },
       defaultLineWidth: 2,
-      defaultPointRadius: 3
+      defaultPointRadius: 3,
     };
   }
 
@@ -26,19 +26,23 @@ export class GraphRenderer extends BaseRenderer {
     if (!this.isVisible(annotation, currentTimeMs)) return;
 
     const { data, style = {} } = annotation;
-    
-    if (!data.series || !Array.isArray(data.series) || data.series.length === 0) {
-      console.warn('Graph annotation missing series data');
+
+    if (
+      !data.series ||
+      !Array.isArray(data.series) ||
+      data.series.length === 0
+    ) {
+      console.warn("Graph annotation missing series data");
       return;
     }
 
     if (!data.position) {
-      console.warn('Graph annotation missing position data');
+      console.warn("Graph annotation missing position data");
       return;
     }
 
     // Convert normalized position to pixel coordinates
-    const pixelPosition = this.normalizedToPixels(data.position, videoRect);
+    const pixelPosition = this.denormalizeBoundingBox(data.position, videoRect);
 
     // Draw graph background
     this.drawGraphBackground(pixelPosition, style);
@@ -49,7 +53,7 @@ export class GraphRenderer extends BaseRenderer {
       x: pixelPosition.x + margin.left,
       y: pixelPosition.y + margin.top,
       width: pixelPosition.width - margin.left - margin.right,
-      height: pixelPosition.height - margin.top - margin.bottom
+      height: pixelPosition.height - margin.top - margin.bottom,
     };
 
     // Calculate data bounds
@@ -67,7 +71,13 @@ export class GraphRenderer extends BaseRenderer {
 
     // Draw each series
     data.series.forEach((series, index) => {
-      this.drawSeries(series, drawingArea, dataBounds, data.graphType || 'line', style);
+      this.drawSeries(
+        series,
+        drawingArea,
+        dataBounds,
+        data.graphType || "line",
+        style,
+      );
     });
 
     // Draw legend if enabled
@@ -77,17 +87,29 @@ export class GraphRenderer extends BaseRenderer {
   }
 
   drawGraphBackground(position, style) {
-    const backgroundColor = style.backgroundColor || this.options.defaultBackgroundColor;
+    const backgroundColor =
+      style.backgroundColor || this.options.defaultBackgroundColor;
     const borderRadius = style.borderRadius || 0;
 
     this.ctx.save();
     this.ctx.fillStyle = backgroundColor;
 
     if (borderRadius > 0) {
-      this.drawRoundedRect(position.x, position.y, position.width, position.height, borderRadius);
+      this.drawRoundedRect(
+        position.x,
+        position.y,
+        position.width,
+        position.height,
+        borderRadius,
+      );
       this.ctx.fill();
     } else {
-      this.ctx.fillRect(position.x, position.y, position.width, position.height);
+      this.ctx.fillRect(
+        position.x,
+        position.y,
+        position.width,
+        position.height,
+      );
     }
 
     this.ctx.restore();
@@ -99,8 +121,8 @@ export class GraphRenderer extends BaseRenderer {
     let minValue = Infinity;
     let maxValue = -Infinity;
 
-    series.forEach(s => {
-      s.points.forEach(point => {
+    series.forEach((s) => {
+      s.points.forEach((point) => {
         minTime = Math.min(minTime, point.timeMs);
         maxTime = Math.max(maxTime, point.timeMs);
         minValue = Math.min(minValue, point.value);
@@ -116,13 +138,14 @@ export class GraphRenderer extends BaseRenderer {
       minTime,
       maxTime,
       minValue: minValue - valuePadding,
-      maxValue: maxValue + valuePadding
+      maxValue: maxValue + valuePadding,
     };
   }
 
   drawGrid(drawingArea, style) {
     const gridColor = style.gridColor || this.options.defaultGridColor;
-    const gridLines = typeof style.gridLines === 'object' ? style.gridLines : { x: 5, y: 5 };
+    const gridLines =
+      typeof style.gridLines === "object" ? style.gridLines : { x: 5, y: 5 };
 
     this.ctx.save();
     this.ctx.strokeStyle = gridColor;
@@ -164,7 +187,10 @@ export class GraphRenderer extends BaseRenderer {
     this.ctx.beginPath();
     // X-axis
     this.ctx.moveTo(drawingArea.x, drawingArea.y + drawingArea.height);
-    this.ctx.lineTo(drawingArea.x + drawingArea.width, drawingArea.y + drawingArea.height);
+    this.ctx.lineTo(
+      drawingArea.x + drawingArea.width,
+      drawingArea.y + drawingArea.height,
+    );
     // Y-axis
     this.ctx.moveTo(drawingArea.x, drawingArea.y);
     this.ctx.lineTo(drawingArea.x, drawingArea.y + drawingArea.height);
@@ -173,14 +199,15 @@ export class GraphRenderer extends BaseRenderer {
     // Draw labels
     this.ctx.fillStyle = textColor;
     this.ctx.font = `${fontSize}px ${fontFamily}`;
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'top';
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "top";
 
     // Y-axis labels
     const valueRange = dataBounds.maxValue - dataBounds.minValue;
     for (let i = 0; i <= 4; i++) {
       const value = dataBounds.minValue + (valueRange / 4) * i;
-      const y = drawingArea.y + drawingArea.height - (drawingArea.height / 4) * i;
+      const y =
+        drawingArea.y + drawingArea.height - (drawingArea.height / 4) * i;
       this.ctx.fillText(value.toFixed(1), drawingArea.x - 5, y - fontSize / 2);
     }
 
@@ -190,21 +217,33 @@ export class GraphRenderer extends BaseRenderer {
   drawSeries(series, drawingArea, dataBounds, graphType, style) {
     if (!series.points || series.points.length === 0) return;
 
-    const seriesColor = series.color || '#00ff00';
+    const seriesColor = series.color || "#00ff00";
     const lineWidth = series.lineWidth || this.options.defaultLineWidth;
     const pointRadius = series.pointRadius || this.options.defaultPointRadius;
 
     this.ctx.save();
 
     switch (graphType) {
-      case 'line':
-        this.drawLineSeries(series, drawingArea, dataBounds, seriesColor, lineWidth);
+      case "line":
+        this.drawLineSeries(
+          series,
+          drawingArea,
+          dataBounds,
+          seriesColor,
+          lineWidth,
+        );
         break;
-      case 'bar':
+      case "bar":
         this.drawBarSeries(series, drawingArea, dataBounds, seriesColor);
         break;
-      case 'scatter':
-        this.drawScatterSeries(series, drawingArea, dataBounds, seriesColor, pointRadius);
+      case "scatter":
+        this.drawScatterSeries(
+          series,
+          drawingArea,
+          dataBounds,
+          seriesColor,
+          pointRadius,
+        );
         break;
     }
 
@@ -212,8 +251,12 @@ export class GraphRenderer extends BaseRenderer {
   }
 
   drawLineSeries(series, drawingArea, dataBounds, color, lineWidth) {
-    const points = this.convertPointsToPixels(series.points, drawingArea, dataBounds);
-    
+    const points = this.convertPointsToPixels(
+      series.points,
+      drawingArea,
+      dataBounds,
+    );
+
     if (points.length < 2) return;
 
     this.ctx.strokeStyle = color;
@@ -222,16 +265,16 @@ export class GraphRenderer extends BaseRenderer {
 
     this.ctx.beginPath();
     this.ctx.moveTo(points[0].x, points[0].y);
-    
+
     for (let i = 1; i < points.length; i++) {
       this.ctx.lineTo(points[i].x, points[i].y);
     }
-    
+
     this.ctx.stroke();
 
     // Draw points
     this.ctx.fillStyle = color;
-    points.forEach(point => {
+    points.forEach((point) => {
       this.ctx.beginPath();
       this.ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
       this.ctx.fill();
@@ -239,28 +282,31 @@ export class GraphRenderer extends BaseRenderer {
   }
 
   drawBarSeries(series, drawingArea, dataBounds, color) {
-    const points = this.convertPointsToPixels(series.points, drawingArea, dataBounds);
-    const barWidth = drawingArea.width / points.length * 0.8;
+    const points = this.convertPointsToPixels(
+      series.points,
+      drawingArea,
+      dataBounds,
+    );
+    const barWidth = (drawingArea.width / points.length) * 0.8;
 
     this.ctx.fillStyle = color;
 
-    points.forEach(point => {
+    points.forEach((point) => {
       const barHeight = drawingArea.y + drawingArea.height - point.y;
-      this.ctx.fillRect(
-        point.x - barWidth / 2,
-        point.y,
-        barWidth,
-        barHeight
-      );
+      this.ctx.fillRect(point.x - barWidth / 2, point.y, barWidth, barHeight);
     });
   }
 
   drawScatterSeries(series, drawingArea, dataBounds, color, pointRadius) {
-    const points = this.convertPointsToPixels(series.points, drawingArea, dataBounds);
+    const points = this.convertPointsToPixels(
+      series.points,
+      drawingArea,
+      dataBounds,
+    );
 
     this.ctx.fillStyle = color;
 
-    points.forEach(point => {
+    points.forEach((point) => {
       this.ctx.beginPath();
       this.ctx.arc(point.x, point.y, pointRadius, 0, 2 * Math.PI);
       this.ctx.fill();
@@ -271,9 +317,14 @@ export class GraphRenderer extends BaseRenderer {
     const timeRange = dataBounds.maxTime - dataBounds.minTime;
     const valueRange = dataBounds.maxValue - dataBounds.minValue;
 
-    return points.map(point => ({
-      x: drawingArea.x + ((point.timeMs - dataBounds.minTime) / timeRange) * drawingArea.width,
-      y: drawingArea.y + drawingArea.height - ((point.value - dataBounds.minValue) / valueRange) * drawingArea.height
+    return points.map((point) => ({
+      x:
+        drawingArea.x +
+        ((point.timeMs - dataBounds.minTime) / timeRange) * drawingArea.width,
+      y:
+        drawingArea.y +
+        drawingArea.height -
+        ((point.value - dataBounds.minValue) / valueRange) * drawingArea.height,
     }));
   }
 
@@ -290,15 +341,15 @@ export class GraphRenderer extends BaseRenderer {
 
     series.forEach((s, index) => {
       const legendX = position.x + 10;
-      
+
       // Draw color indicator
-      this.ctx.fillStyle = s.color || '#00ff00';
+      this.ctx.fillStyle = s.color || "#00ff00";
       this.ctx.fillRect(legendX, legendY - fontSize, 10, fontSize);
-      
+
       // Draw series name
       this.ctx.fillStyle = textColor;
       this.ctx.fillText(s.name || `Series ${index + 1}`, legendX + 15, legendY);
-      
+
       legendY -= fontSize + 5;
     });
 

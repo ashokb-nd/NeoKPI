@@ -1,14 +1,14 @@
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import json from '@rollup/plugin-json';
-import { readFileSync } from 'fs';
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import json from "@rollup/plugin-json";
+import { readFileSync } from "fs";
 
-const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
+const packageJson = JSON.parse(readFileSync("./package.json", "utf8"));
 
 export default {
-  input: 'src/index.js',
+  input: "src/index.js",
   output: {
-    file: 'dist/tampermonkey-script.js',
-    format: 'iife',
+    file: "dist/tampermonkey-script.js",
+    format: "iife",
     banner: `// ==UserScript==
 // @name         Alert Debug Shortcut (Refactored)
 // @namespace    http://tampermonkey.net/
@@ -19,8 +19,5 @@ export default {
 // @grant        none
 // ==/UserScript==`,
   },
-  plugins: [
-    json(),
-    nodeResolve()
-  ]
+  plugins: [json(), nodeResolve()],
 };

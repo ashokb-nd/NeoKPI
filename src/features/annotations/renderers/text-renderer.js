@@ -1,22 +1,22 @@
-import { BaseRenderer } from './base-renderer.js';
+import { BaseRenderer } from "./base-renderer.js";
 
 // ========================================
 // TEXT RENDERER - Text overlays and labels
 // ========================================
 export class TextRenderer extends BaseRenderer {
   getType() {
-    return 'text';
+    return "text";
   }
 
   getDefaultOptions() {
     return {
       defaultFontSize: 16,
-      defaultFontFamily: 'Arial',
-      defaultColor: '#ffffff',
-      defaultBackgroundColor: 'rgba(0,0,0,0.7)',
+      defaultFontFamily: "Arial",
+      defaultColor: "#ffffff",
+      defaultBackgroundColor: "rgba(0,0,0,0.7)",
       defaultPadding: { x: 8, y: 4 },
       defaultBorderRadius: 4,
-      defaultAnchor: 'top-left'
+      defaultAnchor: "top-left",
     };
   }
 
@@ -24,36 +24,45 @@ export class TextRenderer extends BaseRenderer {
     if (!this.isVisible(annotation, currentTimeMs)) return;
 
     const { data, style = {} } = annotation;
-    
+
     if (!data.text) {
-      console.warn('Text annotation missing text data');
+      console.warn("Text annotation missing text data");
       return;
     }
 
     // Convert normalized position to pixel coordinates
-    const pixelPosition = this.normalizedToPixels(data.position, videoRect);
+    const pixelPosition = this.denormalizePoint(data.position, videoRect);
 
     // Merge styles
     const textStyle = {
       fontSize: style.fontSize || this.options.defaultFontSize,
       fontFamily: style.fontFamily || this.options.defaultFontFamily,
       color: style.color || this.options.defaultColor,
-      backgroundColor: style.backgroundColor || this.options.defaultBackgroundColor,
+      backgroundColor:
+        style.backgroundColor || this.options.defaultBackgroundColor,
       padding: style.padding || this.options.defaultPadding,
-      borderRadius: style.borderRadius !== undefined ? style.borderRadius : this.options.defaultBorderRadius
+      borderRadius:
+        style.borderRadius !== undefined
+          ? style.borderRadius
+          : this.options.defaultBorderRadius,
     };
 
     // Get anchor position
     const anchor = data.anchor || style.anchor || this.options.defaultAnchor;
     const adjustedPosition = this.getAnchoredPosition(
-      data.text, 
-      pixelPosition, 
-      textStyle, 
-      anchor
+      data.text,
+      pixelPosition,
+      textStyle,
+      anchor,
     );
 
     // Render text with background
-    this.drawTextWithBackground(data.text, adjustedPosition.x, adjustedPosition.y, textStyle);
+    this.drawTextWithBackground(
+      data.text,
+      adjustedPosition.x,
+      adjustedPosition.y,
+      textStyle,
+    );
 
     // Draw border if specified
     if (style.borderColor && style.borderWidth) {
@@ -72,34 +81,34 @@ export class TextRenderer extends BaseRenderer {
     let y = position.y;
 
     switch (anchor) {
-      case 'top-left':
+      case "top-left":
         // No adjustment needed
         break;
-      case 'top-center':
+      case "top-center":
         x -= textWidth / 2;
         break;
-      case 'top-right':
+      case "top-right":
         x -= textWidth;
         break;
-      case 'center-left':
+      case "center-left":
         y -= textHeight / 2;
         break;
-      case 'center':
+      case "center":
         x -= textWidth / 2;
         y -= textHeight / 2;
         break;
-      case 'center-right':
+      case "center-right":
         x -= textWidth;
         y -= textHeight / 2;
         break;
-      case 'bottom-left':
+      case "bottom-left":
         y -= textHeight;
         break;
-      case 'bottom-center':
+      case "bottom-center":
         x -= textWidth / 2;
         y -= textHeight;
         break;
-      case 'bottom-right':
+      case "bottom-right":
         x -= textWidth;
         y -= textHeight;
         break;
@@ -110,7 +119,7 @@ export class TextRenderer extends BaseRenderer {
 
   drawTextBorder(text, position, textStyle, borderStyle) {
     this.ctx.save();
-    
+
     // Measure text
     this.ctx.font = `${textStyle.fontSize}px ${textStyle.fontFamily}`;
     const metrics = this.ctx.measureText(text);
@@ -120,14 +129,14 @@ export class TextRenderer extends BaseRenderer {
     // Draw border
     this.ctx.strokeStyle = borderStyle.borderColor;
     this.ctx.lineWidth = borderStyle.borderWidth;
-    
+
     if (textStyle.borderRadius > 0) {
       this.drawRoundedRect(
         position.x - textStyle.padding.x,
         position.y - textHeight + textStyle.padding.y,
         textWidth,
         textHeight,
-        textStyle.borderRadius
+        textStyle.borderRadius,
       );
       this.ctx.stroke();
     } else {
@@ -135,7 +144,7 @@ export class TextRenderer extends BaseRenderer {
         position.x - textStyle.padding.x,
         position.y - textHeight + textStyle.padding.y,
         textWidth,
-        textHeight
+        textHeight,
       );
     }
 

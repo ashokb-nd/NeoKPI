@@ -1,4 +1,4 @@
-import { CONFIG } from '../config/constants.js';
+import { CONFIG } from "../config/constants.js";
 
 // ========================================
 // UTILITY FUNCTIONS
@@ -22,7 +22,7 @@ export const Utils = {
     return {
       input: document.querySelector(CONFIG.SELECTORS.INPUT),
       button: document.querySelector(CONFIG.SELECTORS.BUTTON),
-      typeDropdown: document.querySelector(CONFIG.SELECTORS.TYPE_DROPDOWN)
+      typeDropdown: document.querySelector(CONFIG.SELECTORS.TYPE_DROPDOWN),
     };
   },
 
@@ -41,10 +41,10 @@ export const Utils = {
 
   isNotepadFocused() {
     const activeElement = document.activeElement;
-    const notepadPanel = document.querySelector('#notepad-panel');
-    
+    const notepadPanel = document.querySelector("#notepad-panel");
+
     if (!notepadPanel || !activeElement) return false;
-    
+
     // Check if the active element is within the notepad panel
     return notepadPanel.contains(activeElement);
   },
@@ -52,10 +52,10 @@ export const Utils = {
   getCurrentAlertType() {
     try {
       const dropdown = document.querySelector(CONFIG.SELECTORS.TYPE_DROPDOWN);
-      const selectedLabel = dropdown?.querySelector('.Select-value-label');
+      const selectedLabel = dropdown?.querySelector(".Select-value-label");
       return selectedLabel ? selectedLabel.textContent.trim() : null;
     } catch (error) {
-      console.error('Error getting alert type:', error);
+      console.error("Error getting alert type:", error);
       return null;
     }
   },
@@ -63,32 +63,32 @@ export const Utils = {
   getCurrentVideoTimestamp() {
     const video = this.getVideoElement();
     if (!video || isNaN(video.currentTime)) return null;
-    
+
     const mins = Math.floor(video.currentTime / 60);
     const secs = Math.floor(video.currentTime % 60);
-    return `[${mins}:${secs.toString().padStart(2, '0')}]`;
+    return `[${mins}:${secs.toString().padStart(2, "0")}]`;
   },
 
   processTimestampReplacements(text) {
     // Replace all @ symbols with current video timestamp
     const timestamp = this.getCurrentVideoTimestamp();
     if (!timestamp) return text;
-    
+
     return text.replace(/@/g, timestamp);
   },
 
   // Format time in mm:ss format
   formatTime(seconds) {
-    if (isNaN(seconds) || seconds < 0) return '0:00';
-    
+    if (isNaN(seconds) || seconds < 0) return "0:00";
+
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   },
 
   // Create a styled button
   createButton(text, color, action) {
-    const button = document.createElement('button');
+    const button = document.createElement("button");
     button.textContent = text;
     button.style.cssText = `
       padding: 4px 8px;
@@ -100,7 +100,7 @@ export const Utils = {
       font-size: 11px;
       font-family: inherit;
     `;
-    button.addEventListener('click', action);
+    button.addEventListener("click", action);
     return button;
   },
 
@@ -115,5 +115,5 @@ export const Utils = {
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
     };
-  }
+  },
 };

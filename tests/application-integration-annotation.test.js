@@ -1,14 +1,14 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { Application } from '../src/core/application.js';
-import { Utils } from '../src/utils/utils.js';
-import { MetadataManager } from '../src/services/metadata.js';
-import { SettingsManager } from '../src/services/settings.js';
-import { NotesManager } from '../src/features/notes.js';
-import { VideoControlsManager } from '../src/ui/video-controls.js';
-import { AnnotationManager } from '../src/features/annotations/annotation-manager.js';
+import { describe, test, expect, vi, beforeEach } from "vitest";
+import { Application } from "../src/core/application.js";
+import { Utils } from "../src/utils/utils.js";
+import { MetadataManager } from "../src/services/metadata.js";
+import { SettingsManager } from "../src/services/settings.js";
+import { NotesManager } from "../src/features/notes.js";
+import { VideoControlsManager } from "../src/ui/video-controls.js";
+import { AnnotationManager } from "../src/features/annotations/annotation-manager.js";
 
 // Mock all dependencies
-vi.mock('../src/utils/utils.js', () => ({
+vi.mock("../src/utils/utils.js", () => ({
   Utils: {
     log: vi.fn(),
     waitForElements: vi.fn((callback) => {
@@ -16,60 +16,60 @@ vi.mock('../src/utils/utils.js', () => ({
       setTimeout(() => {
         callback({ input: {}, button: {} });
       }, 0);
-    })
-  }
-}));
-
-vi.mock('../src/services/metadata.js', () => ({
-  MetadataManager: {
-    init: vi.fn()
-  }
-}));
-
-vi.mock('../src/services/settings.js', () => ({
-  SettingsManager: {
-    init: vi.fn()
-  }
-}));
-
-vi.mock('../src/features/notes.js', () => ({
-  NotesManager: {
-    init: vi.fn()
-  }
-}));
-
-vi.mock('../src/ui/video-controls.js', () => ({
-  VideoControlsManager: {
-    init: vi.fn()
-  }
-}));
-
-vi.mock('../src/ui/fireworks.js', () => ({
-  FireworkShow: vi.fn().mockImplementation(() => ({
-    init: vi.fn()
-  }))
-}));
-
-vi.mock('../src/ui/ui-manager.js', () => ({
-  UIManager: {
-    showNotification: vi.fn()
+    }),
   },
-  NotepadUI: {}
 }));
 
-vi.mock('../src/features/annotations/annotation-manager.js', () => ({
+vi.mock("../src/services/metadata.js", () => ({
+  MetadataManager: {
+    init: vi.fn(),
+  },
+}));
+
+vi.mock("../src/services/settings.js", () => ({
+  SettingsManager: {
+    init: vi.fn(),
+  },
+}));
+
+vi.mock("../src/features/notes.js", () => ({
+  NotesManager: {
+    init: vi.fn(),
+  },
+}));
+
+vi.mock("../src/ui/video-controls.js", () => ({
+  VideoControlsManager: {
+    init: vi.fn(),
+  },
+}));
+
+vi.mock("../src/ui/fireworks.js", () => ({
+  FireworkShow: vi.fn().mockImplementation(() => ({
+    init: vi.fn(),
+  })),
+}));
+
+vi.mock("../src/ui/ui-manager.js", () => ({
+  UIManager: {
+    showNotification: vi.fn(),
+  },
+  NotepadUI: {},
+}));
+
+vi.mock("../src/features/annotations/annotation-manager.js", () => ({
   AnnotationManager: {
-    init: vi.fn()
-  }
+    init: vi.fn(),
+  },
 }));
 
-describe('Application Integration', () => {
+describe("Application Integration", () => {
   let app;
 
   beforeEach(() => {
     vi.clearAllMocks();
     app = new Application();
-    
+
     // Mock app instance methods that might fail
     app.restoreBulkAlerts = vi.fn();
     app.setupInputMonitoring = vi.fn();
@@ -77,30 +77,30 @@ describe('Application Integration', () => {
     app.autoOpenNotepad = vi.fn();
   });
 
-  describe('init', () => {
-    test('should initialize application successfully', async () => {
+  describe("init", () => {
+    test("should initialize application successfully", async () => {
       await app.init();
-      
+
       expect(Utils.log).toHaveBeenCalledWith(
-        expect.stringContaining('Initializing Alert Debug UserScript')
+        expect.stringContaining("Initializing Alert Debug UserScript"),
       );
     });
 
-    test('should initialize annotation manager', async () => {
+    test("should initialize annotation manager", async () => {
       await app.init();
-      
+
       // Wait a bit for the async callback to execute
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       expect(AnnotationManager.init).toHaveBeenCalled();
     });
 
-    test('should initialize all core services', async () => {
+    test("should initialize all core services", async () => {
       await app.init();
-      
+
       // Wait a bit for the async callback to execute
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       expect(MetadataManager.init).toHaveBeenCalled();
       expect(SettingsManager.init).toHaveBeenCalled();
       expect(NotesManager.init).toHaveBeenCalled();

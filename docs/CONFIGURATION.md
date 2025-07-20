@@ -7,37 +7,41 @@ All keyboard shortcuts are defined in `src/config/constants.js`:
 ```javascript
 export const CONFIG = {
   KEYS: {
-    FOCUS_INPUT: 'i',         // Cmd+I - Focus input field
-    SUBMIT: 'Enter',          // Enter - Submit form
-    PLAY_PAUSE: 'Space',      // Space - Video play/pause
-    REWIND: 'ArrowLeft',      // ← - Rewind video
-    FAST_FORWARD: 'ArrowRight', // → - Fast-forward video
-    NEXT_ALERT: 'ArrowDown',  // Cmd+↓ - Next alert (bulk)
-    PREV_ALERT: 'ArrowUp',    // Cmd+↑ - Previous alert (bulk)
-    BULK_PROCESS: 'b',        // Cmd+B - Toggle bulk mode
-    TOGGLE_NOTEPAD: 'j'       // Cmd+J - Toggle notepad
-  }
-}
+    FOCUS_INPUT: "i", // Cmd+I - Focus input field
+    SUBMIT: "Enter", // Enter - Submit form
+    PLAY_PAUSE: "Space", // Space - Video play/pause
+    REWIND: "ArrowLeft", // ← - Rewind video
+    FAST_FORWARD: "ArrowRight", // → - Fast-forward video
+    NEXT_ALERT: "ArrowDown", // Cmd+↓ - Next alert (bulk)
+    PREV_ALERT: "ArrowUp", // Cmd+↑ - Previous alert (bulk)
+    BULK_PROCESS: "b", // Cmd+B - Toggle bulk mode
+    TOGGLE_NOTEPAD: "j", // Cmd+J - Toggle notepad
+  },
+};
 ```
 
 ## 📝 Changing Shortcuts
 
 ### Step 1: Update Config
+
 ```javascript
 // src/config/constants.js
 KEYS: {
-  TOGGLE_NOTEPAD: 'n'  // Changed from 'j' to 'n'
+  TOGGLE_NOTEPAD: "n"; // Changed from 'j' to 'n'
 }
 ```
 
 ### Step 2: Update Documentation
+
 ```bash
 npm run docs:update  # Updates README automatically
 npm run build       # Rebuilds with new shortcuts
 ```
 
 ### Step 3: Automatic Updates
+
 The system prevents documentation drift by:
+
 - ✅ Generating docs from source of truth (config)
 - ✅ Pre-commit hooks for automatic updates
 - ✅ Runtime help always reflects current config
@@ -46,6 +50,7 @@ The system prevents documentation drift by:
 ## ⚙️ Other Configuration Options
 
 ### Element Selectors
+
 ```javascript
 SELECTORS: {
   INPUT: '#alert-debug-user-input',
@@ -57,6 +62,7 @@ SELECTORS: {
 ```
 
 ### Timing Settings
+
 ```javascript
 TIMING: {
   ELEMENT_CHECK_INTERVAL: 300,  // How often to check for DOM elements
@@ -65,6 +71,7 @@ TIMING: {
 ```
 
 ### Storage Keys
+
 ```javascript
 STORAGE_KEYS: {
   NOTES: 'alert-debug-notes',
@@ -76,6 +83,7 @@ STORAGE_KEYS: {
 ```
 
 ### UI Defaults
+
 ```javascript
 UI: {
   PANEL_DEFAULT_HEIGHT: 400,
@@ -89,6 +97,7 @@ UI: {
 ## 🔄 Runtime Configuration
 
 Some settings can be changed at runtime through the settings panel:
+
 - S3 Presigner URL
 - Auto-save preferences
 - Keyboard hint visibility

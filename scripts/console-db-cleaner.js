@@ -6,27 +6,30 @@
 
 // Database configuration (matches your CONFIG.DATABASE)
 const DB_CONFIG = {
-  NAME: 'NeoKPIApp',
+  NAME: "NeoKPIApp",
   VERSION: 1,
   STORES: {
-    METADATA: 'metadata',
-    METADATA_URLS: 'metadataUrls',
-    NOTES: 'notes',
-    TAGS: 'tags',
-    SETTINGS: 'settings'
-  }
+    METADATA: "metadata",
+    METADATA_URLS: "metadataUrls",
+    NOTES: "notes",
+    TAGS: "tags",
+    SETTINGS: "settings",
+  },
 };
 
 // Option 1: Clean All Databases (Nuclear Option)
-window.cleanAllIndexedDB = async function() {
+window.cleanAllIndexedDB = async function () {
   try {
-    console.log('🧹 Starting complete IndexedDB cleanup...');
-    
+    console.log("🧹 Starting complete IndexedDB cleanup...");
+
     // Get all database names (Chrome/Edge only)
-    if ('databases' in indexedDB) {
+    if ("databases" in indexedDB) {
       const databases = await indexedDB.databases();
-      console.log('📊 Found databases:', databases.map(db => db.name));
-      
+      console.log(
+        "📊 Found databases:",
+        databases.map((db) => db.name),
+      );
+
       for (const db of databases) {
         const deleteReq = indexedDB.deleteDatabase(db.name);
         await new Promise((resolve, reject) => {
@@ -39,29 +42,31 @@ window.cleanAllIndexedDB = async function() {
             reject(deleteReq.error);
           };
           deleteReq.onblocked = () => {
-            console.warn(`⚠️  Deletion blocked for: ${db.name} (close all tabs using this database)`);
-            reject(new Error('Blocked'));
+            console.warn(
+              `⚠️  Deletion blocked for: ${db.name} (close all tabs using this database)`,
+            );
+            reject(new Error("Blocked"));
           };
         });
       }
-      console.log('🎉 All IndexedDB databases deleted!');
-      console.log('💡 Refresh the page to create fresh databases');
+      console.log("🎉 All IndexedDB databases deleted!");
+      console.log("💡 Refresh the page to create fresh databases");
     } else {
-      console.warn('indexedDB.databases() not supported in this browser');
+      console.warn("indexedDB.databases() not supported in this browser");
     }
   } catch (error) {
-    console.error('Error cleaning IndexedDB:', error);
+    console.error("Error cleaning IndexedDB:", error);
   }
 };
 
 // Option 2: Clean Only App Database
-window.cleanAppDatabase = async function() {
+window.cleanAppDatabase = async function () {
   const dbName = DB_CONFIG.NAME;
-  
+
   try {
     console.log(`🧹 Deleting app database: ${dbName}`);
     const deleteReq = indexedDB.deleteDatabase(dbName);
-    
+
     await new Promise((resolve, reject) => {
       deleteReq.onsuccess = () => {
         console.log(`✅ Deleted database: ${dbName}`);
@@ -72,37 +77,41 @@ window.cleanAppDatabase = async function() {
         resolve(); // Don't treat as error
       };
       deleteReq.onblocked = () => {
-        console.warn(`⚠️  Deletion blocked for: ${dbName} (close all tabs using this database)`);
-        reject(new Error('Blocked'));
+        console.warn(
+          `⚠️  Deletion blocked for: ${dbName} (close all tabs using this database)`,
+        );
+        reject(new Error("Blocked"));
       };
     });
-    
-    console.log('🎉 App database cleaned!');
-    console.log('💡 Refresh the page to create a fresh database');
+
+    console.log("🎉 App database cleaned!");
+    console.log("💡 Refresh the page to create a fresh database");
   } catch (error) {
     console.error(`Error deleting ${dbName}:`, error);
   }
 };
 
 // Option 3: Clear Specific Store Data
-window.clearAppStore = async function(storeName) {
+window.clearAppStore = async function (storeName) {
   if (!Object.values(DB_CONFIG.STORES).includes(storeName)) {
-    console.error(`❌ Invalid store name. Valid stores: ${Object.values(DB_CONFIG.STORES).join(', ')}`);
+    console.error(
+      `❌ Invalid store name. Valid stores: ${Object.values(DB_CONFIG.STORES).join(", ")}`,
+    );
     return;
   }
-  
+
   try {
     console.log(`🧹 Clearing store: ${storeName}`);
-    
+
     const openReq = indexedDB.open(DB_CONFIG.NAME);
     const db = await new Promise((resolve, reject) => {
       openReq.onsuccess = () => resolve(openReq.result);
       openReq.onerror = () => reject(openReq.error);
     });
-    
-    const transaction = db.transaction([storeName], 'readwrite');
+
+    const transaction = db.transaction([storeName], "readwrite");
     const store = transaction.objectStore(storeName);
-    
+
     await new Promise((resolve, reject) => {
       const clearReq = store.clear();
       clearReq.onsuccess = () => {
@@ -111,50 +120,52 @@ window.clearAppStore = async function(storeName) {
       };
       clearReq.onerror = () => reject(clearReq.error);
     });
-    
+
     db.close();
-    console.log('🎉 Store cleared successfully!');
+    console.log("🎉 Store cleared successfully!");
   } catch (error) {
     console.error(`Error clearing store ${storeName}:`, error);
   }
 };
 
 // Option 4: Database Inspector
-window.inspectAppDatabase = async function() {
+window.inspectAppDatabase = async function () {
   try {
     console.log(`🔍 Inspecting database: ${DB_CONFIG.NAME}`);
-    
+
     const openReq = indexedDB.open(DB_CONFIG.NAME);
     const db = await new Promise((resolve, reject) => {
       openReq.onsuccess = () => resolve(openReq.result);
       openReq.onerror = () => reject(openReq.error);
     });
-    
+
     console.log(`📊 Database: ${db.name} (version: ${db.version})`);
-    console.log(`🏪 Object Stores: ${Array.from(db.objectStoreNames).join(', ')}`);
-    
+    console.log(
+      `🏪 Object Stores: ${Array.from(db.objectStoreNames).join(", ")}`,
+    );
+
     // Get count for each store
     for (const storeName of Array.from(db.objectStoreNames)) {
       try {
-        const transaction = db.transaction([storeName], 'readonly');
+        const transaction = db.transaction([storeName], "readonly");
         const store = transaction.objectStore(storeName);
-        
+
         const count = await new Promise((resolve, reject) => {
           const countReq = store.count();
           countReq.onsuccess = () => resolve(countReq.result);
           countReq.onerror = () => reject(countReq.error);
         });
-        
+
         console.log(`   📦 ${storeName}: ${count} entries`);
       } catch (error) {
         console.log(`   ❌ ${storeName}: Error getting count`);
       }
     }
-    
+
     db.close();
   } catch (error) {
-    console.error('Database does not exist or error inspecting:', error);
-    console.log('💡 This is normal if the database hasn\'t been created yet');
+    console.error("Database does not exist or error inspecting:", error);
+    console.log("💡 This is normal if the database hasn't been created yet");
   }
 };
 
@@ -167,7 +178,7 @@ console.log(`
 🗑️ clearAppStore('store')  - Clear data from a specific store
 🔍 inspectAppDatabase()    - Inspect current database structure
 
-Valid store names: ${Object.values(DB_CONFIG.STORES).join(', ')}
+Valid store names: ${Object.values(DB_CONFIG.STORES).join(", ")}
 
 Example usage:
   cleanAppDatabase()                    // Clean everything

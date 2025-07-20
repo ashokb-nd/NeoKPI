@@ -28,7 +28,7 @@ npm run build
 
 ```bash
 npm run dev     # Development with watch
-npm test        # Run tests  
+npm test        # Run tests
 npm run build   # Build UserScript
 ```
 
@@ -38,6 +38,7 @@ npm run build   # Build UserScript
 - **[Architecture](docs/ARCHITECTURE.md)** - Project structure & design
 - **[Configuration](docs/CONFIGURATION.md)** - Keyboard shortcuts & settings
 - **[Usage Guide](docs/USAGE.md)** - Detailed feature documentation
+
 ## 🚀 Upcoming Features
 
 - Automatic caching of alert type

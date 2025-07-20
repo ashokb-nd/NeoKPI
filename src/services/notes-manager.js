@@ -1,6 +1,6 @@
-import { createAppDatabase } from '../utils/indexdb-manager.js';
-import { Utils } from '../utils/utils.js';
-import { CONFIG } from '../config/constants.js';
+import { createAppDatabase } from "../utils/indexdb-manager.js";
+import { Utils } from "../utils/utils.js";
+import { CONFIG } from "../config/constants.js";
 
 // ========================================
 // NOTES MANAGER - Using IndexedDB Utility
@@ -12,11 +12,11 @@ export const NotesManager = {
   async init() {
     this.db = createAppDatabase();
     await this.db.init();
-    Utils.log('Notes manager initialized with IndexedDB');
+    Utils.log("Notes manager initialized with IndexedDB");
   },
 
   // Create a new note
-  async createNote(alertId, content, category = 'general') {
+  async createNote(alertId, content, category = "general") {
     try {
       const note = {
         alertId,
@@ -24,7 +24,7 @@ export const NotesManager = {
         category,
         timestamp: new Date().toISOString(),
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       const result = await this.db.add(this.storeName, note);
@@ -39,7 +39,7 @@ export const NotesManager = {
   // Get all notes for an alert
   async getNotesForAlert(alertId) {
     try {
-      return await this.db.getAllByIndex(this.storeName, 'alertId', alertId);
+      return await this.db.getAllByIndex(this.storeName, "alertId", alertId);
     } catch (error) {
       Utils.log(`Error getting notes for alert ${alertId}: ${error.message}`);
       return [];
@@ -49,9 +49,11 @@ export const NotesManager = {
   // Get notes by category
   async getNotesByCategory(category) {
     try {
-      return await this.db.getAllByIndex(this.storeName, 'category', category);
+      return await this.db.getAllByIndex(this.storeName, "category", category);
     } catch (error) {
-      Utils.log(`Error getting notes by category ${category}: ${error.message}`);
+      Utils.log(
+        `Error getting notes by category ${category}: ${error.message}`,
+      );
       return [];
     }
   },
@@ -67,7 +69,7 @@ export const NotesManager = {
       const updatedNote = {
         ...existingNote,
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       await this.db.put(this.storeName, updatedNote);
@@ -104,8 +106,8 @@ export const NotesManager = {
   async searchNotes(searchTerm) {
     try {
       const allNotes = await this.getAllNotes();
-      return allNotes.filter(note => 
-        note.content.toLowerCase().includes(searchTerm.toLowerCase())
+      return allNotes.filter((note) =>
+        note.content.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     } catch (error) {
       Utils.log(`Error searching notes: ${error.message}`);
@@ -118,16 +120,16 @@ export const NotesManager = {
     try {
       const stats = await this.db.getStats(this.storeName);
       const allNotes = await this.getAllNotes();
-      
+
       const categories = {};
-      allNotes.forEach(note => {
+      allNotes.forEach((note) => {
         categories[note.category] = (categories[note.category] || 0) + 1;
       });
 
       return {
         ...stats,
         categories,
-        totalCategories: Object.keys(categories).length
+        totalCategories: Object.keys(categories).length,
       };
     } catch (error) {
       Utils.log(`Error getting notes stats: ${error.message}`);
@@ -141,7 +143,7 @@ export const NotesManager = {
       const deletedCount = await this.db.cleanup(this.storeName, {
         maxEntries: options.maxEntries || 1000,
         maxAgeInDays: options.maxAgeInDays || 90,
-        timestampField: 'timestamp'
+        timestampField: "timestamp",
       });
       return deletedCount;
     } catch (error) {
@@ -154,10 +156,10 @@ export const NotesManager = {
   async clearAll() {
     try {
       await this.db.clear(this.storeName);
-      Utils.log('Cleared all notes');
+      Utils.log("Cleared all notes");
     } catch (error) {
       Utils.log(`Error clearing notes: ${error.message}`);
       throw error;
     }
-  }
+  },
 };

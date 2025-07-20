@@ -6,8 +6,8 @@ export const AppState = {
     isOpen: false,
     currentAlertId: null,
     selectedFilters: [],
-    filterLogic: 'AND',
-    includeHashtags: true
+    filterLogic: "AND",
+    includeHashtags: true,
   },
 
   setCurrentAlert(alertId) {
@@ -28,5 +28,5 @@ export const AppState = {
 
   setIncludeHashtags(include) {
     this.notepad.includeHashtags = include;
-  }
+  },
 };

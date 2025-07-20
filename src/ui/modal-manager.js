@@ -1,9 +1,9 @@
 /**
  * Modal Manager - Coordinates modal dialogs
  */
-import { BulkDialog } from './modals/bulk-dialog.js';
-import { ImportDialog } from './modals/import-dialog.js';
-import { SettingsDialog } from './modals/settings-dialog.js';
+import { BulkDialog } from "./modals/bulk-dialog.js";
+import { ImportDialog } from "./modals/import-dialog.js";
+import { SettingsDialog } from "./modals/settings-dialog.js";
 
 const ModalManager = {
   showBulkDialog() {
@@ -19,8 +19,8 @@ const ModalManager = {
   showSettingsDialog() {
     const dialog = new SettingsDialog();
     dialog.show();
-  }
+  },
 };
 
-// exports 
+// exports
 export { ModalManager };
