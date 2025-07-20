@@ -5,3 +5,7 @@
 /.idea/
 /.DS_Store
 /.env
+
+# Generated documentation (use CI/CD to deploy)
+/docs/generated/
+/docs/internal/

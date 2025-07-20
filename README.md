@@ -34,10 +34,12 @@ npm run build   # Build UserScript
 
 ## 📚 Documentation
 
+- **[API Reference](docs/API.md)** - Complete API documentation
 - **[Setup Guide](docs/ONBOARDING.md)** - New developer walkthrough
 - **[Architecture](docs/ARCHITECTURE.md)** - Project structure & design
 - **[Configuration](docs/CONFIGURATION.md)** - Keyboard shortcuts & settings
 - **[Usage Guide](docs/USAGE.md)** - Detailed feature documentation
+- **[Documentation Guidelines](docs/DOCUMENTATION_GUIDELINES.md)** - JSDoc standards & practices
 
 ## 🚀 Upcoming Features
 
