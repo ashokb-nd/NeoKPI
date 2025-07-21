@@ -3,7 +3,8 @@
 A powerful Tampermonkey UserScript that enhances the Alert Debug page with custumizable annotations, note-taking capabilities, bulk processing features, and advanced video controls.
 
 ## Rendering Pipeline
-![NeoKPI_Rendering_pipeline drawio](https://github.com/user-attachments/assets/52880ee5-7f77-45c1-aa11-63b0ae666d1c)
+![NeoKPI2 drawio](https://github.com/user-attachments/assets/16505659-3b5f-4e66-9199-71c0e05b77c5)
+
 
 ## ⚡ Quick Start
 
