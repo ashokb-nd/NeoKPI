@@ -44,8 +44,10 @@ npm run build   # Build UserScript
 ## 🚀 Upcoming Features
 
 - Automatic caching of alert type
-- Saved dataset management
-- Video annotations from metadata (using runtime overlay)
+- Saved dataset management (named bulk)
+- make it into a 'chrome extension'
+- 
+
 
 ---
 
