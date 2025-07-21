@@ -44,9 +44,11 @@ npm run build   # Build UserScript
 ## 🚀 Upcoming Features
 
 - Automatic caching of alert type
-- Saved dataset management (named bulk)
 - make it into a 'chrome extension'
-- 
+- Saved dataset management (named bulk)
+  - save to s3
+  - should be able to share our observations, along with time stamps with others, easily.
+
 
 
 ---
