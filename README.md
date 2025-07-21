@@ -1,6 +1,9 @@
 # NeoKPI - Alert Debug UserScript
 
-A powerful Tampermonkey UserScript that enhances the Alert Debug page with comprehensive keyboard shortcuts, note-taking capabilities, bulk processing features, and advanced video controls.
+A powerful Tampermonkey UserScript that enhances the Alert Debug page with custumizable annotations, note-taking capabilities, bulk processing features, and advanced video controls.
+
+## Rendering Pipeline
+![NeoKPI_Rendering_pipeline drawio](https://github.com/user-attachments/assets/52880ee5-7f77-45c1-aa11-63b0ae666d1c)
 
 ## ⚡ Quick Start
 
