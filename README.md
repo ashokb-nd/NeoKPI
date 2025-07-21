@@ -49,6 +49,8 @@ npm run build   # Build UserScript
 - Saved dataset management (named bulk)
   - save to s3
   - should be able to share our observations, along with time stamps with others, easily.
+ 
+- Download the annotated video
 
 
 
