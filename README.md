@@ -58,4 +58,4 @@ npm run build   # Build UserScript
 
 ---
 
-**Author**: Batakal Ashok | **Version**: 0.7.1 | **License**: ISC
+**Author**: Batakal Ashok 
