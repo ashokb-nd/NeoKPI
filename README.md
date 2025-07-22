@@ -51,6 +51,8 @@ npm run build   # Build UserScript
   - should be able to share our observations, along with time stamps with others, easily.
  
 - Download the annotated video
+- annotation level opacity
+  - Option for the user to choose the opacity of individual annotations
 
 
 
