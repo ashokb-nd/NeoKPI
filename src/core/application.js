@@ -6,6 +6,7 @@ import { AppState } from "./app-state.js";
 import { KeyboardManager } from "./keyboard-manager.js";
 import { SettingsManager } from "../services/settings.js";
 import { MetadataManager } from "../services/metadata.js";
+import { VideoSyncOverride } from "../services/video-sync-override.js";
 import { NotesManager } from "../features/notes.js";
 import { BulkProcessor } from "../features/bulk-processor.js";
 import { FireworkShow } from "../ui/fireworks.js";
@@ -50,6 +51,7 @@ export class Application {
       // Initialize core services
       MetadataManager.init();
       SettingsManager.init();
+      VideoSyncOverride.init(); // Override Dash video sync with enhanced version
       NotesManager.init(); // Initialize IndexedDB for notes
 
       // Restore application state

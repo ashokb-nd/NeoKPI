@@ -1,5 +1,80 @@
 import { BaseRenderer } from "./base-renderer.js";
 
+/**
+ * @fileoverview HelloRenderer - Simple message display for demos and debugging
+ * 
+ * ANNOTATION DATA STRUCTURE:
+ * =========================
+ * 
+ * Expected annotation format:
+ * {
+ *   id: "hello-1",                   // Unique identifier
+ *   category: "hello",               // Must be "hello"
+ *   timeRange: {                     // Time visibility range
+ *     startMs: 1000,                 //   Start time in milliseconds  
+ *     endMs: 4000                    //   End time in milliseconds
+ *   },
+ *   data: {                          // Hello-specific data
+ *     message: "Hello World!",       //   Message text to display
+ *     position: "center"             //   Optional: "center", "top", "bottom", "left", "right"
+ *   },
+ *   style: {                         // Optional styling overrides
+ *     fontSize: "24px",              //   Font size (default: 24px)
+ *     fontFamily: "Arial, sans-serif", // Font family (default: Arial)
+ *     textColor: "#ffffff",          //   Text color (default: white)
+ *     backgroundColor: "rgba(0,0,0,0.7)", // Background color (default: semi-transparent black)
+ *     padding: 10,                   //   Background padding in pixels (default: 10)
+ *     borderRadius: 5                //   Background border radius (default: 5)
+ *   }
+ * }
+ * 
+ * POSITION OPTIONS:
+ * ================
+ * - "center": Center of video (default)
+ * - "top": Top center of video
+ * - "bottom": Bottom center of video  
+ * - "left": Left center of video
+ * - "right": Right center of video
+ * 
+ * RENDERING BEHAVIOR:
+ * ==================
+ * - Displays simple text message with background
+ * - Centers text at specified position on video canvas
+ * - Draws rounded rectangle background for better readability
+ * - Automatically measures text to size background appropriately
+ * - Useful for simple notifications, debugging, or demo purposes
+ * 
+ * @example
+ * // Simple centered hello message
+ * {
+ *   id: "welcome-msg",
+ *   category: "hello",
+ *   timeRange: { startMs: 0, endMs: 3000 },
+ *   data: {
+ *     message: "Welcome to the Video!",
+ *     position: "center"
+ *   }
+ * }
+ * 
+ * @example
+ * // Custom styled notification at bottom
+ * {
+ *   id: "debug-info",
+ *   category: "hello",
+ *   timeRange: { startMs: 5000, endMs: 8000 },
+ *   data: {
+ *     message: "Debug Mode: ON",
+ *     position: "bottom"
+ *   },
+ *   style: {
+ *     fontSize: "16px",
+ *     textColor: "#ffff00",
+ *     backgroundColor: "rgba(255,0,0,0.8)",
+ *     padding: 15
+ *   }
+ * }
+ */
+
 // ========================================
 // HELLO RENDERER - Simple message display
 // ========================================

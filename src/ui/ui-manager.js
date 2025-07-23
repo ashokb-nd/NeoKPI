@@ -734,14 +734,11 @@ export const NotepadUI = {
       // Show loading notification
       UIManager.showNotification("Loading annotations...", "info", 2000);
       
-      // Load annotations with multiple categories for testing
-      const categories = ['hello', 'cross', 'text', 'detection'];
-      const success = await AnnotationManager.loadAnnotationsForAlert(alertId, categories);
+      // Load annotations using default categories from config
+      const success = await AnnotationManager.loadAnnotationsForAlert();
       
       if (success) {
         UIManager.showNotification(`✅ Annotations loaded for alert ${alertId}`, "success");
-        // Show debug borders to make it obvious
-        AnnotationManager.showDebugBorders();
       } else {
         UIManager.showNotification(`❌ Failed to load annotations for alert ${alertId}`, "error");
       }

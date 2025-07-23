@@ -148,6 +148,67 @@ export const VideoControlsManager = {
       .video-controls-enhanced:hover .video-keyboard-hint {
         opacity: 1;
       }
+      
+      /* Renderer controls panel */
+      .renderer-controls-panel {
+        margin-top: 12px;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 6px;
+        border: 1px solid #eee;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 11px;
+      }
+      
+      .renderer-controls-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .renderer-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      
+      .renderer-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: background 0.2s ease;
+      }
+      
+      .renderer-checkbox-item:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+      
+      .renderer-checkbox {
+        width: 12px;
+        height: 12px;
+        cursor: pointer;
+        accent-color: #333;
+      }
+      
+      .renderer-checkbox-label {
+        color: #666;
+        font-size: 10px;
+        cursor: pointer;
+        user-select: none;
+        text-transform: capitalize;
+      }
+      
+      .renderer-checkbox:checked + .renderer-checkbox-label {
+        color: #333;
+        font-weight: 500;
+      }
     `;
   },
 
@@ -196,8 +257,12 @@ export const VideoControlsManager = {
     const controlsPanel = this.createCustomControls(video);
     container.appendChild(controlsPanel);
 
+    // Create renderer controls panel
+    const rendererPanel = this.createRendererControlsPanel(video);
+    container.appendChild(rendererPanel);
+
     // Add keyboard shortcuts hint
-    this.addKeyboardHint(container);
+    // this.addKeyboardHint(container);
 
     // Setup enhanced keyboard controls
     this.setupKeyboardControls(video);
@@ -290,6 +355,82 @@ export const VideoControlsManager = {
     rightSection.appendChild(fullscreenButton);
 
     return rightSection;
+  },
+
+  createRendererControlsPanel(video) {
+    const panel = document.createElement("div");
+    panel.className = "renderer-controls-panel";
+
+    // Title
+    const title = document.createElement("div");
+    title.className = "renderer-controls-title";
+    title.textContent = "Annotation Renderers";
+
+    // Checkbox container
+    const checkboxContainer = document.createElement("div");
+    checkboxContainer.className = "renderer-checkboxes";
+
+    // Create renderer types from CONFIG with all enabled by default
+    const rendererTypes = CONFIG.ANNOTATIONS_CATEGORIES.map(category => ({
+      type: category,
+      label: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize first letter
+      enabled: true // Enable all by default
+    }));
+
+    // Create checkbox for each renderer
+    rendererTypes.forEach(renderer => {
+      const checkboxItem = document.createElement("div");
+      checkboxItem.className = "renderer-checkbox-item";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "renderer-checkbox";
+      checkbox.id = `renderer-${renderer.type}`;
+      checkbox.checked = renderer.enabled;
+      
+      const label = document.createElement("label");
+      label.className = "renderer-checkbox-label";
+      label.htmlFor = `renderer-${renderer.type}`;
+      label.textContent = renderer.label;
+
+      // Add event listener to handle renderer toggling
+      checkbox.addEventListener("change", (e) => {
+        this.toggleRenderer(renderer.type, e.target.checked);
+      });
+
+      checkboxItem.appendChild(checkbox);
+      checkboxItem.appendChild(label);
+      checkboxContainer.appendChild(checkboxItem);
+    });
+
+    panel.appendChild(title);
+    panel.appendChild(checkboxContainer);
+
+    return panel;
+  },
+
+  toggleRenderer(rendererType, enabled) {
+    Utils.log(`Renderer ${rendererType} ${enabled ? 'enabled' : 'disabled'}`);
+    
+    // Toggle renderer on all videos with annotators
+    const videos = document.querySelectorAll('video');
+    let toggledAny = false;
+    
+    videos.forEach(video => {
+      if (video.annotator) {
+        video.annotator.toggleRenderer(rendererType, enabled);
+        toggledAny = true;
+      }
+    });
+    
+    // Always store preference for future video loads
+    const rendererPrefs = JSON.parse(localStorage.getItem('neo-kpi-renderer-prefs') || '{}');
+    rendererPrefs[rendererType] = enabled;
+    localStorage.setItem('neo-kpi-renderer-prefs', JSON.stringify(rendererPrefs));
+    
+    if (!toggledAny) {
+      Utils.log(`No videos with annotators found. Preference saved for future loads.`);
+    }
   },
 
   setupVideoEvents(video, controlsPanel) {

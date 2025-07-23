@@ -727,10 +727,12 @@
           "IsVisible:",
           annotationDrawer ? annotationDrawer.isVisible : "N/A",
         );
-        console.log(
-          "Annotations count:",
-          annotationDrawer ? annotationDrawer.annotations.length : "N/A",
-        );
+        
+        // Calculate total count from annotationsByCategory
+        const totalCount = annotationDrawer 
+          ? Object.values(annotationDrawer.annotationsByCategory).reduce((sum, arr) => sum + arr.length, 0)
+          : 0;
+        console.log("Annotations count:", totalCount);
 
         if (canvas) {
           // Test draw something simple
@@ -1034,7 +1036,7 @@
               ? `${((renderCallCount / repositionCallCount) * 100).toFixed(1)}%`
               : "N/A",
           annotationsCount: annotationDrawer
-            ? annotationDrawer.annotations.length
+            ? Object.values(annotationDrawer.annotationsByCategory).reduce((sum, arr) => sum + arr.length, 0)
             : 0,
           canvasVisible: annotationDrawer ? annotationDrawer.isVisible : false,
         };

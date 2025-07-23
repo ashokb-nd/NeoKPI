@@ -11,6 +11,7 @@
  */
 
 import { AnnotationManifest, Annotation } from '../features/annotations/annotation-manifest.js';
+import { dsf_extractor } from './extractors-folder/DSF_extractor.js';
 
 
 //  * const detection = new Annotation({
@@ -93,6 +94,11 @@ const Extractors = {
     }
     
     return annotations;
+  },
+
+  // DSF extractor - processes DSF lane calibration data from metadata
+  dsf(video_metadata, options) {
+    return dsf_extractor(video_metadata);
   },
 
   // Add more extractor functions as needed

@@ -9,7 +9,7 @@
         {
           "id": "detection-1",
           "category": "detection",
-          "timeRange": { "startMs": 1000, "endMs": 5000 },
+          "timeRange": { "startMs": 5000, "endMs": 15000 },
           "data": {
             "bbox": { "x": 0.1, "y": 0.1, "width": 0.2, "height": 0.3 },
             "confidence": 0.95,
@@ -19,7 +19,7 @@
         {
           "id": "detection-2",
           "category": "detection",
-          "timeRange": { "startMs": 2000, "endMs": 6000 },
+          "timeRange": { "startMs": 8000, "endMs": 60000 },
           "data": {
             "bbox": { "x": 0.5, "y": 0.2, "width": 0.15, "height": 0.25 },
             "confidence": 0.88,
@@ -31,10 +31,37 @@
         {
           "id": "debug-cross-1",
           "category": "cross",
-          "timeRange": { "startMs": 0, "endMs": 10000 },
+          "timeRange": { "startMs": 0, "endMs": 999999999 },
           "data": {
             "debugText": "DEBUG CROSS",
             "includeCenterLines": false
+          }
+        }
+      ],
+      "trajectory": [
+        {
+          "id": "debug-trajectory-1",
+          "category": "trajectory",
+          "timeRange": { "startMs": 2000, "endMs": 18000 },
+          "data": {
+            "points": [
+              { "x": 0.1, "y": 0.8, "timeMs": 2000 },
+              { "x": 0.05, "y": 0.6, "timeMs": 3500 },
+              { "x": 0.25, "y": 0.4, "timeMs": 5000 },
+              { "x": 0.5, "y": 0.2, "timeMs": 6500 },
+              { "x": 0.8, "y": 0.15, "timeMs": 8000 },
+              { "x": 0.95, "y": 0.4, "timeMs": 9500 },
+              { "x": 0.85, "y": 0.7, "timeMs": 11000 },
+              { "x": 0.6, "y": 0.85, "timeMs": 12500 },
+              { "x": 0.3, "y": 0.9, "timeMs": 14000 },
+              { "x": 0.1, "y": 0.65, "timeMs": 15500 },
+              { "x": 0.4, "y": 0.3, "timeMs": 17000 },
+              { "x": 0.7, "y": 0.2, "timeMs": 18000 }
+            ],
+            "showDirection": true,
+            "showHistory": true,
+            "historyLengthMs": 4000,
+            "label": "Dynamic Debug Trajectory"
           }
         }
       ]
@@ -74,7 +101,7 @@
         {
           "id": "corner-cross",
           "category": "cross",
-          "timeRange": { "startMs": 0, "endMs": 15000 },
+          "timeRange": { "startMs": 10000, "endMs": 150000 },
           "data": {
             "debugText": "CORNER TO CORNER",
             "includeCenterLines": false
@@ -143,6 +170,301 @@
           "data": {
             "debugText": "TIMING TEST",
             "includeCenterLines": true
+          }
+        }
+      ]
+    }
+  },
+  "trajectorySample": {
+    "metadata": { "source": "trajectory-demo" },
+    "items": {
+      "trajectory": [
+        {
+          "id": "person-walking",
+          "category": "trajectory",
+          "timeRange": { "startMs": 0, "endMs": 12000 },
+          "data": {
+            "points": [
+              { "x": 0.05, "y": 0.8, "timeMs": 0 },
+              { "x": 0.15, "y": 0.75, "timeMs": 1500 },
+              { "x": 0.3, "y": 0.6, "timeMs": 3000 },
+              { "x": 0.45, "y": 0.4, "timeMs": 5000 },
+              { "x": 0.6, "y": 0.3, "timeMs": 7000 },
+              { "x": 0.75, "y": 0.25, "timeMs": 9000 },
+              { "x": 0.9, "y": 0.2, "timeMs": 12000 }
+            ],
+            "showDirection": true,
+            "showHistory": true,
+            "historyLengthMs": 2500,
+            "label": "Person Walking"
+          }
+        },
+        {
+          "id": "vehicle-route",
+          "category": "trajectory",
+          "timeRange": { "startMs": 2000, "endMs": 28000 },
+          "data": {
+            "points": [
+              { "x": 0.02, "y": 0.9, "timeMs": 2000 },
+              { "x": 0.08, "y": 0.75, "timeMs": 3200 },
+              { "x": 0.2, "y": 0.6, "timeMs": 4500 },
+              { "x": 0.35, "y": 0.45, "timeMs": 6000 },
+              { "x": 0.5, "y": 0.3, "timeMs": 7500 },
+              { "x": 0.7, "y": 0.25, "timeMs": 9000 },
+              { "x": 0.85, "y": 0.35, "timeMs": 10500 },
+              { "x": 0.9, "y": 0.55, "timeMs": 12000 },
+              { "x": 0.8, "y": 0.75, "timeMs": 13500 },
+              { "x": 0.6, "y": 0.85, "timeMs": 15000 },
+              { "x": 0.4, "y": 0.8, "timeMs": 16500 },
+              { "x": 0.2, "y": 0.7, "timeMs": 18000 },
+              { "x": 0.1, "y": 0.5, "timeMs": 19500 },
+              { "x": 0.15, "y": 0.3, "timeMs": 21000 },
+              { "x": 0.3, "y": 0.15, "timeMs": 22500 },
+              { "x": 0.5, "y": 0.1, "timeMs": 24000 },
+              { "x": 0.75, "y": 0.2, "timeMs": 25500 },
+              { "x": 0.9, "y": 0.4, "timeMs": 27000 },
+              { "x": 0.95, "y": 0.15, "timeMs": 28000 }
+            ],
+            "interpolation": "bezier",
+            "showDirection": true,
+            "historyLengthMs": 5000,
+            "label": "Dramatic Vehicle Route"
+          },
+          "style": {
+            "lineColor": "#00ff00",
+            "lineWidth": 5,
+            "currentPointColor": "#ff0000",
+            "showGlow": true,
+            "trailOpacity": 0.9
+          }
+        }
+      ]
+    }
+  },
+  "graphSample": {
+    "metadata": { "source": "analytics-overlay" },
+    "items": {
+      "graph": [
+        {
+          "id": "cpu-metrics",
+          "category": "graph",
+          "timeRange": { "startMs": 1000, "endMs": 12000 },
+          "data": {
+            "type": "line",
+            "position": { "x": 0.02, "y": 0.02, "width": 0.35, "height": 0.25 },
+            "datasets": [
+              {
+                "label": "CPU %",
+                "data": [
+                  { "x": 0, "y": 20 },
+                  { "x": 2000, "y": 45 },
+                  { "x": 4000, "y": 65 },
+                  { "x": 6000, "y": 40 },
+                  { "x": 8000, "y": 78 },
+                  { "x": 10000, "y": 52 }
+                ],
+                "color": "#ff6384"
+              }
+            ],
+            "title": "CPU Usage",
+            "axes": {
+              "x": { "label": "Time", "unit": "ms" },
+              "y": { "label": "Usage %", "min": 0, "max": 100 }
+            },
+            "showGrid": true
+          }
+        },
+        {
+          "id": "comparison-chart",
+          "category": "graph",
+          "timeRange": { "startMs": 5000, "endMs": 15000 },
+          "data": {
+            "type": "bar",
+            "position": { "x": 0.55, "y": 0.1, "width": 0.4, "height": 0.4 },
+            "datasets": [
+              {
+                "label": "Before",
+                "data": [
+                  { "x": 0, "y": 85 },
+                  { "x": 1, "y": 92 },
+                  { "x": 2, "y": 78 }
+                ],
+                "color": "#36a2eb"
+              },
+              {
+                "label": "After",
+                "data": [
+                  { "x": 0, "y": 95 },
+                  { "x": 1, "y": 88 },
+                  { "x": 2, "y": 94 }
+                ],
+                "color": "#4bc0c0"
+              }
+            ],
+            "title": "Performance Comparison",
+            "showLegend": true
+          }
+        }
+      ]
+    }
+  },
+  "helloSample": {
+    "metadata": { "source": "welcome-messages" },
+    "items": {
+      "hello": [
+        {
+          "id": "welcome-msg",
+          "category": "hello",
+          "timeRange": { "startMs": 0, "endMs": 3000 },
+          "data": {
+            "message": "Welcome to the Video!",
+            "position": "center"
+          }
+        },
+        {
+          "id": "debug-info",
+          "category": "hello",
+          "timeRange": { "startMs": 8000, "endMs": 12000 },
+          "data": {
+            "message": "Debug Mode: ON",
+            "position": "bottom"
+          },
+          "style": {
+            "fontSize": "16px",
+            "textColor": "#ffff00",
+            "backgroundColor": "rgba(255,0,0,0.8)",
+            "padding": 15
+          }
+        }
+      ]
+    }
+  },
+  "complexMixedSample": {
+    "metadata": { "source": "comprehensive-demo" },
+    "items": {
+      "detection": [
+        {
+          "id": "tracked-person",
+          "category": "detection",
+          "timeRange": { "startMs": 2000, "endMs": 18000 },
+          "data": {
+            "bbox": { "x": 0.3, "y": 0.1, "width": 0.15, "height": 0.4 },
+            "confidence": 0.91,
+            "label": "Person",
+            "classId": 1
+          },
+          "style": {
+            "borderColor": "#00ff00",
+            "showLabel": true,
+            "labelPosition": "top-left"
+          }
+        }
+      ],
+      "trajectory": [
+        {
+          "id": "drone-patrol",
+          "category": "trajectory",
+          "timeRange": { "startMs": 1000, "endMs": 61000 },
+          "data": {
+            "points": [
+              { "x": 0.5, "y": 0.9, "timeMs": 1000 },
+              { "x": 0.2, "y": 0.8, "timeMs": 3000 },
+              { "x": 0.05, "y": 0.6, "timeMs": 5000 },
+              { "x": 0.02, "y": 0.3, "timeMs": 7000 },
+              { "x": 0.1, "y": 0.05, "timeMs": 9000 },
+              { "x": 0.35, "y": 0.02, "timeMs": 11000 },
+              { "x": 0.6, "y": 0.08, "timeMs": 13000 },
+              { "x": 0.85, "y": 0.2, "timeMs": 15000 },
+              { "x": 0.98, "y": 0.4, "timeMs": 17000 },
+              { "x": 0.95, "y": 0.65, "timeMs": 19000 },
+              { "x": 0.8, "y": 0.85, "timeMs": 21000 },
+              { "x": 0.55, "y": 0.98, "timeMs": 23000 },
+              { "x": 0.25, "y": 0.92, "timeMs": 25000 },
+              { "x": 0.08, "y": 0.75, "timeMs": 27000 },
+              { "x": 0.03, "y": 0.5, "timeMs": 29000 },
+              { "x": 0.15, "y": 0.25, "timeMs": 31000 },
+              { "x": 0.4, "y": 0.1, "timeMs": 33000 },
+              { "x": 0.65, "y": 0.05, "timeMs": 35000 },
+              { "x": 0.9, "y": 0.15, "timeMs": 37000 },
+              { "x": 0.97, "y": 0.35, "timeMs": 39000 },
+              { "x": 0.9, "y": 0.6, "timeMs": 41000 },
+              { "x": 0.7, "y": 0.8, "timeMs": 43000 },
+              { "x": 0.45, "y": 0.95, "timeMs": 45000 },
+              { "x": 0.2, "y": 0.85, "timeMs": 47000 },
+              { "x": 0.05, "y": 0.65, "timeMs": 49000 },
+              { "x": 0.1, "y": 0.4, "timeMs": 51000 },
+              { "x": 0.3, "y": 0.2, "timeMs": 53000 },
+              { "x": 0.55, "y": 0.1, "timeMs": 55000 },
+              { "x": 0.8, "y": 0.25, "timeMs": 57000 },
+              { "x": 0.9, "y": 0.5, "timeMs": 59000 },
+              { "x": 0.5, "y": 0.9, "timeMs": 61000 }
+            ],
+            "interpolation": "bezier",
+            "showDirection": true,
+            "showHistory": true,
+            "historyLengthMs": 8000,
+            "label": "Epic 1-Minute Drone Patrol"
+          },
+          "style": {
+            "lineColor": "#00aaff",
+            "lineWidth": 5,
+            "currentPointColor": "#ff4400",
+            "showFuture": true,
+            "trailOpacity": 0.95
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "status-overlay",
+          "category": "text",
+          "timeRange": { "startMs": 3000, "endMs": 20000 },
+          "data": {
+            "text": "SURVEILLANCE ACTIVE",
+            "position": { "x": 0.02, "y": 0.95 },
+            "anchor": "bottom-left"
+          },
+          "style": {
+            "fontSize": 14,
+            "color": "#00ff00",
+            "backgroundColor": "rgba(0,0,0,0.8)",
+            "padding": { "x": 8, "y": 4 }
+          }
+        }
+      ],
+      "graph": [
+        {
+          "id": "altitude-graph",
+          "category": "graph", 
+          "timeRange": { "startMs": 2000, "endMs": 22000 },
+          "data": {
+            "type": "area",
+            "position": { "x": 0.65, "y": 0.65, "width": 0.32, "height": 0.3 },
+            "datasets": [
+              {
+                "label": "Altitude (m)",
+                "data": [
+                  { "x": 0, "y": 0 },
+                  { "x": 2000, "y": 15 },
+                  { "x": 5000, "y": 25 },
+                  { "x": 10000, "y": 30 },
+                  { "x": 15000, "y": 28 },
+                  { "x": 20000, "y": 12 },
+                  { "x": 22000, "y": 0 }
+                ],
+                "color": "#00aaff",
+                "fillColor": "rgba(0,170,255,0.3)"
+              }
+            ],
+            "title": "Drone Altitude",
+            "axes": {
+              "x": { "label": "Time", "unit": "ms" },
+              "y": { "label": "Height (m)", "min": 0, "max": 40 }
+            }
+          },
+          "style": {
+            "backgroundColor": "rgba(0,0,0,0.9)",
+            "fontSize": 9
           }
         }
       ]

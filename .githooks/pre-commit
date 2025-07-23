@@ -1,5 +1,8 @@
 #!/bin/sh
-# Pre-commit hook to update documentation
+# Pre-commit hook to format code and update documentation
+
+echo "🎨 Formatting staged files with prettier..."
+npm run format:changed
 
 echo "🔄 Updating documentation from config..."
 npm run docs:update

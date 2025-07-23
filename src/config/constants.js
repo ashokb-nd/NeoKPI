@@ -66,4 +66,5 @@ export const CONFIG = {
   TAGS: {
     HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g,
   },
+  ANNOTATIONS_CATEGORIES: ['hello', 'cross', 'text', 'detection', 'trajectory', 'graph', 'dsf'],
 };

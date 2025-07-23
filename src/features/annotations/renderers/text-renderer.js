@@ -1,5 +1,102 @@
 import { BaseRenderer } from "./base-renderer.js";
 
+/**
+ * @fileoverview TextRenderer - Renders text overlays and labels on video canvas
+ * 
+ * ANNOTATION DATA STRUCTURE:
+ * =========================
+ * 
+ * Expected annotation format:
+ * {
+ *   id: "text-1",                    // Unique identifier  
+ *   category: "text",                // Must be "text"
+ *   timeRange: {                     // Time visibility range
+ *     startMs: 1000,                 //   Start time in milliseconds
+ *     endMs: 5000                    //   End time in milliseconds
+ *   },
+ *   data: {                          // Text-specific data
+ *     text: "Hello World",           //   Text content to display
+ *     position: {                    //   Position (normalized coordinates 0-1)
+ *       x: 0.5,                      //     X position (0 = left, 1 = right)
+ *       y: 0.1                       //     Y position (0 = top, 1 = bottom)
+ *     },
+ *     anchor: "center",              //   Optional: text anchor point
+ *     maxWidth: 0.8                  //   Optional: maximum width as fraction of video width
+ *   },
+ *   style: {                         // Optional styling overrides  
+ *     fontSize: 16,                  //   Font size in pixels (default: 16)
+ *     fontFamily: "Arial",           //   Font family (default: Arial)
+ *     color: "#ffffff",              //   Text color (default: white)
+ *     backgroundColor: "rgba(0,0,0,0.7)", // Background color (default: semi-transparent black)
+ *     padding: { x: 8, y: 4 },       //   Background padding (default: 8px horizontal, 4px vertical)
+ *     borderRadius: 4,               //   Background border radius (default: 4)
+ *     textAlign: "center",           //   Text alignment: "left", "center", "right"
+ *     lineHeight: 1.2,               //   Line height multiplier for multi-line text
+ *     strokeColor: "#000000",        //   Optional: text outline color
+ *     strokeWidth: 1                 //   Optional: text outline width
+ *   }
+ * }
+ * 
+ * ANCHOR POSITIONS:
+ * ================
+ * - "top-left": position is top-left corner of text
+ * - "top-center": position is top-center of text  
+ * - "top-right": position is top-right corner of text
+ * - "center-left": position is center-left of text
+ * - "center": position is center of text (default)
+ * - "center-right": position is center-right of text
+ * - "bottom-left": position is bottom-left corner of text
+ * - "bottom-center": position is bottom-center of text
+ * - "bottom-right": position is bottom-right corner of text
+ * 
+ * RENDERING BEHAVIOR:
+ * ==================
+ * - Converts normalized position (0-1) to pixel coordinates
+ * - Draws background rectangle if backgroundColor is specified
+ * - Renders text with specified font, color, and alignment
+ * - Handles multi-line text with automatic line wrapping
+ * - Respects maxWidth constraint for text wrapping
+ * - Applies text outline if strokeColor/strokeWidth specified
+ * 
+ * @example
+ * // Centered title text
+ * {
+ *   id: "title-1",
+ *   category: "text",
+ *   timeRange: { startMs: 0, endMs: 3000 },
+ *   data: {
+ *     text: "Video Title",
+ *     position: { x: 0.5, y: 0.1 },
+ *     anchor: "top-center"
+ *   },
+ *   style: {
+ *     fontSize: 24,
+ *     fontFamily: "Arial Bold",
+ *     color: "#ffffff"
+ *   }
+ * }
+ * 
+ * @example
+ * // Multi-line subtitle with background
+ * {
+ *   id: "subtitle-1",
+ *   category: "text", 
+ *   timeRange: { startMs: 1000, endMs: 5000 },
+ *   data: {
+ *     text: "This is a longer subtitle that will wrap to multiple lines",
+ *     position: { x: 0.5, y: 0.9 },
+ *     anchor: "bottom-center",
+ *     maxWidth: 0.8
+ *   },
+ *   style: {
+ *     fontSize: 14,
+ *     backgroundColor: "rgba(0,0,0,0.8)",
+ *     padding: { x: 12, y: 6 },
+ *     borderRadius: 6
+ *   }
+ * }
+ */
+
 // ========================================
 // TEXT RENDERER - Text overlays and labels
 // ========================================

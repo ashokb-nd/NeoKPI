@@ -1,5 +1,145 @@
 import { BaseRenderer } from "./base-renderer.js";
 
+/**
+ * @fileoverview GraphRenderer - Renders charts and time-series data overlays
+ * 
+ * ANNOTATION DATA STRUCTURE:
+ * =========================
+ * 
+ * Expected annotation format:
+ * {
+ *   id: "graph-1",                   // Unique identifier
+ *   category: "graph",               // Must be "graph" 
+ *   timeRange: {                     // Time visibility range
+ *     startMs: 1000,                 //   Start time in milliseconds
+ *     endMs: 8000                    //   End time in milliseconds
+ *   },
+ *   data: {                          // Graph-specific data
+ *     type: "line",                  //   Chart type: "line", "bar", "area", "scatter"
+ *     position: {                    //   Graph position (normalized 0-1)
+ *       x: 0.05,                     //     Left edge X position  
+ *       y: 0.05,                     //     Top edge Y position
+ *       width: 0.4,                  //     Graph width as fraction of video
+ *       height: 0.3                  //     Graph height as fraction of video
+ *     },
+ *     datasets: [                    //   Array of data series
+ *       {
+ *         label: "CPU Usage",         //     Series name
+ *         data: [                     //     Data points array
+ *           { x: 0, y: 45 },          //       Time-value pairs
+ *           { x: 1000, y: 62 },       //       x = time offset (ms), y = value
+ *           { x: 2000, y: 58 },
+ *           { x: 3000, y: 71 }
+ *         ],
+ *         color: "#ff6384",           //     Line/bar color
+ *         fillColor: "rgba(255,99,132,0.2)", // Optional: area fill color
+ *         lineWidth: 2               //     Optional: line thickness
+ *       }
+ *     ],
+ *     axes: {                        //   Optional: axis configuration
+ *       x: {                         //     X-axis settings
+ *         label: "Time (s)",          //       Axis label
+ *         min: 0,                     //       Minimum value
+ *         max: 5000,                  //       Maximum value
+ *         unit: "ms"                  //       Value unit
+ *       },
+ *       y: {                         //     Y-axis settings  
+ *         label: "Usage %",           //       Axis label
+ *         min: 0,                     //       Minimum value
+ *         max: 100                    //       Maximum value
+ *       }
+ *     },
+ *     title: "System Metrics",       //   Optional: graph title
+ *     showGrid: true,                //   Optional: show grid lines
+ *     showLegend: true,              //   Optional: show legend
+ *     animated: false                //   Optional: animate data points
+ *   },
+ *   style: {                         // Optional styling overrides
+ *     backgroundColor: "rgba(0,0,0,0.8)", // Background color
+ *     gridColor: "rgba(255,255,255,0.2)", // Grid line color
+ *     axisColor: "rgba(255,255,255,0.5)", // Axis line color  
+ *     textColor: "#ffffff",          //     Text color for labels
+ *     fontSize: 10,                  //     Font size for labels
+ *     fontFamily: "Arial",           //     Font family
+ *     margin: {                      //     Graph margins (pixels)
+ *       top: 20, right: 20,          //       Spacing around graph
+ *       bottom: 30, left: 40         
+ *     }
+ *   }
+ * }
+ * 
+ * CHART TYPES:
+ * ===========
+ * - "line": Connected line chart with optional area fill
+ * - "bar": Vertical bar chart 
+ * - "area": Filled area chart
+ * - "scatter": Individual data points without connecting lines
+ * 
+ * RENDERING BEHAVIOR:
+ * ==================
+ * - Draws chart background with optional transparency
+ * - Renders axes with labels and tick marks
+ * - Plots data points according to chart type
+ * - Shows grid lines for easier reading (if showGrid=true)
+ * - Displays legend identifying data series (if showLegend=true)
+ * - Supports multiple data series on same chart
+ * - Automatically scales axes to fit data range
+ * - Animates current time indicator for time-series data
+ * 
+ * @example
+ * // Simple line chart showing metrics over time
+ * {
+ *   id: "cpu-graph",
+ *   category: "graph",
+ *   timeRange: { startMs: 2000, endMs: 10000 },
+ *   data: {
+ *     type: "line",
+ *     position: { x: 0.02, y: 0.02, width: 0.35, height: 0.25 },
+ *     datasets: [{
+ *       label: "CPU %",
+ *       data: [
+ *         { x: 0, y: 20 },
+ *         { x: 2000, y: 45 },
+ *         { x: 4000, y: 65 },
+ *         { x: 6000, y: 40 }
+ *       ],
+ *       color: "#ff6384"
+ *     }],
+ *     title: "CPU Usage",
+ *     axes: {
+ *       x: { label: "Time", unit: "ms" },
+ *       y: { label: "Usage %", min: 0, max: 100 }
+ *     }
+ *   }
+ * }
+ * 
+ * @example
+ * // Multi-series bar chart
+ * {
+ *   id: "comparison-chart",
+ *   category: "graph", 
+ *   timeRange: { startMs: 3000, endMs: 8000 },
+ *   data: {
+ *     type: "bar",
+ *     position: { x: 0.55, y: 0.1, width: 0.4, height: 0.4 },
+ *     datasets: [
+ *       {
+ *         label: "Before",
+ *         data: [{ x: 0, y: 85 }, { x: 1, y: 92 }, { x: 2, y: 78 }],
+ *         color: "#36a2eb"
+ *       },
+ *       {
+ *         label: "After", 
+ *         data: [{ x: 0, y: 95 }, { x: 1, y: 88 }, { x: 2, y: 94 }],
+ *         color: "#4bc0c0"
+ *       }
+ *     ],
+ *     title: "Performance Comparison",
+ *     showLegend: true
+ *   }
+ * }
+ */
+
 // ========================================
 // GRAPH RENDERER - Charts and time-series data
 // ========================================
