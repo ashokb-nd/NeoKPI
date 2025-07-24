@@ -85,7 +85,50 @@ const AVAILABLE_RENDERER_CLASSES = [
 ];
 ```
 
-### Step 3: That's It! 
+### Step 3: Add to Configuration
+Add your renderer category to the system configuration:
+
+Open `/src/config/constants.js` and:
+
+1. **Add your category** to the `ANNOTATIONS_CATEGORIES` array:
+```javascript
+ANNOTATIONS_CATEGORIES: [
+  'cross', 
+  'dsf',
+  'myCategory'  // ← Add your renderer category here
+],
+```
+
+### Step 4: Create an Extractor Function
+To convert metadata into annotations that your renderer can display, create an extractor function:
+
+Open `/src/services/extractors.js` and:
+
+1. **Add your extractor function** to the `Extractors` object:
+- implement it in a new file in `extractors-folder`.  then import it into the `extractors.js`.
+```javascript
+const Extractors = {
+  // ... existing extractors ...
+  
+  // My custom extractor - processes my custom data from metadata
+  myCategory(video_metadata, options) {
+    const annotations = [];
+    
+    // Process your metadata format here
+    // ...
+    
+    return annotations;
+  }
+};
+```
+
+2. **Key Points:**
+   - Function name must match your renderer's `category` property
+   - Return an array of `Annotation` objects
+   - Transform metadata into the data structure your renderer expects
+
+
+### Step 5: That's It! 
 The VideoAnnotator will automatically:
 - Use your renderer's `.category` property to identify it
 - Create instances when annotations with that category are loaded
@@ -106,6 +149,18 @@ annotator.addAnnotation({
 
 ### ⚠️ Important Notes
 - **Category must be unique**: Each renderer's `category` should be unique across all renderers
+- **Configuration update required**: Your renderer category must be added to `ANNOTATIONS_CATEGORIES` in `/src/config/constants.js`
+- **Extractor-Renderer pairing**: Your extractor function name must exactly match your renderer's `category` property
+- **Data transformation**: The extractor transforms raw metadata into the annotation format your renderer expects
+
+### 🔄 Workflow Overview
+1. **Metadata arrives** → 2. **Extractor processes it** → 3. **Annotations created** → 4. **Renderer displays them**
+
+When you call `MetadataToAnnotationConverter.convertToManifest(metadata, ['my-category'])`, the system:
+1. Checks that `my-category` is listed in `CONFIG.ANNOTATIONS_CATEGORIES`
+2. Looks for an extractor function named `my-category` in the `Extractors` object
+3. Calls that function with your metadata to create annotations
+4. Routes annotations with category `my-category` to your renderer for display
 
 
 ---

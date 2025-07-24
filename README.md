@@ -39,6 +39,7 @@ npm run build   # Build UserScript
 - **[Architecture](docs/ARCHITECTURE.md)** - Project structure & design
 - **[Configuration](docs/CONFIGURATION.md)** - Keyboard shortcuts & settings
 - **[Usage Guide](docs/USAGE.md)** - Detailed feature documentation
+- **[Add your own renderer](docs/AddingNewRenderer.md)** - How to create custom annotation renderers
 - **[Documentation Guidelines](docs/DOCUMENTATION_GUIDELINES.md)** - JSDoc standards & practices
 
 ## 🚀 Upcoming Features
