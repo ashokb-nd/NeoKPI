@@ -56,7 +56,7 @@ npm run build   # Build UserScript
 - Handle SPA navigation properly.
   - going out from `alert-debug`
   - into `alert-debug`
-
+- video contains white padding like thing on left,right sides. Then, HTML video size != actual video screen size.
 
 ---
 
