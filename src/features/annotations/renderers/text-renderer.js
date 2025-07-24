@@ -118,8 +118,6 @@ export class TextRenderer extends BaseRenderer {
   }
 
   render(annotation, currentTimeMs, videoRect) {
-    if (!this.isVisible(annotation, currentTimeMs)) return;
-
     const { data, style = {} } = annotation;
 
     if (!data.text) {

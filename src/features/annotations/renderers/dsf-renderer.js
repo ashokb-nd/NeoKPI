@@ -70,8 +70,6 @@ export class DSFRenderer extends BaseRenderer {
   }
 
   render(annotation, currentTimeMs, videoRect) {
-    if (!this.isVisible(annotation, currentTimeMs)) return;
-
     const { data, style = {} } = annotation;
     
     // Check for required data

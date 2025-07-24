@@ -163,8 +163,6 @@ export class GraphRenderer extends BaseRenderer {
   }
 
   render(annotation, currentTimeMs, videoRect) {
-    if (!this.isVisible(annotation, currentTimeMs)) return;
-
     const { data, style = {} } = annotation;
 
     if (

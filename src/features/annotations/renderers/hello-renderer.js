@@ -95,8 +95,6 @@ export class HelloRenderer extends BaseRenderer {
   }
 
   render(annotation, currentTimeMs, videoRect) {
-    if (!this.isVisible(annotation, currentTimeMs)) return;
-
     const { data, style = {} } = annotation;
     const message = data.message || "Hello!";
 

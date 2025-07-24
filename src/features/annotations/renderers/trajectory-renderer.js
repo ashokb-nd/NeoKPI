@@ -178,12 +178,6 @@ export class TrajectoryRenderer extends BaseRenderer {
 
   render(annotation, currentTimeMs, videoRect) {
     console.log('🚀 TrajectoryRenderer.render called:', annotation.id, 'at time:', currentTimeMs);
-    
-    if (!this.isVisible(annotation, currentTimeMs)) {
-      console.log('❌ Trajectory not visible at time:', currentTimeMs, 'timeRange:', annotation.timeRange);
-      return;
-    }
-
     console.log('✅ Trajectory is visible, rendering...');
 
     const { data, style = {} } = annotation;

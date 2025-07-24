@@ -66,14 +66,12 @@ export class CrossRenderer extends BaseRenderer {
   getDefaultOptions() {
     return {
       defaultStrokeColor: "#ff00ff", // Magenta
-      defaultLineWidth: 3,
+      defaultLineWidth: 2,
       defaultOpacity: 0.8,
     };
   }
 
   render(annotation, currentTimeMs, videoRect) {
-    if (!this.isVisible(annotation, currentTimeMs)) return;
-
     const { data, style = {} } = annotation;
     const strokeColor = style.strokeColor || this.options.defaultStrokeColor;
     const lineWidth = style.lineWidth || this.options.defaultLineWidth;

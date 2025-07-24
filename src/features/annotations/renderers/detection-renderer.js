@@ -116,11 +116,6 @@ export class DetectionRenderer extends BaseRenderer {
     //   isVisible: this.isVisible(annotation, currentTimeMs)
     // });
 
-    if (!this.isVisible(annotation, currentTimeMs)) {
-      // console.log("⚠️ DetectionRenderer: annotation not visible at current time");
-      return;
-    }
-
     const { data, style = {} } = annotation;
 
     if (!data.bbox) {

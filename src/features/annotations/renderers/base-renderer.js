@@ -5,7 +5,7 @@
 // To implement a new renderer, extend this class and implement the abstract methods
 //  1. get category() - return the unique type identifier for this renderer
 //  2. getDefaultOptions() - return default options for this renderer
-//  3. render(annotation, currentTimeMs, videoRect) - main rendering logic
+//  3. render(annotation, currentTimeMs, videoRect) - main rendering logic 
 
 // use ctx, canvas through getters
 //  - ctx: CanvasRenderingContext2D for drawing
@@ -141,7 +141,7 @@ export class BaseRenderer {
   /**
    * Main render method - must be implemented by subclasses
    * @abstract
-   * @param {Annotation} annotation - The annotation to render
+   * @param {Annotation} annotation - The annotation to render (single annotation item, not annotation manifest)
    * @param {number} currentTimeMs - Current time in milliseconds
    * @param {Object} videoRect - Video rectangle dimensions
    */
@@ -174,16 +174,6 @@ export class BaseRenderer {
    */
   getZIndexOffset() {
     return 0;
-  }
-  /**
-   * Check if annotation is visible at current time
-   * @protected
-   * @param {Annotation} annotation - The annotation to check
-   * @param {number} currentTimeMs - Current time in milliseconds
-   * @returns {boolean} True if annotation should be visible
-   */
-  isVisible(annotation, currentTimeMs) {
-    return this._isAnnotationVisible(annotation, currentTimeMs);
   }
 
   /**
