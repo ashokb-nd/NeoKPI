@@ -54,7 +54,8 @@ npm run build   # Build UserScript
 - annotation level opacity
   - Option for the user to choose the opacity of individual annotations
 - Handle SPA navigation properly.
-
+  - going out from `alert-debug`
+  - into `alert-debug`
 
 
 ---
