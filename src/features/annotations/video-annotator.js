@@ -64,6 +64,21 @@ import { DSFRenderer } from "./renderers/dsf-renderer.js";
 import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
 
 /**
+ * Registry of all available renderer classes.
+ * Add new renderer classes here to make them available for automatic discovery.
+ * The VideoAnnotator will use each renderer's .category property to build the mapping.
+ */
+const AVAILABLE_RENDERER_CLASSES = [
+  DetectionRenderer,
+  TextRenderer,
+  GraphRenderer,
+  TrajectoryRenderer,
+  CrossRenderer,
+  HelloRenderer,
+  DSFRenderer
+];
+
+/**
  * VideoAnnotator - Coordinates multiple canvas renderers for video annotations
  * 
  * @example
@@ -406,6 +421,35 @@ class VideoAnnotator {
   }
 
   /**
+   * Get the mapping of categories to renderer classes.
+   * This builds the mapping dynamically using each renderer's category property.
+   * 
+   * @private
+   * @returns {Object<string, typeof BaseRenderer>} Map of category to renderer class
+   */
+  _getRendererMap() {
+    // Cache the renderer map to avoid rebuilding it on each call
+    if (!VideoAnnotator._rendererMap) {
+      VideoAnnotator._rendererMap = {};
+      
+      // Build the map by creating temporary instances to get their categories
+      for (const RendererClass of AVAILABLE_RENDERER_CLASSES) {
+        try {
+          const tempRenderer = new RendererClass(this);
+          VideoAnnotator._rendererMap[tempRenderer.category] = RendererClass;
+          tempRenderer.destroy();
+        } catch (error) {
+          if (this.options.debugMode) {
+            Utils.log(`Warning: Could not initialize renderer ${RendererClass.name}: ${error.message}`);
+          }
+        }
+      }
+    }
+    
+    return VideoAnnotator._rendererMap; 
+  }
+
+  /**
    * Create a renderer instance for the given category.
    * 
    * @private
@@ -413,27 +457,17 @@ class VideoAnnotator {
    * @returns {BaseRenderer|null} Renderer instance or null if category not supported
    */
   _createRendererForCategory(category) {
-    switch (category) {
-      case 'detection':
-        return new DetectionRenderer(this);
-      case 'text':
-        return new TextRenderer(this);
-      case 'graph':
-        return new GraphRenderer(this);
-      case 'trajectory':
-        return new TrajectoryRenderer(this);
-      case 'cross':
-        return new CrossRenderer(this);
-      case 'hello':
-        return new HelloRenderer(this);
-      case 'dsf':
-        return new DSFRenderer(this);
-      default:
-        if (this.options.debugMode) {
-          Utils.log(`Warning: No renderer available for category '${category}'`);
-        }
-        return null;
+    const rendererMap = this._getRendererMap();
+    const RendererClass = rendererMap[category];
+    
+    if (RendererClass) {
+      return new RendererClass(this);
     }
+
+    if (this.options.debugMode) {
+      Utils.log(`Warning: No renderer available for category '${category}'`);
+    }
+    return null;
   }
 
   /**

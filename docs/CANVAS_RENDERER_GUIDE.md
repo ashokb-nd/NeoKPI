@@ -6,6 +6,7 @@ A comprehensive guide for developers creating new annotation renderers using HTM
 
 ## Table of Contents
 - [Quick Start](#quick-start)
+- [Integrating with VideoAnnotator](#integrating-with-videoannotator)
 - [Canvas Context Basics](#canvas-context-basics)
 - [Essential Good Practices](#essential-good-practices)
 - [Common Rendering Patterns](#common-rendering-patterns)
@@ -54,6 +55,60 @@ export class MyRenderer extends BaseRenderer {
   }
 }
 ```
+
+---
+
+## Integrating with VideoAnnotator
+
+After creating your renderer, you need to register it with the VideoAnnotator system to make it available for use.
+
+### Step 1: Create Your Renderer
+Follow the [Quick Start](#quick-start) section to create your renderer class.
+
+### Step 2: Add to VideoAnnotator Registry
+Open `/src/features/annotations/video-annotator.js` and:
+
+1. **Import your renderer** at the top with other imports:
+```javascript
+import { MyRenderer } from "./renderers/my-renderer.js";
+```
+
+2. **Add to the registry** - Find the `AVAILABLE_RENDERER_CLASSES` array and add your renderer:
+```javascript
+const AVAILABLE_RENDERER_CLASSES = [
+  DetectionRenderer,
+  TextRenderer,
+  GraphRenderer,
+  TrajectoryRenderer,
+  CrossRenderer,
+  HelloRenderer,
+  DSFRenderer,
+  MyRenderer  // ← Add your renderer here
+];
+```
+
+### Step 3: That's It! 
+The VideoAnnotator will automatically:
+- Use your renderer's `.category` property to identify it
+- Create instances when annotations with that category are loaded
+- Route annotations to your renderer based on the category match
+
+### Example Usage
+```javascript
+// Your renderer will automatically handle annotations like this:
+annotator.addAnnotation({
+  id: "my-annotation-1",
+  category: "my-category",  // ← Must match your renderer's category
+  timeRange: { startMs: 1000, endMs: 5000 },
+  data: { 
+    points: [{ x: 0.5, y: 0.5 }]  // Your custom data structure
+  }
+});
+```
+
+### ⚠️ Important Notes
+- **Category must be unique**: Each renderer's `category` should be unique across all renderers
+
 
 ---
 
@@ -193,94 +248,6 @@ render(annotation, currentTimeMs, videoRect) {
   });
   
   this.ctx.stroke();
-  this.ctx.restore();
-}
-```
-
-### Drawing Circles/Points
-```javascript
-render(annotation, currentTimeMs, videoRect) {
-  const { data, style = {} } = annotation;
-  if (!data || !data.points) return;
-  
-  this.ctx.save();
-  this.ctx.fillStyle = style.color || "#FF0000";
-  const radius = style.radius || 5;
-  
-  data.points.forEach(point => {
-    const x = point[0] * videoRect.width;
-    const y = point[1] * videoRect.height;
-    
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    this.ctx.fill();
-  });
-  
-  this.ctx.restore();
-}
-```
-
-### Drawing Rectangles/Bounding Boxes
-```javascript
-render(annotation, currentTimeMs, videoRect) {
-  const { data, style = {} } = annotation;
-  if (!data || !data.bbox) return;
-  
-  const [x, y, width, height] = data.bbox; // Normalized coordinates
-  
-  this.ctx.save();
-  this.ctx.strokeStyle = style.borderColor || "#00FF00";
-  this.ctx.fillStyle = style.fillColor || "rgba(0, 255, 0, 0.1)";
-  this.ctx.lineWidth = style.borderWidth || 2;
-  
-  // Convert to canvas coordinates
-  const canvasX = x * videoRect.width;
-  const canvasY = y * videoRect.height;
-  const canvasWidth = width * videoRect.width;
-  const canvasHeight = height * videoRect.height;
-  
-  this.ctx.beginPath();
-  this.ctx.rect(canvasX, canvasY, canvasWidth, canvasHeight);
-  this.ctx.fill();   // Fill first
-  this.ctx.stroke(); // Then stroke for crisp borders
-  
-  this.ctx.restore();
-}
-```
-
-### Drawing Text
-```javascript
-render(annotation, currentTimeMs, videoRect) {
-  const { data, style = {} } = annotation;
-  if (!data || !data.text || !data.position) return;
-  
-  this.ctx.save();
-  this.ctx.font = style.font || "16px Arial";
-  this.ctx.fillStyle = style.color || "#FFFFFF";
-  this.ctx.textAlign = style.align || "left";
-  this.ctx.textBaseline = style.baseline || "top";
-  
-  // Add text background for better readability
-  if (style.background) {
-    const metrics = this.ctx.measureText(data.text);
-    const padding = 4;
-    
-    this.ctx.fillStyle = style.background;
-    this.ctx.fillRect(
-      data.position[0] * videoRect.width - padding,
-      data.position[1] * videoRect.height - padding,
-      metrics.width + padding * 2,
-      parseInt(this.ctx.font) + padding * 2
-    );
-  }
-  
-  this.ctx.fillStyle = style.color || "#FFFFFF";
-  this.ctx.fillText(
-    data.text,
-    data.position[0] * videoRect.width,
-    data.position[1] * videoRect.height
-  );
-  
   this.ctx.restore();
 }
 ```
