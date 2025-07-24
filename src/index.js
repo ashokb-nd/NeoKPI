@@ -48,6 +48,12 @@ import { CONFIG } from "./config/constants.js";
   // change the title of the page to "NeoKPI - <version> 🎉"
   document.title = `NeoKPI - ${CONFIG.VERSION} 🎉`;
 
+  // Early exit if not on alert-debug page
+  if (!window.location.href.includes('/alert-debug')) {
+    console.log('NeoKPI: Not on alert-debug page, skipping initialization');
+    return;
+  }
+
   // Create and initialize the application
   const app = new Application();
   app.init();

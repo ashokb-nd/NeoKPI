@@ -1,10 +1,13 @@
 {
   "name": "neokpi",
   "version": "0.9.0",
-  "description": "",
+  "description": "Chrome Extension that enhances Alert Debug with keyboard shortcuts, note-taking, bulk processing, and video controls",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
+    "build:extension": "rollup -c && echo 'Chrome Extension built! Load dist/chrome-extension as unpacked extension.'",
+    "build:tampermonkey": "rollup -c && echo 'Tampermonkey script built! Copy dist/tampermonkey-script.js to Tampermonkey.'",
+    "package:store": "npm run build && cd dist/chrome-extension && zip -r ../neokpi-chrome-extension.zip . && echo 'Extension packaged! Upload dist/neokpi-chrome-extension.zip to Chrome Web Store.'",
     "dev": "rollup -c --watch",
     "test": "vitest run",
     "test:watch": "vitest",

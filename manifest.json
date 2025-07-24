@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "NeoKPI",
+  "version": "0.9.0",
+  "description": " Adds extra functionality to alert debug page. [ for internal use of Inward-Analytics team ]",
+  "author": "Batakal Ashok",
+  "homepage_url": "https://github.com/ashokb-nd/NeoKPI",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://analytics-kpis.netradyne.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://analytics-kpis.netradyne.com/alert-debug*"],
+      "js": ["content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "NeoKPI Settings"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content-script.js"],
+      "matches": ["https://analytics-kpis.netradyne.com/*"]
+    }
+  ]
+}

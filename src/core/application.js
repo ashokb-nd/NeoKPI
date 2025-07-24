@@ -4,6 +4,7 @@ import { StorageManager } from "../utils/storage.js";
 import { CONFIG } from "../config/constants.js";
 import { AppState } from "./app-state.js";
 import { KeyboardManager } from "./keyboard-manager.js";
+import { URLMonitor } from "./url-monitor.js";
 import { SettingsManager } from "../services/settings.js";
 import { MetadataManager } from "../services/metadata.js";
 import { VideoSyncOverride } from "../services/video-sync-override.js";
@@ -28,6 +29,8 @@ export class Application {
    */
   async init() {
     try {
+      // Initialize URL monitoring first
+      URLMonitor.init();
 
       // Initialize beautiful fireworks on first load
       const fireworks = new FireworkShow();
@@ -138,22 +141,10 @@ export class Application {
    * Cleanup function for development/testing
    */
   cleanup() {
-    const elementsToRemove = [
-      "#fireworks-canvas",
-      "#bulk-status",
-      "#notepad-panel",
-      "#video-controls-styles",
-      "#bulk-status-keyframes",
-      "#spinner-animation",
-    ];
-
-    elementsToRemove.forEach((selector) => {
-      const element = document.querySelector(selector);
-      if (element) {
-        element.remove();
-      }
-    });
-
+    // Use URL monitor's cleanup which is more comprehensive
+    URLMonitor.cleanup();
+    
+    // Additional cleanup
     StorageManager.clear();
     Utils.log("UserScript cleanup complete");
   }
