@@ -12,6 +12,8 @@
  * ## Public API
  * - `init()` - Initialize and start watching for videos
  * - `loadAnnotationsForAlert()` - Load annotations for current alert from state
+ * 
+ * ### just passes the signal to the VideoAnnotator instances (e.g. tells all video_annotators to hide/show annotations)
  * - `hideAnnotations()` - Hide all annotation overlays
  * - `showAnnotations()` - Show all annotation overlays
  * - `clearAnnotations()` - Remove all annotations

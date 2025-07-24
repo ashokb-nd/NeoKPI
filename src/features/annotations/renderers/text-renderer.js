@@ -101,9 +101,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // TEXT RENDERER - Text overlays and labels
 // ========================================
 export class TextRenderer extends BaseRenderer {
-  get category() {
-    return "text";
-  }
+  static category = "text";
 
   getDefaultOptions() {
     return {

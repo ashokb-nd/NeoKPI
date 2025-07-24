@@ -53,7 +53,9 @@
  */
 
 import { Utils } from "../../utils/utils.js";
+import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
 import { BaseRenderer } from "./renderers/base-renderer.js";
+
 import { DetectionRenderer } from "./renderers/detection-renderer.js";
 import { TextRenderer } from "./renderers/text-renderer.js";
 import { GraphRenderer } from "./renderers/graph-renderer.js";
@@ -61,7 +63,6 @@ import { TrajectoryRenderer } from "./renderers/trajectory-renderer.js";
 import { CrossRenderer } from "./renderers/cross-renderer.js";
 import { HelloRenderer } from "./renderers/hello-renderer.js";
 import { DSFRenderer } from "./renderers/dsf-renderer.js";
-import { AnnotationManifest, Annotation } from "./annotation-manifest.js";
 
 /**
  * Registry of all available renderer classes.
@@ -246,10 +247,15 @@ class VideoAnnotator {
       throw new Error("Renderer must extend BaseRenderer");
     }
 
-    this.renderers.set(renderer.category, renderer);
+    const category = renderer.constructor.category;
+    if (!category) {
+      throw new Error("Renderer class must have a static category property");
+    }
+
+    this.renderers.set(category, renderer);
 
     if (this.options.debugMode) {
-      Utils.log(`Registered renderer: ${renderer.category}`);
+      Utils.log(`Registered renderer: ${category}`);
     }
   }
 
@@ -422,7 +428,7 @@ class VideoAnnotator {
 
   /**
    * Get the mapping of categories to renderer classes.
-   * This builds the mapping dynamically using each renderer's category property.
+   * This builds the mapping dynamically using each renderer's static category property.
    * 
    * @private
    * @returns {Object<string, typeof BaseRenderer>} Map of category to renderer class
@@ -432,16 +438,12 @@ class VideoAnnotator {
     if (!VideoAnnotator._rendererMap) {
       VideoAnnotator._rendererMap = {};
       
-      // Build the map by creating temporary instances to get their categories
+      // Build the map using static category properties (much more efficient!)
       for (const RendererClass of AVAILABLE_RENDERER_CLASSES) {
-        try {
-          const tempRenderer = new RendererClass(this);
-          VideoAnnotator._rendererMap[tempRenderer.category] = RendererClass;
-          tempRenderer.destroy();
-        } catch (error) {
-          if (this.options.debugMode) {
-            Utils.log(`Warning: Could not initialize renderer ${RendererClass.name}: ${error.message}`);
-          }
+        if (RendererClass.category) {
+          VideoAnnotator._rendererMap[RendererClass.category] = RendererClass;
+        } else if (this.options.debugMode) {
+          Utils.log(`Warning: Renderer ${RendererClass.name} does not have a static category property`);
         }
       }
     }

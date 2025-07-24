@@ -150,12 +150,11 @@ export class BaseRenderer {
   }
 
   /**
-   * Get renderer type - must be implemented by subclasses
-   * @abstract
+   * Get renderer category - uses the static category property
    * @returns {string} The type identifier for this renderer
    */
   get category() {
-    throw new Error("category getter must be implemented by subclasses");
+    return this.constructor.category;
   }
 
   /**

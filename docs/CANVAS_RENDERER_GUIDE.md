@@ -22,9 +22,7 @@ A comprehensive guide for developers creating new annotation renderers using HTM
 import { BaseRenderer } from "./base-renderer.js";
 
 export class MyRenderer extends BaseRenderer {
-  get category() {
-    return "my-category";
-  }
+   static category = "my-category";
 
   getDefaultOptions() {
     return {

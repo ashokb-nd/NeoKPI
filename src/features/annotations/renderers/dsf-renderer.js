@@ -54,9 +54,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // DSF RENDERER - Lane calibration lines
 // ========================================
 export class DSFRenderer extends BaseRenderer {
-  get category() {
-    return "dsf";
-  }
+  static category = "dsf";
 
   getDefaultOptions() {
     return {

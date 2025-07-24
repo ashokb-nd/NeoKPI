@@ -59,9 +59,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // CROSS RENDERER - Debug cross patterns
 // ========================================
 export class CrossRenderer extends BaseRenderer {
-  get category() {
-    return "cross";
-  }
+  static category = "cross";
 
   getDefaultOptions() {
     return {
