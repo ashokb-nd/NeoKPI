@@ -86,7 +86,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // DETECTION RENDERER - Bounding boxes and labels
 // ========================================
 export class DetectionRenderer extends BaseRenderer {
-  getType() {
+  get category() {
     return "detection";
   }
 

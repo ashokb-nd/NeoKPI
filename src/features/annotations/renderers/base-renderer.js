@@ -1,6 +1,20 @@
 // ========================================
 // BASE RENDERER - Abstract base class
 // ========================================
+
+// To implement a new renderer, extend this class and implement the abstract methods
+//  1. get category() - return the unique type identifier for this renderer
+//  2. getDefaultOptions() - return default options for this renderer
+//  3. render(annotation, currentTimeMs, videoRect) - main rendering logic
+
+// use ctx, canvas through getters
+//  - ctx: CanvasRenderingContext2D for drawing
+//  - canvas: HTMLCanvasElement for the renderer's canvas
+
+
+
+
+
 export class BaseRenderer {
   constructor(videoAnnotator, options = {}) {
     if (this.constructor === BaseRenderer) {
@@ -32,7 +46,7 @@ export class BaseRenderer {
    * @param {Annotation[]} annotations - Array of all annotations
    */
   setAnnotations(annotations) {
-    this._annotations = annotations.filter(ann => ann.category === this.getType());
+    this._annotations = annotations.filter(ann => ann.category === this.category);
   }
 
   /**
@@ -117,7 +131,7 @@ export class BaseRenderer {
    * @returns {boolean} True if this renderer can handle the annotation
    */
   canRender(annotation) {
-    return annotation.category === this.getType();
+    return annotation.category === this.category;
   }
 
   // ========================================
@@ -140,8 +154,8 @@ export class BaseRenderer {
    * @abstract
    * @returns {string} The type identifier for this renderer
    */
-  getType() {
-    throw new Error("getType() method must be implemented by subclasses");
+  get category() {
+    throw new Error("category getter must be implemented by subclasses");
   }
 
   /**
@@ -209,7 +223,7 @@ export class BaseRenderer {
    */
   _createCanvas() {
     this._canvas = document.createElement("canvas");
-    this._canvas.className = `video-annotation-${this.getType()}-renderer`;
+    this._canvas.className = `video-annotation-${this.category}-renderer`;
     
     // Get base z-index from video annotator and add renderer-specific offset
     const baseZIndex = this.videoAnnotator.options.canvasZIndex;

@@ -79,7 +79,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // HELLO RENDERER - Simple message display
 // ========================================
 export class HelloRenderer extends BaseRenderer {
-  getType() {
+  get category() {
     return "hello";
   }
 

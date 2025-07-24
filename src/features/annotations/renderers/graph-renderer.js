@@ -144,7 +144,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // GRAPH RENDERER - Charts and time-series data
 // ========================================
 export class GraphRenderer extends BaseRenderer {
-  getType() {
+  get category() {
     return "graph";
   }
 

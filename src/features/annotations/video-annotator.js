@@ -231,10 +231,10 @@ class VideoAnnotator {
       throw new Error("Renderer must extend BaseRenderer");
     }
 
-    this.renderers.set(renderer.getType(), renderer);
+    this.renderers.set(renderer.category, renderer);
 
     if (this.options.debugMode) {
-      Utils.log(`Registered renderer: ${renderer.getType()}`);
+      Utils.log(`Registered renderer: ${renderer.category}`);
     }
   }
 

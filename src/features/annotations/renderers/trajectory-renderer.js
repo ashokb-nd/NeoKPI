@@ -158,7 +158,7 @@ import { BaseRenderer } from "./base-renderer.js";
 // TRAJECTORY RENDERER - Paths and motion trails
 // ========================================
 export class TrajectoryRenderer extends BaseRenderer {
-  getType() {
+  get category() {
     return "trajectory";
   }
 
