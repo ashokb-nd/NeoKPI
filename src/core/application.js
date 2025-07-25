@@ -33,8 +33,8 @@ export class Application {
       URLMonitor.init();
 
       // Initialize beautiful fireworks on first load
-      const fireworks = new FireworkShow();
-      fireworks.init();
+      // const fireworks = new FireworkShow();
+      // fireworks.init();
 
       // Wait for required elements and initialize
       const elements = await Utils.waitForElements();

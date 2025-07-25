@@ -28,6 +28,7 @@ import { BaseRenderer } from "./base-renderer.js";
  * RENDERING BEHAVIOR:
  * ==================
  * - Draws diagonal lines from corner to corner across entire video canvas
+ * - Draws a boundary rectangle around the entire video canvas area
  * - Optionally includes horizontal and vertical center lines if includeCenterLines=true
  * - Displays debug text at top center if debugText is provided
  * - Useful for debugging video positioning, alignment, and canvas boundaries
@@ -93,6 +94,11 @@ export class CrossRenderer extends BaseRenderer {
     this.ctx.moveTo(videoRect.width, 0);
     this.ctx.lineTo(0, videoRect.height);
     
+    this.ctx.stroke();
+
+    // Draw boundary rectangle around the video rect
+    this.ctx.beginPath();
+    this.ctx.rect(0, 0, videoRect.width, videoRect.height);
     this.ctx.stroke();
 
     // Optionally draw center lines as well
