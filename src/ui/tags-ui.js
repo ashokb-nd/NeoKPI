@@ -415,11 +415,11 @@ export const TagsUI = {
     const alertId = AppState.notepad.currentAlertId;
     if (!alertId || !tagName) return;
 
-    const currentTags = await NotesManager.getTags(alertId);
-    if (!currentTags.includes(tagName)) {
-      currentTags.push(tagName);
+    const currentManualTags = await NotesManager.getManualTags(alertId);
+    if (!currentManualTags.includes(tagName)) {
+      currentManualTags.push(tagName);
       const noteText = document.querySelector("#notepad-textarea").value;
-      await NotesManager.saveNote(alertId, noteText, currentTags);
+      await NotesManager.saveNote(alertId, noteText, currentManualTags);
       this.updateTagsDisplay();
       this.updateFilterDisplay();
     }
@@ -429,10 +429,10 @@ export const TagsUI = {
     const alertId = AppState.notepad.currentAlertId;
     if (!alertId) return;
 
-    const currentTags = await NotesManager.getTags(alertId);
-    const updatedTags = currentTags.filter((tag) => tag !== tagName);
+    const currentManualTags = await NotesManager.getManualTags(alertId);
+    const updatedManualTags = currentManualTags.filter((tag) => tag !== tagName);
     const noteText = document.querySelector("#notepad-textarea").value;
-    await NotesManager.saveNote(alertId, noteText, updatedTags);
+    await NotesManager.saveNote(alertId, noteText, updatedManualTags);
     this.updateTagsDisplay();
     this.updateFilterDisplay();
   },
@@ -445,13 +445,18 @@ export const TagsUI = {
 
     const alertId = AppState.notepad.currentAlertId;
     if (alertId) {
-      const tags = await NotesManager.getTags(alertId);
-      const noteText = await NotesManager.getNote(alertId);
-      const hashtagTags = TagManager.extractHashtagsFromText(noteText);
+      const manualTags = await NotesManager.getManualTags(alertId);
+      const hashtagTags = await NotesManager.getHashtagTags(alertId);
 
-      tags.forEach((tag) => {
-        const isHashtag = hashtagTags.includes(tag);
-        const chip = this.createTagChip(tag, !isHashtag, isHashtag);
+      // Display manual tags
+      manualTags.forEach((tag) => {
+        const chip = this.createTagChip(tag, true, false);
+        display.appendChild(chip);
+      });
+
+      // Display hashtag tags
+      hashtagTags.forEach((tag) => {
+        const chip = this.createTagChip(tag, false, true);
         display.appendChild(chip);
       });
     }

@@ -44,36 +44,36 @@ export class GlobalScope {
     // Expose annotation system for console access
     window.AlertDebugAnnotations = {
       manager: AnnotationManager,
-      
-      // Main function you use
-      loadSample: async () => {
-        const sample = AnnotationSamples.createFullSample();
+    
+    // Main function you use
+    loadSample: async () => {
+      const sample = AnnotationSamples.createFullSample();
 
-        // Load sample annotations directly into all active videos
-        let loaded = false;
-        AnnotationManager.getVideosWithAnnotators().forEach(video => {
-          try {
-            video.annotator.loadManifest(sample);
-            video.annotator.show();
-            loaded = true;
-            console.log(
-              `✅ Loaded sample annotations for video: ${video.src || "unknown"}`,
-            );
-          } catch (error) {
-            console.error(`❌ Failed to load sample annotations:`, error);
-          }
-        });
-
-        if (loaded) {
+      // Load sample annotations directly into all active videos
+      let loaded = false;
+      AnnotationManager.getVideosWithAnnotators().forEach(video => {
+        try {
+          video.annotator.loadManifest(sample);
+          video.annotator.show();
+          loaded = true;
           console.log(
-            `🎯 Sample annotation loaded: Vehicle detection (95% confidence) visible 1-5s at position (0.1, 0.1)`,
+            `✅ Loaded sample annotations for video: ${video.src || "unknown"}`,
           );
-          return true;
-        } else {
-          console.log(`⚠️ No video elements found to load annotations into`);
-          return false;
+        } catch (error) {
+          console.error(`❌ Failed to load sample annotations:`, error);
         }
-      },
+      });
+
+      if (loaded) {
+        console.log(
+          `🎯 Sample annotation loaded: Vehicle detection (95% confidence) visible 1-5s at position (0.1, 0.1)`,
+        );
+        return true;
+      } else {
+        console.log(`⚠️ No video elements found to load annotations into`);
+        return false;
+      }
+    },
       
       // Essential utility functions
       hide: () => AnnotationManager.hideAnnotations(),
@@ -81,28 +81,5 @@ export class GlobalScope {
       clear: () => AnnotationManager.clearAnnotations(),
     };
 
-    this.logAvailableCommands();
-  }
-
-  /**
-   * Log available console commands for developers
-   */
-  static logAvailableCommands() {
-    console.log(
-      "%cAlert Debug Admin Commands Available:",
-      "color: #4CAF50; font-weight: bold;",
-    );
-    console.log("AlertDebugAdmin.showStats() - Show storage statistics");
-    console.log("AlertDebugAdmin.clearAll() - Clear all data");
-
-    console.log(
-      "%cAnnotation System Commands:",
-      "color: #2196F3; font-weight: bold;",
-    );
-    console.log("AlertDebugAnnotations.loadSample() - Load sample annotation");
-    console.log("AlertDebugAnnotations.loadAnnotationsForCurrentAlert() - Load annotations for current alert");
-    console.log("AlertDebugAnnotations.hide() - Hide all annotations");
-    console.log("AlertDebugAnnotations.show() - Show all annotations");
-    console.log("AlertDebugAnnotations.clear() - Clear all annotations");
   }
 }

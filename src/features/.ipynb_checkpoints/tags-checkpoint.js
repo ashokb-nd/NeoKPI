@@ -35,11 +35,12 @@ export const TagManager = {
 
     Object.values(notes).forEach((noteData) => {
       if (noteData && typeof noteData === "object") {
-        let allTags = noteData.manualTags || [];
+        let allTags = noteData.tags || [];
 
-        // Include hashtags if enabled and available
-        if (includeHashtags && noteData.hashtagTags) {
-          allTags = this.mergeTags(allTags, noteData.hashtagTags);
+        // Include hashtags from note text if enabled
+        if (includeHashtags && noteData.note) {
+          const hashtagTags = this.extractHashtagsFromText(noteData.note);
+          allTags = this.mergeTags(allTags, hashtagTags);
         }
 
         allTags.forEach((tag) => {
@@ -55,8 +56,8 @@ export const TagManager = {
     const allTags = new Set();
 
     Object.values(notes).forEach((noteData) => {
-      if (noteData && typeof noteData === "object" && noteData.manualTags) {
-        noteData.manualTags.forEach((tag) => allTags.add(tag));
+      if (noteData && typeof noteData === "object" && noteData.tags) {
+        noteData.tags.forEach((tag) => allTags.add(tag));
       }
     });
 

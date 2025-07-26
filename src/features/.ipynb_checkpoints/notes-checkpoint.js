@@ -1,34 +1,3 @@
-/**
- * NotesManager - Database APIs Used:
- * - getAll() - Retrieve all notes
- * - getAllByIndex() - Query notes by here mostly alertId
- * - put() - Update existing notes
- * - add() - Create new notes  
- * - delete() - Remove notes by ID
- * - clear() - Delete all notes
- * Uses IndexedDB with alertId, timestamp, category indexes
- *
- * The notes are stored in IndexedDB with the following schema:
-
-Store Name: Defined by CONFIG.DATABASE.STORES.NOTES
-Key Path: "id" (auto-increment)
-Indexes:
-alertId (for querying notes by alert)
-timestamp (for time-based queries)
-category (for filtering by alert type)
-Data Structure:
-Each note record contains:
-
-id (auto-generated)
-alertId (foreign key)
-content (note text)
-manualTags (array of manually added tags)
-hashtagTags (array of hashtags extracted from content)
-category (alert type)
-timestamp / createdAt / updatedAt
-
- */
-
 import { CONFIG } from "../config/constants.js";
 import { Utils } from "../utils/utils.js";
 import { TagManager } from "./tags.js";
@@ -37,8 +6,6 @@ import { createAppDatabase } from "../utils/indexdb-manager.js";
 export const NotesManager = {
   db: null,
   storeName: CONFIG.DATABASE.STORES.NOTES,
-  _notesCache: null,
-  _cacheInitialized: false,
 
   async init() {
     if (!this.db) {
@@ -48,43 +15,7 @@ export const NotesManager = {
     }
   },
 
-  async _refreshCache() {
-    try {
-      await this.init();
-      this._notesCache = await this.db.getAll(this.storeName);
-      this._cacheInitialized = true;
-      Utils.log(`Notes cache refreshed with ${this._notesCache.length} notes`);
-    } catch (error) {
-      Utils.log(`Error refreshing notes cache: ${error.message}`);
-      this._notesCache = [];
-      this._cacheInitialized = true; // Set to true with empty cache rather than keep trying
-    }
-  },
-
-  async initCache() {
-    if (!this._cacheInitialized) {
-      await this._refreshCache();
-    }
-  },
-
-  getAllNotes() {
-    if (!this._cacheInitialized || this._notesCache === null) {
-      Utils.log("Warning: Notes cache not initialized, returning empty object");
-      return {};
-    }
-    
-    // Transform array to object indexed by alertId for backwards compatibility
-    const notesObject = {};
-    this._notesCache.forEach(note => {
-      if (note.alertId) {
-        notesObject[note.alertId] = note;
-      }
-    });
-    
-    return notesObject;
-  },
-
-  async getAllNotesAsync() {
+  async getAllNotes() {
     await this.init();
     return await this.db.getAll(this.storeName);
   },
@@ -102,20 +33,7 @@ export const NotesManager = {
     return "";
   },
 
-  // async getTags(alertId) {
-  //   await this.init();
-  //   const notes = await this.db.getAllByIndex(
-  //     this.storeName,
-  //     "alertId",
-  //     alertId,
-  //   );
-  //   if (notes.length > 0) {
-  //     return notes[0].manualTags || [];
-  //   }
-  //   return [];
-  // },
-
-  async getManualTags(alertId) {
+  async getTags(alertId) {
     await this.init();
     const notes = await this.db.getAllByIndex(
       this.storeName,
@@ -123,35 +41,7 @@ export const NotesManager = {
       alertId,
     );
     if (notes.length > 0) {
-      return notes[0].manualTags || [];
-    }
-    return [];
-  },
-
-  async getHashtagTags(alertId) {
-    await this.init();
-    const notes = await this.db.getAllByIndex(
-      this.storeName,
-      "alertId",
-      alertId,
-    );
-    if (notes.length > 0) {
-      return notes[0].hashtagTags || [];
-    }
-    return [];
-  },
-
-  async getAllTagsForAlert(alertId) {
-    await this.init();
-    const notes = await this.db.getAllByIndex(
-      this.storeName,
-      "alertId",
-      alertId,
-    );
-    if (notes.length > 0) {
-      const manualTags = notes[0].manualTags || [];
-      const hashtagTags = notes[0].hashtagTags || [];
-      return TagManager.mergeTags(manualTags, hashtagTags);
+      return notes[0].tags || [];
     }
     return [];
   },
@@ -162,9 +52,10 @@ export const NotesManager = {
     await this.init();
 
     const hashtagTags = TagManager.extractHashtagsFromText(note);
+    const allTags = TagManager.mergeTags(manualTags, hashtagTags);
     const alertType = Utils.getCurrentAlertType() || "unknown";
 
-    if (note.trim() || manualTags.length > 0 || hashtagTags.length > 0) {
+    if (note.trim() || allTags.length > 0) {
       // Check if note already exists
       const existingNotes = await this.db.getAllByIndex(
         this.storeName,
@@ -175,9 +66,7 @@ export const NotesManager = {
       const noteData = {
         alertId,
         content: note.trim(),
-        // tags: allTags,
-        manualTags: manualTags,
-        hashtagTags: hashtagTags,
+        tags: allTags,
         category: alertType,
         timestamp: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -193,9 +82,6 @@ export const NotesManager = {
         noteData.createdAt = new Date().toISOString();
         await this.db.add(this.storeName, noteData);
       }
-      
-      // Refresh cache after saving
-      await this._refreshCache();
     } else {
       // Delete note if empty
       await this.deleteNote(alertId);
@@ -219,8 +105,6 @@ export const NotesManager = {
       await this.db.delete(this.storeName, note.id);
     }
 
-    // Refresh cache after deletion
-    await this._refreshCache();
     return true;
   },
 
@@ -229,75 +113,44 @@ export const NotesManager = {
 
     // Clear IndexedDB
     await this.db.clear(this.storeName);
-    console.log("All notes cleared from IndexedDB");
-    
-    // Refresh cache after clearing
-    await this._refreshCache();
+
     return true;
   },
 
-  async importFromCsv(csvContent) {
+  // Get notes with pagination
+  async getNotesPage(page = 1, pageSize = 50) {
+    const notes = await this.getAllNotes();
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
 
-//   importFromCsv() [PUBLIC]
-// ├── _parseCsvContent() [PRIVATE]
-// └── _processImportedRows() [PRIVATE]
-//     ├── _getColumnIndices() [PRIVATE]
-//     └── _createNoteDataFromRow() [PRIVATE]
-
-    try {
-      const rows = this._parseCsvContent(csvContent);
-
-      if (rows.length < 2) {
-        throw new Error(
-          "CSV file must contain at least a header and one data row",
-        );
-      }
-
-      return await this._processImportedRows(rows);
-    } catch (error) {
-      return {
-        success: false,
-        message: `Import failed: ${error.message}`,
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        alertIds: [],
-      };
-    }
+    return {
+      notes: notes.slice(startIndex, endIndex),
+      total: notes.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(notes.length / pageSize),
+    };
   },
 
-
   async exportToCsv() {
- 
-//   exportToCsv() [PUBLIC]
-// ├── _generateCsvContent() [PRIVATE]
-// └── _downloadCsv() [PRIVATE]
-
-    const notesObject = this.getAllNotes();
-    const notes = Object.values(notesObject); // Convert object to array
+    const notes = await this.getAllNotes();
 
     if (notes.length === 0) {
       alert("No notes to export");
       return;
     }
 
-    const csvContent = this._generateCsvContent(notes);
-    this._downloadCsv(csvContent);
+    const csvContent = this.generateCsvContent(notes);
+    this.downloadCsv(csvContent);
   },
 
-  // ====================
-  // Private methods
-  // ====================
-
-
-  _generateCsvContent(notes) {
-    const headers = ["Alert ID", "Alert Type", "Notes", "Manual Tags", "Hashtag Tags", "Timestamp"];
+  generateCsvContent(notes) {
+    const headers = ["Alert ID", "Alert Type", "Notes", "Tags", "Timestamp"];
     const rows = notes.map((note) => [
       note.alertId,
       note.category || "unknown",
       note.content || "",
-      (note.manualTags || []).join(", "),
-      (note.hashtagTags || []).join(", "),
+      (note.tags || []).join(", "),
       note.timestamp || "",
     ]);
 
@@ -308,7 +161,7 @@ export const NotesManager = {
       .join("\n");
   },
 
-  _downloadCsv(csvContent) {
+  downloadCsv(csvContent) {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -326,11 +179,34 @@ export const NotesManager = {
     URL.revokeObjectURL(url);
   },
 
-  async _processImportedRows(rows) {
+  async importFromCsv(csvContent) {
+    try {
+      const rows = this.parseCsvContent(csvContent);
+
+      if (rows.length < 2) {
+        throw new Error(
+          "CSV file must contain at least a header and one data row",
+        );
+      }
+
+      return await this.processImportedRows(rows);
+    } catch (error) {
+      return {
+        success: false,
+        message: `Import failed: ${error.message}`,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        alertIds: [],
+      };
+    }
+  },
+
+  async processImportedRows(rows) {
     await this.init();
 
     const headers = rows[0];
-    const columnIndices = this._getColumnIndices(headers);
+    const columnIndices = this.getColumnIndices(headers);
 
     if (columnIndices.alertIdIndex === -1) {
       throw new Error('CSV must contain an "Alert ID" column');
@@ -355,7 +231,7 @@ export const NotesManager = {
           continue;
         }
 
-        const noteData = this._createNoteDataFromRow(values, columnIndices);
+        const noteData = this.createNoteDataFromRow(values, columnIndices);
 
         // Check if note already exists in IndexedDB
         const existingNotes = await this.db.getAllByIndex(
@@ -368,8 +244,7 @@ export const NotesManager = {
         const indexedDBNote = {
           alertId,
           content: noteData.note || "",
-          manualTags: noteData.tags || [],
-          hashtagTags: TagManager.extractHashtagsFromText(noteData.note || ""),
+          tags: noteData.tags || [],
           category: noteData.alertType || "unknown",
           timestamp: noteData.timestamp || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -395,9 +270,6 @@ export const NotesManager = {
       }
     }
 
-    // Refresh cache after import
-    await this._refreshCache();
-
     return {
       success: true,
       message: `Import completed: ${result.imported} new notes, ${result.updated} updated, ${result.skipped} skipped`,
@@ -405,7 +277,7 @@ export const NotesManager = {
     };
   },
 
-  _getColumnIndices(headers) {
+  getColumnIndices(headers) {
     return {
       alertIdIndex: headers.findIndex((h) =>
         h.toLowerCase().includes("alert id"),
@@ -421,7 +293,7 @@ export const NotesManager = {
     };
   },
 
-  _createNoteDataFromRow(values, columnIndices) {
+  createNoteDataFromRow(values, columnIndices) {
     return {
       note: values[columnIndices.notesIndex]?.trim() || "",
       alertType: values[columnIndices.alertTypeIndex]?.trim() || "unknown",
@@ -437,7 +309,7 @@ export const NotesManager = {
     };
   },
 
-  _parseCsvContent(csvContent) {
+  parseCsvContent(csvContent) {
     const rows = [];
     let currentRow = [];
     let currentField = "";
@@ -498,5 +370,110 @@ export const NotesManager = {
     }
 
     return rows;
+  },
+
+  // IndexedDB-specific methods
+  async getStats() {
+    await this.init();
+    try {
+      const stats = await this.db.getStats(this.storeName);
+      const allNotes = await this.db.getAll(this.storeName);
+
+      const categories = {};
+      allNotes.forEach((note) => {
+        categories[note.category] = (categories[note.category] || 0) + 1;
+      });
+
+      const tagStats = {};
+      allNotes.forEach((note) => {
+        if (note.tags) {
+          note.tags.forEach((tag) => {
+            tagStats[tag] = (tagStats[tag] || 0) + 1;
+          });
+        }
+      });
+
+      return {
+        ...stats,
+        categories,
+        totalCategories: Object.keys(categories).length,
+        tagStats,
+        totalUniqueTags: Object.keys(tagStats).length,
+      };
+    } catch (error) {
+      Utils.log(`Error getting notes stats: ${error.message}`);
+      return {
+        count: 0,
+        categories: {},
+        totalCategories: 0,
+        tagStats: {},
+        totalUniqueTags: 0,
+      };
+    }
+  },
+
+  async searchNotes(searchTerm, options = {}) {
+    await this.init();
+    try {
+      const allNotes = await this.db.getAll(this.storeName);
+      const searchLower = searchTerm.toLowerCase();
+
+      return allNotes.filter((note) => {
+        const contentMatch = note.content.toLowerCase().includes(searchLower);
+        const tagsMatch =
+          note.tags &&
+          note.tags.some((tag) => tag.toLowerCase().includes(searchLower));
+        const categoryMatch = note.category.toLowerCase().includes(searchLower);
+        const alertIdMatch = note.alertId.toLowerCase().includes(searchLower);
+
+        if (options.searchInTags && !options.searchInContent) {
+          return tagsMatch;
+        }
+        if (options.searchInContent && !options.searchInTags) {
+          return contentMatch;
+        }
+
+        return contentMatch || tagsMatch || categoryMatch || alertIdMatch;
+      });
+    } catch (error) {
+      Utils.log(`Error searching notes: ${error.message}`);
+      return [];
+    }
+  },
+
+  async getNotesByCategory(category) {
+    await this.init();
+    try {
+      return await this.db.getAllByIndex(this.storeName, "category", category);
+    } catch (error) {
+      Utils.log(`Error getting notes by category: ${error.message}`);
+      return [];
+    }
+  },
+
+  async getNotesByTag(tag) {
+    await this.init();
+    try {
+      const allNotes = await this.db.getAll(this.storeName);
+      return allNotes.filter((note) => note.tags && note.tags.includes(tag));
+    } catch (error) {
+      Utils.log(`Error getting notes by tag: ${error.message}`);
+      return [];
+    }
+  },
+
+  async cleanup(options = {}) {
+    await this.init();
+    try {
+      const deletedCount = await this.db.cleanup(this.storeName, {
+        maxEntries: options.maxEntries || 10000,
+        maxAgeInDays: options.maxAgeInDays || 365,
+        timestampField: "timestamp",
+      });
+      return deletedCount;
+    } catch (error) {
+      Utils.log(`Error cleaning up notes: ${error.message}`);
+      throw error;
+    }
   },
 };

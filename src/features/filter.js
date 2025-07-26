@@ -6,6 +6,8 @@ import { TagManager } from "./tags.js";
 // ========================================
 export const FilterManager = {
   getFilteredNotes(filterTags, logic = "AND", includeHashtags = true) {
+    
+    //no filter tags provided, return all notes
     if (!filterTags || filterTags.length === 0) {
       return NotesManager.getAllNotes();
     }
@@ -15,12 +17,11 @@ export const FilterManager = {
 
     Object.entries(notes).forEach(([alertId, noteData]) => {
       if (noteData && typeof noteData === "object") {
-        let alertTags = noteData.tags || [];
+        let alertTags = noteData.manualTags || [];
 
-        // Include hashtags from note text if enabled
-        if (includeHashtags && noteData.note) {
-          const hashtagTags = TagManager.extractHashtagsFromText(noteData.note);
-          alertTags = TagManager.mergeTags(alertTags, hashtagTags);
+        // Include hashtags if enabled and available
+        if (includeHashtags && noteData.hashtagTags) {
+          alertTags = TagManager.mergeTags(alertTags, noteData.hashtagTags);
         }
 
         // If there are no tags, don't match any filter

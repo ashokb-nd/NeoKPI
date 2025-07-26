@@ -4,7 +4,6 @@
  */
 
 /**
- * Minimal annotation manager that auto-detects videos and loads ML detection overlays.
  *
  * @namespace AnnotationManager
  * @description Auto-discovers video elements and creates VideoAnnotator instances.
@@ -34,7 +33,7 @@ import { CONFIG } from "../../config/constants.js";
 
 const AnnotationManager = {
   init() {
-    // Auto-enhance existing videos + watch for new ones
+    // attach video annotators to all existing video elements. And also watch for new video elements added to the DOM
     document.querySelectorAll("video").forEach((video) => this._attach_video_annotator(video));
     new MutationObserver((mutations) =>
       mutations.forEach((m) =>

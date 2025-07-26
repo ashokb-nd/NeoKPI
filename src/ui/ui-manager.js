@@ -501,7 +501,7 @@ export const NotepadUI = {
       const alertId = AppState.notepad.currentAlertId;
       if (alertId) {
         // Get alert type from stored notes data
-        const notes = await NotesManager.getAllNotes();
+        const notes = NotesManager.getAllNotes();
         const noteData = notes[alertId];
         let alertType = "unknown";
 
@@ -561,15 +561,10 @@ export const NotepadUI = {
       }
     }
 
-    const existingTags = await NotesManager.getTags(alertId);
-    const previousText = await NotesManager.getNote(alertId);
-    const previousHashtags =
-      window.TagManager?.extractHashtagsFromText?.(previousText) || [];
-    const manualTags = existingTags.filter(
-      (tag) => !previousHashtags.includes(tag),
-    );
+    // Get existing tags and filter out hashtags more reliably
+    const manual_tags = await NotesManager.getManualTags(alertId);
 
-    await NotesManager.saveNote(alertId, textarea.value, manualTags);
+    await NotesManager.saveNote(alertId, textarea.value, manual_tags);
     window.TagsUI?.updateTagsDisplay?.();
     window.TagsUI?.updateFilterDisplay?.();
   },

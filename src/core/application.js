@@ -55,7 +55,8 @@ export class Application {
       MetadataManager.init();
       SettingsManager.init();
       VideoSyncOverride.init(); // Override Dash video sync with enhanced version
-      NotesManager.init(); // Initialize IndexedDB for notes
+      await NotesManager.init(); // Initialize IndexedDB for notes
+      await NotesManager.initCache(); // Initialize notes cache for synchronous access
 
       // Restore application state
       this.restoreBulkAlerts();

@@ -1,3 +1,8 @@
+/* Wrapper for IndexedDB operations
+https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Basic_Terminology 
+*/
+
+
 import { Utils } from "./utils.js";
 import { CONFIG } from "../config/constants.js";
 
@@ -63,12 +68,17 @@ export class IndexedDBManager {
     });
   }
 
+  // Helper method to get transaction and store
+  _getStore(storeName, mode = "readonly") {
+    const transaction = this.db.transaction([storeName], mode);
+    return transaction.objectStore(storeName);
+  }
+
   // Generic CRUD operations
   async get(storeName, key) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readonly");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readonly");
 
     return new Promise((resolve, reject) => {
       const request = store.get(key);
@@ -77,11 +87,12 @@ export class IndexedDBManager {
     });
   }
 
+  // key it inferred from data
   async put(storeName, data) {
     if (!this.db) await this.init();
+    console.log(`Putting data in store: ${storeName}`, data);
 
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readwrite");
 
     return new Promise((resolve, reject) => {
       const request = store.put(data);
@@ -93,8 +104,7 @@ export class IndexedDBManager {
   async add(storeName, data) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readwrite");
 
     return new Promise((resolve, reject) => {
       const request = store.add(data);
@@ -106,8 +116,7 @@ export class IndexedDBManager {
   async delete(storeName, key) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readwrite");
 
     return new Promise((resolve, reject) => {
       const request = store.delete(key);
@@ -119,8 +128,7 @@ export class IndexedDBManager {
   async getAll(storeName, query = null, count = null) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readonly");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readonly");
 
     return new Promise((resolve, reject) => {
       const request = store.getAll(query, count);
@@ -132,8 +140,7 @@ export class IndexedDBManager {
   async clear(storeName) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readwrite");
 
     return new Promise((resolve, reject) => {
       const request = store.clear();
@@ -143,26 +150,12 @@ export class IndexedDBManager {
   }
 
   // Query by index
-  async getByIndex(storeName, indexName, value) {
-    if (!this.db) await this.init();
-
-    const transaction = this.db.transaction([storeName], "readonly");
-    const store = transaction.objectStore(storeName);
-    const index = store.index(indexName);
-
-    return new Promise((resolve, reject) => {
-      const request = index.get(value);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
+  // This indexName should have been defined in the store configuration
   async getAllByIndex(storeName, indexName, value = null) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readonly");
-    const store = transaction.objectStore(storeName);
-    const index = store.index(indexName);
+    const store = this._getStore(storeName, "readonly");
+    const index = store.index(indexName); // create a index reference, instead of using the store directly
 
     return new Promise((resolve, reject) => {
       const request = value ? index.getAll(value) : index.getAll();
@@ -171,47 +164,11 @@ export class IndexedDBManager {
     });
   }
 
-  // Batch operations
-  async batchPut(storeName, dataArray) {
-    if (!this.db) await this.init();
-
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
-
-    const promises = dataArray.map((data) => {
-      return new Promise((resolve, reject) => {
-        const request = store.put(data);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    });
-
-    return Promise.all(promises);
-  }
-
-  async batchDelete(storeName, keys) {
-    if (!this.db) await this.init();
-
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
-
-    const promises = keys.map((key) => {
-      return new Promise((resolve, reject) => {
-        const request = store.delete(key);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    });
-
-    return Promise.all(promises);
-  }
-
   // Maintenance operations
   async getStats(storeName) {
     if (!this.db) await this.init();
 
-    const transaction = this.db.transaction([storeName], "readonly");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readonly");
 
     return new Promise((resolve, reject) => {
       const countRequest = store.count();
@@ -237,8 +194,7 @@ export class IndexedDBManager {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - maxAgeInDays);
 
-    const transaction = this.db.transaction([storeName], "readwrite");
-    const store = transaction.objectStore(storeName);
+    const store = this._getStore(storeName, "readwrite");
 
     // Get all entries
     const allEntries = await new Promise((resolve, reject) => {
@@ -286,19 +242,14 @@ export class IndexedDBManager {
     return deletedCount;
   }
 
-  // Close database connection
-  close() {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
-      Utils.log(`Closed IndexedDB: ${this.dbName}`);
-    }
-  }
-
   // Delete entire database
   async deleteDatabase() {
     return new Promise((resolve, reject) => {
-      this.close();
+      if (this.db) {
+        this.db.close();
+        this.db = null;
+        Utils.log(`Closed IndexedDB: ${this.dbName}`);
+      }
 
       const deleteRequest = indexedDB.deleteDatabase(this.dbName);
 
@@ -320,10 +271,15 @@ export class IndexedDBManager {
   }
 }
 
-// Factory function for creating commonly used databases
+// ========================================
+// Singleton instance for global IndexedDB manager
+// ========================================
+let appDatabaseInstance = null;
+
+// Factory function for creating commonly used databases (Singleton pattern)
 export const createAppDatabase = () => {
-  return (
-    new IndexedDBManager(CONFIG.DATABASE.NAME, CONFIG.DATABASE.VERSION)
+  if (!appDatabaseInstance) {
+    appDatabaseInstance = new IndexedDBManager(CONFIG.DATABASE.NAME, CONFIG.DATABASE.VERSION)
       // Metadata stores
       .defineStore(CONFIG.DATABASE.STORES.METADATA, {
         keyPath: "alertId",
@@ -336,7 +292,7 @@ export const createAppDatabase = () => {
         keyPath: "alertId",
         indexes: [{ name: "timestamp", unique: false }],
       })
-      // Notes store
+      // Notes store (tags are stored as arrays within notes)
       .defineStore(CONFIG.DATABASE.STORES.NOTES, {
         keyPath: "id",
         autoIncrement: true,
@@ -345,22 +301,7 @@ export const createAppDatabase = () => {
           { name: "timestamp", unique: false },
           { name: "category", unique: false },
         ],
-      })
-      // Tags store
-      .defineStore(CONFIG.DATABASE.STORES.TAGS, {
-        keyPath: "name",
-        indexes: [
-          { name: "color", unique: false },
-          { name: "createdAt", unique: false },
-        ],
-      })
-      // Settings store
-      .defineStore(CONFIG.DATABASE.STORES.SETTINGS, {
-        keyPath: "key",
-        indexes: [
-          { name: "category", unique: false },
-          { name: "updatedAt", unique: false },
-        ],
-      })
-  );
+      });
+  }
+  return appDatabaseInstance;
 };

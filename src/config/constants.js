@@ -51,10 +51,9 @@ export const CONFIG = {
     VERSION: 1,
     STORES: {
       METADATA: "metadata",
-      METADATA_URLS: "metadataUrls",
+      METADATA_URLS: "metadataUrls", 
       NOTES: "notes",
-      TAGS: "tags",
-      SETTINGS: "settings",
+      // Removed: TAGS (stored as arrays in notes), SETTINGS (uses localStorage)
     },
     // Best practices for key handling
     KEY_NORMALIZATION: {
@@ -64,7 +63,7 @@ export const CONFIG = {
     },
   },
   TAGS: {
-    HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)/g,
+    HASHTAG_REGEX: /(?:^|\s)#([a-zA-Z0-9_-]+)(?=\s|$)/g,
   },
   ANNOTATIONS_CATEGORIES: ['hello', 'cross', 'text', 'detection', 'trajectory', 'graph', 'dsf'],
 };
