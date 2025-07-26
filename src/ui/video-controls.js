@@ -459,6 +459,9 @@ init() {
     const panel = document.createElement("div");
     panel.className = "renderer-controls-panel";
 
+    // Create a unique identifier for this video to avoid checkbox ID conflicts
+    const videoId = video.src ? video.src.split('/').pop().split('.')[0] : Date.now();
+
     // Title
     const title = document.createElement("div");
     title.className = "renderer-controls-title";
@@ -483,17 +486,17 @@ init() {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.className = "renderer-checkbox";
-      checkbox.id = `renderer-${renderer.type}`;
+      checkbox.id = `renderer-${renderer.type}-${videoId}`;
       checkbox.checked = renderer.enabled;
       
       const label = document.createElement("label");
       label.className = "renderer-checkbox-label";
-      label.htmlFor = `renderer-${renderer.type}`;
+      label.htmlFor = `renderer-${renderer.type}-${videoId}`;
       label.textContent = renderer.label;
 
       // Add event listener to handle renderer toggling
       checkbox.addEventListener("change", (e) => {
-        this.toggleRenderer(renderer.type, e.target.checked);
+        this.toggleRenderer(renderer.type, e.target.checked, video);
       });
 
       checkboxItem.appendChild(checkbox);
@@ -507,28 +510,21 @@ init() {
     return panel;
   },
 
-  toggleRenderer(rendererType, enabled) {
-    Utils.log(`Renderer ${rendererType} ${enabled ? 'enabled' : 'disabled'}`);
+  toggleRenderer(rendererType, enabled, targetVideo) {
+    Utils.log(`Renderer ${rendererType} ${enabled ? 'enabled' : 'disabled'} for specific video`);
     
-    // Toggle renderer on all videos with annotators
-    const videos = document.querySelectorAll('video');
-    let toggledAny = false;
+    // Toggle renderer only on the specific video
+    if (targetVideo && targetVideo.annotator) {
+      targetVideo.annotator.toggleRenderer(rendererType, enabled);
+      Utils.log(`Successfully toggled ${rendererType} renderer for video`);
+    } else {
+      Utils.log(`Video or annotator not found for ${rendererType} toggle`);
+    }
     
-    videos.forEach(video => {
-      if (video.annotator) {
-        video.annotator.toggleRenderer(rendererType, enabled);
-        toggledAny = true;
-      }
-    });
-    
-    // Always store preference for future video loads
+    // Store preference for future video loads (this affects all new videos)
     const rendererPrefs = JSON.parse(localStorage.getItem('neo-kpi-renderer-prefs') || '{}');
     rendererPrefs[rendererType] = enabled;
     localStorage.setItem('neo-kpi-renderer-prefs', JSON.stringify(rendererPrefs));
-    
-    if (!toggledAny) {
-      Utils.log(`No videos with annotators found. Preference saved for future loads.`);
-    }
   },
 
   setupVideoEvents(video, controlsPanel) {
