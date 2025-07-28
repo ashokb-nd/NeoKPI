@@ -134,6 +134,15 @@ export class BaseRenderer {
     return annotation.category === this.category;
   }
 
+  /**
+   * Get the current visibility state of this renderer
+   * @public
+   * @returns {boolean} True if renderer is visible
+   */
+  get isVisible() {
+    return this._isVisible;
+  }
+
   // ========================================
   // ABSTRACT METHODS - Must be implemented by subclasses
   // ========================================

@@ -125,6 +125,7 @@ class VideoAnnotator {
     this.renderers = new Map();
     this.isVisible = false;
     this._lastRenderTime = -1;
+    this._rendererVisibilityStates = new Map(); // Track individual renderer visibility preferences
 
     // Initialize event listeners for video element for resizing and rendering(time updates)
     this._setupEventListeners();
@@ -253,6 +254,11 @@ class VideoAnnotator {
     }
 
     this.renderers.set(category, renderer);
+    
+    // Set default visibility state if not already set
+    if (!this._rendererVisibilityStates.has(category)) {
+      this._rendererVisibilityStates.set(category, true); // Default to visible
+    }
 
     if (this.options.debugMode) {
       Utils.log(`Registered renderer: ${category}`);
@@ -260,13 +266,20 @@ class VideoAnnotator {
   }
 
   /**
-   * Show all renderer canvases.
+   * Show all renderer canvases (respecting individual renderer visibility preferences).
    */
   show() {
     this.isVisible = true;
     
-    for (const renderer of this.renderers.values()) {
-      renderer.show();
+    for (const [rendererType, renderer] of this.renderers.entries()) {
+      // Check if we have a specific preference for this renderer
+      const shouldShow = this._rendererVisibilityStates.has(rendererType) 
+        ? this._rendererVisibilityStates.get(rendererType)
+        : true; // Default to visible if no preference set
+      
+      if (shouldShow) {
+        renderer.show();
+      }
     }
 
     this._startRenderLoop();
@@ -337,6 +350,9 @@ class VideoAnnotator {
    * @returns {boolean} True if renderer exists and was toggled
    */
   toggleRenderer(rendererType, enabled) {
+    // Store the preference for this renderer
+    this._rendererVisibilityStates.set(rendererType, enabled);
+    
     return enabled ? this.enableRenderer(rendererType) : this.disableRenderer(rendererType);
   }
 
