@@ -459,8 +459,18 @@ init() {
     const panel = document.createElement("div");
     panel.className = "renderer-controls-panel";
 
-    // Create a unique identifier for this video to avoid checkbox ID conflicts
-    const videoId = video.src ? video.src.split('/').pop().split('.')[0] : Date.now();
+    // Get the parent container for reliable video identification
+    const container = video.parentElement;
+    
+    // Use parent container ID for both checkbox ID generation and cache key
+    // This is more reliable than video.src or video.id
+    const videoKey = container?.id || 
+                    video.id || 
+                    (video.src ? video.src.split('/').pop().split('.')[0] : null) || 
+                    `video-${Date.now()}`;
+    
+    // Use the same key for checkbox IDs to ensure consistency
+    const videoId = videoKey;
 
     // Title
     const title = document.createElement("div");
@@ -471,11 +481,16 @@ init() {
     const checkboxContainer = document.createElement("div");
     checkboxContainer.className = "renderer-checkboxes";
 
-    // Create renderer types from CONFIG with all enabled by default
+    // Load cached renderer preferences for this specific video
+    // Use parent container ID for reliable video identification
+    const allPrefs = JSON.parse(localStorage.getItem('neo-kpi-video-renderer-prefs') || '{}');
+    const rendererPrefs = allPrefs[videoKey] || {};
+    
+    // Create renderer types from CONFIG with cached preferences or default enabled
     const rendererTypes = CONFIG.ANNOTATIONS_CATEGORIES.map(category => ({
       type: category,
       label: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize first letter
-      enabled: true // Enable all by default
+      enabled: rendererPrefs.hasOwnProperty(category) ? rendererPrefs[category] : true // Use cached value or default enabled
     }));
 
     // Create checkbox for each renderer
@@ -521,10 +536,19 @@ init() {
       Utils.log(`Video or annotator not found for ${rendererType} toggle`);
     }
     
-    // Store preference for future video loads (this affects all new videos)
-    const rendererPrefs = JSON.parse(localStorage.getItem('neo-kpi-renderer-prefs') || '{}');
-    rendererPrefs[rendererType] = enabled;
-    localStorage.setItem('neo-kpi-renderer-prefs', JSON.stringify(rendererPrefs));
+    // Store preference for this specific video using parent container ID
+    const container = targetVideo.parentElement;
+    const videoKey = container?.id || 
+                    targetVideo.id || 
+                    (targetVideo.src ? targetVideo.src.split('/').pop().split('.')[0] : null) || 
+                    `video-${Date.now()}`;
+    
+    const allPrefs = JSON.parse(localStorage.getItem('neo-kpi-video-renderer-prefs') || '{}');
+    if (!allPrefs[videoKey]) {
+      allPrefs[videoKey] = {};
+    }
+    allPrefs[videoKey][rendererType] = enabled;
+    localStorage.setItem('neo-kpi-video-renderer-prefs', JSON.stringify(allPrefs));
   },
 
   setupVideoEvents(video, controlsPanel) {

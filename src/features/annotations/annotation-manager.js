@@ -57,6 +57,21 @@ const AnnotationManager = {
     
     if (!video.annotator) {
       video.annotator = new VideoAnnotator(video);
+      
+      // Apply cached renderer preferences for this specific video using parent container ID
+      const container = video.parentElement;
+      const videoKey = container?.id || 
+                      video.id || 
+                      (video.src ? video.src.split('/').pop().split('.')[0] : null) || 
+                      `video-${Date.now()}`;
+      
+      const allPrefs = JSON.parse(localStorage.getItem('neo-kpi-video-renderer-prefs') || '{}');
+      const rendererPrefs = allPrefs[videoKey] || {};
+      
+      Object.entries(rendererPrefs).forEach(([rendererType, enabled]) => {
+        video.annotator.toggleRenderer(rendererType, enabled);
+      });
+      Utils.log(`Applied cached renderer preferences for video ${videoKey}:`, rendererPrefs);
     }
     return video.annotator;
   },

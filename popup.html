@@ -67,6 +67,59 @@
       font-size: 11px;
       color: #888;
     }
+    
+    .tools-section {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    .tools-section h4 {
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .download-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .download-btn:hover {
+      background: #0056b3;
+    }
+    
+    .tool-description {
+      font-size: 11px;
+      color: #666;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+    
+    .tool-description code {
+      background: #e9ecef;
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-family: monospace;
+      font-size: 10px;
+    }
+    
+    .tool-description a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    
+    .tool-description a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -98,6 +151,18 @@
     </div>
     <div class="shortcut">
       <span><span class="key">Cmd+↓↑</span> Navigate bulk</span>
+    </div>
+  </div>
+  
+  <div class="tools-section">
+    <h4>S3 Presigner Tool</h4>
+    <button id="downloadPresigner" class="download-btn">
+      📥 Download s3-presigner.py
+    </button>
+    <div class="tool-description">
+      Python script to generate S3 presigned URLs. Required for accessing private S3 content.<br>
+      <strong>Setup:</strong> 1) Download file 2) Install boto3: <code>pip install boto3</code> 3) Get AWS credentials from <a href="https://netradyne.awsapps.com/start/#/?tab=accounts" target="_blank">AWS SSO</a> 4) Run: <code>python s3-presigner.py</code>
+
     </div>
   </div>
   

@@ -7,14 +7,11 @@ const packageJson = JSON.parse(readFileSync("./package.json", "utf8"));
 
 // Chrome Extension build configuration
 const chromeExtensionConfig = {
-  input: "src/index.js",
+  input: "src/chrome-extension-injector.js",
   output: {
     file: "dist/chrome-extension/content-script.js",
     format: "iife",
     banner: `// NeoKPI Chrome Extension Content Script
-// Version: ${packageJson.version}
-// Generated: ${new Date().toISOString()}`,
-  banner: `// NeoKPI Chrome Extension Content Script
 // Version: ${packageJson.version}
 // Generated: ${new Date().toISOString()}`,
   },
@@ -25,14 +22,14 @@ const chromeExtensionConfig = {
 const tampermonkeyConfig = {
   input: "src/index.js",
   output: {
-    file: "dist/tampermonkey-script.js",
+    file: "dist/chrome-extension/tampermonkey-script.js",
     format: "iife",
     banner: `// ==UserScript==
 // @name         Alert Debug Shortcut (Refactored)
 // @namespace    http://tampermonkey.net/
 // @version      ${packageJson.version}
 // @description  Keyboard shortcuts with notes, tags, filtering, and bulk processing
-// @author       Batakal Ashok
+// @author       Inward Analytics Team
 // @match        https://analytics-kpis.netradyne.com/alert-debug
 // @grant        none
 // ==/UserScript==`,
@@ -56,6 +53,14 @@ function copyExtensionFiles() {
   // Copy popup files
   writeFileSync(`${distDir}/popup.html`, readFileSync('popup.html', 'utf8'));
   writeFileSync(`${distDir}/popup.js`, readFileSync('popup.js', 'utf8'));
+  
+  // Copy s3-presigner.py for download feature
+  try {
+    writeFileSync(`${distDir}/s3-presigner.py`, readFileSync('scripts/s3-presigner.py', 'utf8'));
+    console.log('✅ S3 presigner script copied to extension');
+  } catch (e) {
+    console.log('⚠️  S3 presigner script not found - download feature will not work');
+  }
   
   // Copy icons if they exist
   try {
