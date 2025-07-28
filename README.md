@@ -35,17 +35,7 @@ npm run build
 ```
 
 ## 📚 Documentation
-
-- **[Build Guide](docs/BUILD_GUIDE.md)** - Complete Chrome extension build instructions
-
-- **[Chrome Web Store Guide](CHROME_WEB_STORE_GUIDE.md)** - Publishing to Chrome Web Store
-- **[API Reference](docs/API.md)** - Complete API documentation
-- **[Setup Guide](docs/ONBOARDING.md)** - New developer walkthrough
-- **[Architecture](docs/ARCHITECTURE.md)** - Project structure & design
-- **[Configuration](docs/CONFIGURATION.md)** - Keyboard shortcuts & settings
-- **[Usage Guide](docs/USAGE.md)** - Detailed feature documentation
-- **[Add your own renderer](docs/AddingNewRenderer.md)** - How to create custom annotation renderers
-- **[Documentation Guidelines](docs/DOCUMENTATION_GUIDELINES.md)** - JSDoc standards & practices
+> Coming soon...
 
 ## 🚀 Upcoming Features
 
@@ -61,7 +51,7 @@ npm run build
 - Handle SPA navigation properly.
   - going out from `alert-debug`
   - into `alert-debug`
-- video contains white padding like thing on left,right sides. Then, HTML video size != actual video screen size.
+- Copy the video frame and the annotations onto a single canvas.
 
 ---
 
