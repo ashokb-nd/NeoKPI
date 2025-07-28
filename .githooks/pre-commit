@@ -4,13 +4,13 @@
 echo "🎨 Formatting staged files with prettier..."
 npm run format:changed
 
-echo "🔄 Updating documentation from config..."
-npm run docs:update
+# echo "🔄 Updating documentation from config..."
+# npm run docs:update
 
 # Add the updated README to the commit if it was changed
-if git diff --name-only | grep -q "README.md"; then
-  echo "📝 README.md was updated, adding to commit"
-  git add README.md
-fi
+# if git diff --name-only | grep -q "README.md"; then
+#   echo "📝 README.md was updated, adding to commit"
+#   git add README.md
+# fi
 
-echo "✅ Documentation update complete"
+# echo "✅ Documentation update complete"

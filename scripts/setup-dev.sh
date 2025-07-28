@@ -3,8 +3,28 @@
 
 echo "🔧 Setting up NeoKPI development environment..."
 
-# Configure git hooks (always safe to run)
-echo "📋 Configuring git hooks..."
+# Check if Node.js and npm are installed
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js is not installed"
+    echo ""
+    echo "Please install Node.js from https://nodejs.org/ or use:"
+    echo "  macOS: brew install node"
+    echo "  Ubuntu/Debian: sudo apt install nodejs npm"
+    echo "  Windows: Download from https://nodejs.org/"
+    echo ""
+    exit 1
+fi
+
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm is not installed"
+    echo "Please install npm (usually comes with Node.js)"
+    echo "Visit https://nodejs.org/ for installation instructions"
+    exit 1
+fi
+
+echo "✅ Node.js $(node --version) and npm $(npm --version) found"
+
+# Configure git hooks; for code formatting on commit
 git config core.hooksPath .githooks
 chmod +x .githooks/* 2>/dev/null || true
 echo "✅ Git hooks configured"
@@ -17,14 +37,15 @@ else
     echo "✅ Dependencies already installed"
 fi
 
-# Test that everything works
-echo "📝 Testing documentation generation..."
-if npm run docs:update > /dev/null 2>&1; then
-    echo "✅ Documentation generation works"
-else
-    echo "❌ Documentation generation failed - check your setup"
-    exit 1
-fi
+# # Removed the jsdoc generation.
 
-echo ""
+# echo "📝 Testing documentation generation..."
+# if npm run docs:update > /dev/null 2>&1; then
+#     echo "✅ Documentation generation works"
+# else
+#     echo "❌ Documentation generation failed - check your setup"
+#     exit 1
+# fi
+
+# echo ""
 echo "🎉 Setup complete! Try making a commit to test the pre-commit hook."
