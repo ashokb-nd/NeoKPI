@@ -1,6 +1,6 @@
 # NeoKPI - Alert Debug Chrome Extension
 
-A Chrome Extension that enhances the Alert Debug page with comprehensive keyboard shortcuts, note-taking capabilities, bulk processing features, and advanced video controls.
+A Chrome Extension that enhances the KPI-Alert Debug page with comprehensive keyboard shortcuts, note-taking capabilities, bulk processing features, quick custom annotations.
 
 ## Rendering Pipeline
 ![NeoKPI2 drawio](docs/assets/Rendering_pipeline.svg)
@@ -17,6 +17,7 @@ Transform your Alert Debug workflow with:
 
 ## ⚡ Quick Start
 Follow these steps to generate the 'chrome-extension'
+- make sure `node js`, `npm` are installed.
 ```bash
 # 1. Clone & Setup
 git clone <repository-url>
