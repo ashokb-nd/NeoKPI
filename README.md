@@ -2,6 +2,9 @@
 
 A powerful Chrome Extension that enhances the Alert Debug page with comprehensive keyboard shortcuts, note-taking capabilities, bulk processing features, and advanced video controls.
 
+## Rendering Pipeline
+![NeoKPI2 drawio](https://github.com/user-attachments/assets/16505659-3b5f-4e66-9199-71c0e05b77c5)
+
 ## 🎯 What This Does
 
 Transform your Alert Debug workflow with:
@@ -77,9 +80,19 @@ npm run package:store    # Package for distribution/Chrome Web Store
 ## 🚀 Upcoming Features
 
 - Automatic caching of alert type
-- Saved dataset management
-- Video annotations from metadata (using runtime overlay)
+- make it into a 'chrome extension'
+- Saved dataset management (named bulk)
+  - save to s3
+  - should be able to share our observations, along with time stamps with others, easily.
+ 
+- Download the annotated video
+- annotation level opacity
+  - Option for the user to choose the opacity of individual annotations
+- Handle SPA navigation properly.
+  - going out from `alert-debug`
+  - into `alert-debug`
+- video contains white padding like thing on left,right sides. Then, HTML video size != actual video screen size.
 
 ---
 
-**Author**: Batakal Ashok | **Version**: 0.7.1 | **License**: ISC
+**Author**: Batakal Ashok 
