@@ -16,7 +16,7 @@ Transform your Alert Debug workflow with:
 - 🎯 **Video Annotations** Add your own custom renderers using data from metadata file
 
 ## ⚡ Quick Start
-
+Follow these steps to generate the 'chrome-extension'
 ```bash
 # 1. Clone & Setup
 git clone <repository-url>
