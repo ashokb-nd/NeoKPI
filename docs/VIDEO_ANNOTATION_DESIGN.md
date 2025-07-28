@@ -1,4 +1,5 @@
 # Video Annotation System Design
+> ⚠️ **Warning:** This is outdated. we will update it later, in free time.
 
 ## 📖 Overview
 
