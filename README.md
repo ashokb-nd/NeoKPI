@@ -15,7 +15,7 @@ A Chrome Extension that improves the KPI-Alert Debug page with keyboard shortcut
 
 ## ⚡ Quick Start
 Follow these steps to generate the 'chrome-extension'
-- make sure `node js`, `npm` are installed.
+- If node.js is not installed `brew install node`
 ```bash
 # 1. Clone & Setup
 git clone <repository-url>
