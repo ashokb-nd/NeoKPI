@@ -1,3 +1,15 @@
+/**
+ * KeyboardManager - Handles global keyboard shortcuts for the application
+ * 
+ * Structure:
+ * - init(): Sets up event listeners and waits for DOM elements [PUBLIC API - ENTRY POINT]
+ * 
+ * - handlers: Object containing individual shortcut handler functions
+ * - handlerList: Array defining execution order (priority-based)
+ * - handleKeydown(): Main dispatcher that calls handlers in sequence until one returns true
+ */
+
+
 import { CONFIG } from "../config/constants.js";
 import { Utils } from "../utils/utils.js";
 import { BulkProcessor } from "../features/bulk-processor.js";
