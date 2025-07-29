@@ -1,6 +1,6 @@
 {
   "name": "neokpi",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Chrome Extension that enhances Alert Debug with keyboard shortcuts, note-taking, bulk processing, and video controls",
   "main": "index.js",
   "scripts": {
