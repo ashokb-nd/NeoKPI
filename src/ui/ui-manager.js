@@ -313,11 +313,6 @@ export const NotepadUI = {
     container.style.cssText = "display: flex; align-items: center; gap: 8px;";
 
     const buttons = [
-      {
-        text: "Download Metadata",
-        color: "#6f42c1",
-        action: () => MetadataManager.downloadCurrentMetadata(),
-      },
       { text: "Import CSV", color: "#28a745", action: () => this.importCsv() },
       {
         text: "Export CSV",
