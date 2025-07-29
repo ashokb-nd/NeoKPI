@@ -3,10 +3,9 @@
  * 
  * Structure:
  * - init(): Sets up event listeners and waits for DOM elements [PUBLIC API - ENTRY POINT]
- * 
- * - handlers: Object containing individual shortcut handler functions
- * - handlerList: Array defining execution order (priority-based)
- * - handleKeydown(): Main dispatcher that calls handlers in sequence until one returns true
+ * - shortcutMap: Map of key combinations to handler functions (e.g., 'cmd+i' -> focusInput)
+ * - buildKeyString(): Converts keyboard event to standardized key string
+ * - handleKeydown(): Gets key string and directly calls mapped handler
  */
 
 
@@ -19,10 +18,24 @@ import { AppState } from "./app-state.js";
 
 
 export const KeyboardManager = {
-  elements: null,
+
+  elements: null, // DOM elements required for keyboard interactions eg. input fields, buttons etc.
+
+  // Keyboard shortcuts mapping
+  shortcutMap: new Map([
+    ['cmd+i', 'focusInput'],
+    ['enter', 'submitForm'],
+    ['cmd+arrowdown', 'nextAlert'],
+    ['cmd+arrowup', 'previousAlert'],
+    ['cmd+shift+b', 'toggleBulkMode'],
+    ['cmd+j', 'toggleNotepad'],
+    ['space', 'playPauseVideo'],
+    ['arrowleft', 'rewindVideo'],
+    ['arrowright', 'fastForwardVideo'],
+    ['escape', 'focusBody'],
+  ]),
 
   async init() {
-    // Wait for required elements
     this.elements = await Utils.waitForElements();
     
     // Set up global keyboard event handlers
@@ -34,30 +47,19 @@ export const KeyboardManager = {
       }
     });
   },
+
+  // Handler functions
   handlers: {
-    // Cmd+I - Focus input field
     focusInput(event, elements) {
-      if (
-        event.key === CONFIG.KEYS.FOCUS_INPUT &&
-        event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !Utils.isInputFocused(elements.input)
-      ) {
+      if (!Utils.isInputFocused(elements.input)) {
         event.preventDefault();
         elements.input.focus();
         Utils.log("Focused input box");
-        return true;
       }
-      return false;
     },
 
-    // Enter - Submit form when input is focused
     submitForm(event, elements) {
-      if (
-        event.key === CONFIG.KEYS.SUBMIT &&
-        Utils.isInputFocused(elements.input)
-      ) {
+      if (Utils.isInputFocused(elements.input)) {
         event.preventDefault();
 
         const inputValue = elements.input.value.trim();
@@ -68,7 +70,7 @@ export const KeyboardManager = {
           UIManager.showBulkStatus(
             `Bulk mode: ${count} alerts loaded. Press ↓ to start`,
           );
-          return true;
+          return;
         }
 
         elements.button.click();
@@ -83,122 +85,79 @@ export const KeyboardManager = {
         if (AppState.notepad.isOpen) {
           NotepadUI.updateContent();
         }
-
-        return true;
       }
-      return false;
     },
 
-    // Cmd+↓/↑ - Navigate through bulk alerts
-    bulkProcessing(event, elements) {
-      if (!BulkProcessor.state.isProcessing) return false;
-
-      const filters = AppState.notepad.selectedFilters;
-      const logic = AppState.notepad.filterLogic;
-
-      if (
-        event.code === CONFIG.KEYS.NEXT_ALERT &&
-        event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
+    nextAlert(event, elements) {
+      if (BulkProcessor.state.isProcessing) {
         event.preventDefault();
-
-        const nextAlert =
-          filters.length > 0
-            ? BulkProcessor.nextFilteredAlert(filters, logic)
-            : BulkProcessor.nextAlert();
+        
+        const filters = AppState.notepad.selectedFilters;
+        const logic = AppState.notepad.filterLogic;
+        
+        const nextAlert = filters.length > 0
+          ? BulkProcessor.nextFilteredAlert(filters, logic)
+          : BulkProcessor.nextAlert();
 
         if (nextAlert) {
           UIManager.loadAlertId(nextAlert, elements);
-          const progress =
-            filters.length > 0
-              ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
-              : BulkProcessor.getProgress();
+          const progress = filters.length > 0
+            ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
+            : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${nextAlert}`);
         } else {
           UIManager.showBulkStatus(
-            filters.length > 0 ? "End of filtered alerts" : "End of alerts",
+            filters.length > 0 ? "End of filtered alerts" : "End of alerts"
           );
         }
-        return true;
       }
+    },
 
-      if (
-        event.code === CONFIG.KEYS.PREV_ALERT &&
-        event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
+    previousAlert(event, elements) {
+      if (BulkProcessor.state.isProcessing) {
         event.preventDefault();
-
-        const prevAlert =
-          filters.length > 0
-            ? BulkProcessor.prevFilteredAlert(filters, logic)
-            : BulkProcessor.prevAlert();
+        
+        const filters = AppState.notepad.selectedFilters;
+        const logic = AppState.notepad.filterLogic;
+        
+        const prevAlert = filters.length > 0
+          ? BulkProcessor.prevFilteredAlert(filters, logic)
+          : BulkProcessor.prevAlert();
 
         if (prevAlert) {
           UIManager.loadAlertId(prevAlert, elements);
-          const progress =
-            filters.length > 0
-              ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
-              : BulkProcessor.getProgress();
+          const progress = filters.length > 0
+            ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
+            : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${prevAlert}`);
         } else {
           UIManager.showBulkStatus(
-            filters.length > 0 ? "At first filtered alert" : "At first alert",
+            filters.length > 0 ? "At first filtered alert" : "At first alert"
           );
         }
-        return true;
       }
-
-      return false;
     },
 
-    // Cmd+Shift+B - Toggle bulk processing mode
     toggleBulkMode(event) {
-      if (
-        event.key === CONFIG.KEYS.BULK_PROCESS &&
-        event.metaKey &&
-        event.shiftKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
-        event.preventDefault();
+      event.preventDefault();
 
-        if (BulkProcessor.state.isProcessing) {
-          if (confirm("Are you sure you want to exit bulk processing mode?")) {
-            BulkProcessor.clearBulkAlerts();
-            UIManager.showBulkStatus("Bulk mode disabled");
-          }
-        } else {
-          ModalManager.showBulkDialog();
+      if (BulkProcessor.state.isProcessing) {
+        if (confirm("Are you sure you want to exit bulk processing mode?")) {
+          BulkProcessor.clearBulkAlerts();
+          UIManager.showBulkStatus("Bulk mode disabled");
         }
-        return true;
+      } else {
+        ModalManager.showBulkDialog();
       }
-      return false;
     },
 
-    // Cmd+J - Toggle notepad
     toggleNotepad(event) {
-      if (
-        event.key === CONFIG.KEYS.TOGGLE_NOTEPAD &&
-        event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
-        event.preventDefault();
-        NotepadUI.toggle();
-        return true;
-      }
-      return false;
+      event.preventDefault();
+      NotepadUI.toggle();
     },
 
-    // Space, ←/→ - Video controls (play/pause, seek)
-    videoControls(event) {
-      if (!Utils.isBodyFocused()) return false;
-
-      if (event.code === CONFIG.KEYS.PLAY_PAUSE) {
+    playPauseVideo(event) {
+      if (Utils.isBodyFocused()) {
         event.preventDefault();
         const video = Utils.getVideoElement();
         if (video) {
@@ -209,45 +168,39 @@ export const KeyboardManager = {
             video.pause();
           }
         }
-        return true;
       }
+    },
 
-      if (
-        event.code === CONFIG.KEYS.REWIND ||
-        event.code === CONFIG.KEYS.FAST_FORWARD
-      ) {
+    rewindVideo(event) {
+      if (Utils.isBodyFocused()) {
         event.preventDefault();
         const video = Utils.getVideoElement();
         if (video) {
-          const seekDirection =
-            event.code === CONFIG.KEYS.REWIND
-              ? -CONFIG.TIMING.VIDEO_SEEK_SECONDS
-              : CONFIG.TIMING.VIDEO_SEEK_SECONDS;
-          const newTime = video.currentTime + seekDirection;
-          video.currentTime = Math.max(
-            0,
-            Math.min(video.duration || 0, newTime),
-          );
+          const newTime = video.currentTime - CONFIG.TIMING.VIDEO_SEEK_SECONDS;
+          video.currentTime = Math.max(0, newTime);
         }
-        return true;
       }
-
-      return false;
     },
 
-    // Escape - Focus body (blur active element)
-    focusBody(event) {
-      if (event.key === "Escape") {
-        document.activeElement.blur();
-        document.body.focus();
-        return true;
+    fastForwardVideo(event) {
+      if (Utils.isBodyFocused()) {
+        event.preventDefault();
+        const video = Utils.getVideoElement();
+        if (video) {
+          const newTime = video.currentTime + CONFIG.TIMING.VIDEO_SEEK_SECONDS;
+          video.currentTime = Math.min(video.duration || 0, newTime);
+        }
       }
-      return false;
+    },
+
+    focusBody(event) {
+      document.activeElement.blur();
+      document.body.focus();
     },
   },
 
-  // Debug function to print key combinations
-  debugKeydown(event) {
+  // Build standardized key string from event
+  buildKeyString(event) {
     const modifiers = [];
     if (event.metaKey) modifiers.push('cmd');
     if (event.ctrlKey) modifiers.push('ctrl');
@@ -255,30 +208,22 @@ export const KeyboardManager = {
     if (event.shiftKey) modifiers.push('shift');
     
     const key = event.key.toLowerCase();
-    const combination = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
     
-    console.log(`Key pressed: ${combination}`);
+    if (modifiers.length > 0) {
+      return `${modifiers.join('+')}+${key}`;
+    }
+    return key;
   },
 
-  // Handler execution order (priority matters - focusBody first for Escape handling)
-  handlerList: [
-    'focusBody',
-    'focusInput', 
-    'submitForm',
-    'bulkProcessing',
-    'toggleBulkMode',
-    'toggleNotepad',
-    'videoControls',
-  ],
 
   handleKeydown(event, elements) {
-    // Uncomment the line below for debugging key combinations
-    this.debugKeydown(event);
+    console.log(`Key pressed: ${this.buildKeyString(event)}`);
     
-    for (const handlerName of this.handlerList) {
-      if (this.handlers[handlerName](event, elements)) {
-        break;
-      }
+    const keyString = this.buildKeyString(event);
+    const handlerName = this.shortcutMap.get(keyString);
+    
+    if (handlerName && this.handlers[handlerName]) {
+      this.handlers[handlerName](event, elements);
     }
   },
 };
