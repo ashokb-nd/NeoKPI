@@ -14,7 +14,7 @@ export const CONFIG = {
     FAST_FORWARD: "ArrowRight", // → - Fast-forward video
     NEXT_ALERT: "ArrowDown", // Cmd+↓ - Next alert (bulk)
     PREV_ALERT: "ArrowUp", // Cmd+↑ - Previous alert (bulk)
-    BULK_PROCESS: "b", // Cmd+B - Toggle bulk mode
+    BULK_PROCESS: "b", // Cmd+Shift+B - Toggle bulk mode
     TOGGLE_NOTEPAD: "j", // Cmd+J - Toggle notepad
   },
 };

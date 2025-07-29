@@ -36,9 +36,8 @@ export class Application {
       // const fireworks = new FireworkShow();
       // fireworks.init();
 
-      // Wait for required elements and initialize
-      const elements = await Utils.waitForElements();
-      await this.initializeFeatures(elements);
+      // Initialize features
+      await this.initializeFeatures();
     } catch (error) {
       console.error("Failed to initialize UserScript:", error);
       UIManager.showNotification("UserScript initialization failed", "error");
@@ -48,8 +47,10 @@ export class Application {
   /**
    * Initialize all application features once DOM elements are ready
    */
-  async initializeFeatures(elements) {
+  async initializeFeatures() {
     try {
+      // Wait for required elements first
+      const elements = await Utils.waitForElements();
 
       // Initialize core services
       MetadataManager.init();
@@ -63,7 +64,7 @@ export class Application {
 
       // Set up event handlers
       this.setupInputMonitoring(elements);
-      this.setupKeyboardHandlers(elements);
+      await KeyboardManager.init(); // KeyboardManager now handles its own elements
 
       // Initialize UI components
       VideoControlsManager.init();
@@ -71,7 +72,6 @@ export class Application {
 
       // Auto-open notepad on page load
       this.autoOpenNotepad();
-
 
       Utils.log(`NeoKPI V${this.VERSION} initialized successfully 🚀`);
     } catch (error) {
@@ -112,19 +112,6 @@ export class Application {
         }
       }, 300),
     );
-  }
-
-  /**
-   * Set up global keyboard event handlers
-   */
-  setupKeyboardHandlers(elements) {
-    document.addEventListener("keydown", (event) => {
-      try {
-        KeyboardManager.handleKeydown(event, elements);
-      } catch (error) {
-        console.error("Keyboard handler error:", error);
-      }
-    });
   }
 
   /**

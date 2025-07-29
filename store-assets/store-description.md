@@ -9,7 +9,7 @@ NeoKPI transforms the Alert Debug page at analytics-kpis.netradyne.com into a pr
 ### ⌨️ Lightning-Fast Keyboard Shortcuts
 - **Cmd+I** - Instantly focus the alert input field
 - **Cmd+J** - Toggle smart notepad with auto-save
-- **Cmd+B** - Enter bulk processing mode
+- **Cmd+Shift+B** - Enter bulk processing mode
 - **Space** - Play/pause videos with one key
 - **Arrow Keys** - Seek through videos (← →) and navigate bulk alerts (Cmd+↓↑)
 
@@ -49,7 +49,7 @@ NeoKPI transforms the Alert Debug page at analytics-kpis.netradyne.com into a pr
 1. **Install the extension**
 2. **Navigate to** https://analytics-kpis.netradyne.com/alert-debug  
 3. **Start using shortcuts** - Press Cmd+J to see the notepad
-4. **Bulk process** - Press Cmd+B to paste multiple alert IDs
+4. **Bulk process** - Press Cmd+Shift+B to paste multiple alert IDs
 5. **Take notes** - Type "@" to insert video timestamps
 
 Transform your workflow today with NeoKPI!

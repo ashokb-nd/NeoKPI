@@ -9,7 +9,7 @@
  *   - Multiple alert IDs: Paste space/comma/newline separated IDs and press Enter
  *
  * Bulk Processing:
- *   - "Cmd+b" key: Toggle bulk processing mode (shows paste dialog)
+ *   - "Cmd+Shift+b" key: Toggle bulk processing mode (shows paste dialog)
  *   - Cmd+Down arrow (↓): Load next alert ID in bulk mode
  *   - Cmd+Up arrow (↑): Load previous alert ID in bulk mode
  *   - Bulk alerts and alert type are automatically saved and restored between sessions

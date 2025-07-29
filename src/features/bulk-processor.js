@@ -91,6 +91,23 @@ export const BulkProcessor = {
     return `[${this.state.currentIndex + 1}/${this.state.alertIds.length}]`;
   },
 
+  getFilteredProgress(filters, logic, includeHashtags = false) {
+    const filteredIds = FilterManager.getFilteredAlertIds(
+      filters,
+      logic,
+      includeHashtags,
+    );
+    const current = this.getCurrentAlert();
+    const index = filteredIds.indexOf(current);
+
+    if (index !== -1) {
+      const filterText = filters.join(` ${logic} `);
+      return `[${index + 1}/${filteredIds.length}] filtered by "${filterText}"`;
+    }
+
+    return this.getProgress();
+  },
+
   // Get current position in the list
   getCurrentPosition() {
     return {

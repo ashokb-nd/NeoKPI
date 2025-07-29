@@ -4,10 +4,26 @@ import { BulkProcessor } from "../features/bulk-processor.js";
 import { UIManager, NotepadUI } from "../ui/ui-manager.js";
 import { ModalManager } from "../ui/modal-manager.js";
 import { AppState } from "./app-state.js";
-import { FilterManager } from "../features/filter.js";
+
 
 export const KeyboardManager = {
+  elements: null,
+
+  async init() {
+    // Wait for required elements
+    this.elements = await Utils.waitForElements();
+    
+    // Set up global keyboard event handlers
+    document.addEventListener("keydown", (event) => {
+      try {
+        this.handleKeydown(event, this.elements);
+      } catch (error) {
+        console.error("Keyboard handler error:", error);
+      }
+    });
+  },
   handlers: {
+    // Cmd+I - Focus input field
     focusInput(event, elements) {
       if (
         event.key === CONFIG.KEYS.FOCUS_INPUT &&
@@ -24,6 +40,7 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Enter - Submit form when input is focused
     submitForm(event, elements) {
       if (
         event.key === CONFIG.KEYS.SUBMIT &&
@@ -60,6 +77,7 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Cmd+↓/↑ - Navigate through bulk alerts
     bulkProcessing(event, elements) {
       if (!BulkProcessor.state.isProcessing) return false;
 
@@ -83,7 +101,7 @@ export const KeyboardManager = {
           UIManager.loadAlertId(nextAlert, elements);
           const progress =
             filters.length > 0
-              ? this.getFilteredProgress(filters, logic)
+              ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
               : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${nextAlert}`);
         } else {
@@ -111,7 +129,7 @@ export const KeyboardManager = {
           UIManager.loadAlertId(prevAlert, elements);
           const progress =
             filters.length > 0
-              ? this.getFilteredProgress(filters, logic)
+              ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
               : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${prevAlert}`);
         } else {
@@ -125,10 +143,12 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Cmd+Shift+B - Toggle bulk processing mode
     toggleBulkMode(event) {
       if (
         event.key === CONFIG.KEYS.BULK_PROCESS &&
         event.metaKey &&
+        event.shiftKey &&
         !event.ctrlKey &&
         !event.altKey
       ) {
@@ -147,6 +167,7 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Cmd+J - Toggle notepad
     toggleNotepad(event) {
       if (
         event.key === CONFIG.KEYS.TOGGLE_NOTEPAD &&
@@ -161,6 +182,7 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Space, ←/→ - Video controls (play/pause, seek)
     videoControls(event) {
       if (!Utils.isBodyFocused()) return false;
 
@@ -201,6 +223,7 @@ export const KeyboardManager = {
       return false;
     },
 
+    // Escape - Focus body (blur active element)
     focusBody(event) {
       if (event.key === "Escape") {
         document.activeElement.blur();
@@ -211,36 +234,37 @@ export const KeyboardManager = {
     },
   },
 
-  getFilteredProgress(filters, logic) {
-    const filteredIds = FilterManager.getFilteredAlertIds(
-      filters,
-      logic,
-      AppState.notepad.includeHashtags,
-    );
-    const current = BulkProcessor.getCurrentAlert();
-    const index = filteredIds.indexOf(current);
-
-    if (index !== -1) {
-      const filterText = filters.join(` ${logic} `);
-      return `[${index + 1}/${filteredIds.length}] filtered by "${filterText}"`;
-    }
-
-    return BulkProcessor.getProgress();
+  // Debug function to print key combinations
+  debugKeydown(event) {
+    const modifiers = [];
+    if (event.metaKey) modifiers.push('cmd');
+    if (event.ctrlKey) modifiers.push('ctrl');
+    if (event.altKey) modifiers.push('alt');
+    if (event.shiftKey) modifiers.push('shift');
+    
+    const key = event.key.toLowerCase();
+    const combination = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
+    
+    console.log(`Key pressed: ${combination}`);
   },
 
-  handleKeydown(event, elements) {
-    const handlerList = [
-      this.handlers.focusBody,
-      this.handlers.focusInput,
-      this.handlers.submitForm,
-      this.handlers.bulkProcessing,
-      this.handlers.toggleBulkMode,
-      this.handlers.toggleNotepad,
-      this.handlers.videoControls,
-    ];
+  // Handler execution order (priority matters - focusBody first for Escape handling)
+  handlerList: [
+    'focusBody',
+    'focusInput', 
+    'submitForm',
+    'bulkProcessing',
+    'toggleBulkMode',
+    'toggleNotepad',
+    'videoControls',
+  ],
 
-    for (const handler of handlerList) {
-      if (handler.call(this, event, elements)) {
+  handleKeydown(event, elements) {
+    // Uncomment the line below for debugging key combinations
+    this.debugKeydown(event);
+    
+    for (const handlerName of this.handlerList) {
+      if (this.handlers[handlerName](event, elements)) {
         break;
       }
     }

@@ -24,7 +24,7 @@
 
 ### Bulk Processing
 
-- **`Cmd+B`** - Toggle bulk processing mode (shows paste dialog)
+- **`Cmd+Shift+B`** - Toggle bulk processing mode (shows paste dialog)
 - **`Cmd+↓`** - Navigate to next alert ID in bulk mode
 - **`Cmd+↑`** - Navigate to previous alert ID in bulk mode
 
@@ -42,7 +42,7 @@
 
 ### Step 1: Enter Bulk Mode
 
-1. Press `Cmd+B` to open the bulk dialog
+1. Press `Cmd+Shift+B` to open the bulk dialog
 2. Paste multiple alert IDs (space, comma, or newline separated)
 3. Click "Start Bulk Processing"
 
