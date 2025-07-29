@@ -157,8 +157,9 @@ export const KeyboardManager = {
     },
 
     playPauseVideo(event) {
+      event.preventDefault(); // Always prevent scrolling
+      
       if (Utils.isBodyFocused()) {
-        event.preventDefault();
         const video = Utils.getVideoElement();
         if (video) {
           if (video.paused) {
@@ -207,7 +208,10 @@ export const KeyboardManager = {
     if (event.altKey) modifiers.push('alt');
     if (event.shiftKey) modifiers.push('shift');
     
-    const key = event.key.toLowerCase();
+    let key = event.key.toLowerCase();
+    
+    // Handle special keys
+    if (key === ' ') key = 'space';
     
     if (modifiers.length > 0) {
       return `${modifiers.join('+')}+${key}`;
@@ -217,7 +221,7 @@ export const KeyboardManager = {
 
 
   handleKeydown(event, elements) {
-    console.log(`Key pressed: ${this.buildKeyString(event)}`);
+    // console.log(`Key pressed: ${this.buildKeyString(event)}`);
     
     const keyString = this.buildKeyString(event);
     const handlerName = this.shortcutMap.get(keyString);
