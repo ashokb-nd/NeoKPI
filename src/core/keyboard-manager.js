@@ -6,6 +6,10 @@
  * - shortcutMap: Map of key combinations to handler functions (e.g., 'cmd+i' -> focusInput)
  * - buildKeyString(): Converts keyboard event to standardized key string
  * - handleKeydown(): Gets key string and directly calls mapped handler
+ * 
+ * To add a new shortcut:
+ * 1. Add to `shortcutMap` with key combination and handler name
+ * 2. Implement the handler function in `handlers` object
  */
 
 
