@@ -157,9 +157,9 @@ export const KeyboardManager = {
     },
 
     playPauseVideo(event) {
-      event.preventDefault(); // Always prevent scrolling
       
       if (Utils.isBodyFocused()) {
+        event.preventDefault(); // keep it here only. (we don't want to interfere with typing in input fields)
         const video = Utils.getVideoElement();
         if (video) {
           if (video.paused) {
