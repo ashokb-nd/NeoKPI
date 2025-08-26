@@ -304,3 +304,5 @@ export const MetadataManager = {
   },
 };
 
+
+window.MetadataManager = MetadataManager;

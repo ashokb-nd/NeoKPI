@@ -13,7 +13,7 @@ import { BulkProcessor } from "../features/bulk-processor.js";
 import { FireworkShow } from "../ui/fireworks.js";
 import { VideoControlsManager } from "../ui/video-controls.js";
 import { UIManager, NotepadUI } from "../ui/ui-manager.js";
-import { AnnotationManager } from "../features/annotations/annotation-manager.js";
+import { AnnotationManager } from "../features/annotations/annotation-manager-new.js";
 
 /**
  * Main Application class that orchestrates the initialization
@@ -68,7 +68,7 @@ export class Application {
 
       // Initialize UI components
       VideoControlsManager.init();
-      AnnotationManager.init();
+      // AnnotationManager.init();
 
       // Auto-open notepad on page load
       this.autoOpenNotepad();
@@ -104,7 +104,7 @@ export class Application {
         if (alertId && alertId !== AppState.notepad.currentAlertId) {
           // Always update current alert (for annotations)
           await AppState.setCurrentAlert(alertId);
-          
+
           // Update notepad only if open
           if (AppState.notepad.isOpen) {
             NotepadUI.updateContent();
@@ -131,7 +131,7 @@ export class Application {
   cleanup() {
     // Use URL monitor's cleanup which is more comprehensive
     URLMonitor.cleanup();
-    
+
     // Additional cleanup
     StorageManager.clear();
     Utils.log("UserScript cleanup complete");
