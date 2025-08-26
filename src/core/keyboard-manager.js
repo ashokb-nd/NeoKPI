@@ -37,6 +37,7 @@ export const KeyboardManager = {
     ['arrowleft', 'rewindVideo'],
     ['arrowright', 'fastForwardVideo'],
     ['escape', 'focusBody'],
+    ['ctrl+a', 'toggleAnnotations']
   ]),
 
   async init() {
@@ -201,6 +202,11 @@ export const KeyboardManager = {
     focusBody(event) {
       document.activeElement.blur();
       document.body.focus();
+    },
+    toggleAnnotations(event) {
+      let currentAlert = AppState.notepad.currentAlertId || null;
+      console.log('Toggling annotations for alert:', currentAlert);
+      MetadataManager.getMetadata(currentAlert).then(metadata => AnnotationManager.init(metadata));
     },
   },
 

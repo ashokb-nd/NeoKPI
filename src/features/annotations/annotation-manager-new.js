@@ -30,7 +30,7 @@ const AnnotationManager = {
 
     debugBox1 = document.getElementById("debug-exp-box-1-video");
     debugBox2 = document.getElementById("debug-exp-box-2-video");
-    console.log("Debug boxes found:", debugBox1, debugBox2);
+    // console.log("Debug boxes found:", debugBox1, debugBox2);
 
 
     // create divs inside these for konva stages
@@ -48,6 +48,7 @@ const AnnotationManager = {
       konvaDiv2.style.position = "absolute";
       debugBox2.appendChild(konvaDiv2);
       console.log(debugBox2);
+    }
 
 if (konvaDiv1 && !inwardStage) {
     inwardStage = new Konva.Stage({
@@ -72,9 +73,12 @@ if (konvaDiv2 && !outwardStage) {
     inwardVideo = debugBox1.querySelector("video");
     outwardVideo = debugBox2.querySelector("video");
 
-    // const metadata = {
-    //     "name": "Ashok"
-    // };
+    if (inwardAnnotator){
+        inwardAnnotator.destroy();
+    }
+    if (outwardAnnotator){
+        outwardAnnotator.destroy();
+    }
 
     // show annotations
         inwardAnnotator = new VideoAnnotator(
@@ -91,7 +95,6 @@ if (konvaDiv2 && !outwardStage) {
         ['Header','InertialBar']
     );
     this.setResizeListenersForKonvaResizing();
-  }
 },
 
 setResizeListenersForKonvaResizing() {
