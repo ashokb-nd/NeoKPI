@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Local server to generate S3 presigned URLs for the userscript.
-This server accepts metadata URLs and returns properly signed URLs that the browser can access.
+Local server to download S3 file content directly.
+This server accepts S3 URLs and returns the file content directly instead of presigned URLs.
 """
 
 import argparse
+import base64
 import json
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -139,12 +140,16 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 return
 
             s3_url = query_params['url'][0]
-            presigned_url = self.generate_presigned_url_from_s3_url(s3_url)
+            file_data = self.download_file_content_from_s3_url(s3_url)
             
             response_data = {
                 'original_url': s3_url,
-                'presigned_url': presigned_url,
-                'expires_in': 3600,
+                'content': file_data['content'],
+                'is_binary': file_data['is_binary'],
+                'size_bytes': file_data['size_bytes'],
+                'content_type': file_data['content_type'],
+                'last_modified': file_data['last_modified'],
+                'etag': file_data['etag'],
                 'status': 'success',
                 'processing_time_ms': round((time.time() - start_time) * 1000, 2)
             }
@@ -217,14 +222,17 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 return
 
             s3_url = request_data['url']
-            expires_in = request_data.get('expires_in', 3600)  # Default 1 hour
             
-            presigned_url = self.generate_presigned_url_from_s3_url(s3_url, expires_in)
+            file_data = self.download_file_content_from_s3_url(s3_url)
             
             response_data = {
                 'original_url': s3_url,
-                'presigned_url': presigned_url,
-                'expires_in': expires_in,
+                'content': file_data['content'],
+                'is_binary': file_data['is_binary'],
+                'size_bytes': file_data['size_bytes'],
+                'content_type': file_data['content_type'],
+                'last_modified': file_data['last_modified'],
+                'etag': file_data['etag'],
                 'status': 'success',
                 'processing_time_ms': round((time.time() - start_time) * 1000, 2)
             }
@@ -251,16 +259,17 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
             # Enhanced logging for debugging
             self.log_request_response_debug('POST', request_data, response_data, status_code, error, raw_post_data)
 
-    def generate_presigned_url_from_s3_url(self, s3_url, expires_in=3600):
+    def download_file_content_from_s3_url(self, s3_url):
         """
-        Generate a presigned URL from an S3 URL
+        Download file content directly from S3 URL
         
         :param s3_url: The S3 URL (e.g., https://fleetdata-production.s3.amazonaws.com/path/to/file.txt)
-        :param expires_in: Expiration time in seconds
-        :return: Presigned URL
+        :return: Dictionary containing file content and metadata
         """
         start_time = time.time()
-        
+        # s3://nd-training-data-production/N406028947655666/071f10b5-bb33-4fbc-9cae-9cb70bab94e8/metadata.txt
+        if s3_url.startswith('s3://'):
+            s3_url = s3_url.replace('s3://',"https://s3.amazonaws.com/")
         try:
             # Parse the S3 URL to extract bucket and key
             parsed = urlparse(s3_url)
@@ -275,6 +284,16 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 path_parts = parsed.path.lstrip('/').split('/', 1)
                 bucket = path_parts[0]
                 key = path_parts[1] if len(path_parts) > 1 else ''
+            
+            # elif parsed.scheme == "s3":
+            #     #for the format s3://nd-training-data-production/ee6525a9-be5f-4ad1-86d3-2a7ad03b8772/metadata.txt
+            #     # ParseResult(scheme='s3', netloc='nd-training-data-production', path='/ee6525a9-be5f-4ad1-86d3-2a7ad03b8772/metadata.txt', params='', query='', fragment='')
+            #     bucket = parsed.netloc
+            #     key = parsed.path
+
+            #     if key[0] == "/":
+            #         key = key[1:]
+
             else:
                 raise ValueError(f"Unrecognized S3 URL format: {s3_url}")
 
@@ -283,21 +302,34 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
 
             parse_time = time.time()
             print(f"URL parsing completed in {round((parse_time - start_time) * 1000, 2)}ms")
-            print(f"Generating presigned URL for bucket='{bucket}', key='{key}', expires_in={expires_in}s")
+            print(f"Downloading file content for bucket='{bucket}', key='{key}'")
 
             # Create S3 client (uses AWS credentials from environment/config)
             s3_client = boto3.client('s3')
             
-            # Generate presigned URL
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': bucket, 'Key': key},
-                ExpiresIn=expires_in
-            )
+            # Download file content
+            response = s3_client.get_object(Bucket=bucket, Key=key)
+            file_content = response['Body'].read()
+            
+            # Try to decode as text, fallback to base64 if binary
+            try:
+                content_text = file_content.decode('utf-8')
+                is_binary = False
+            except UnicodeDecodeError:
+                content_text = base64.b64encode(file_content).decode('utf-8')
+                is_binary = True
             
             total_time = time.time()
-            print(f"Successfully generated presigned URL in {round((total_time - start_time) * 1000, 2)}ms")
-            return presigned_url
+            print(f"Successfully downloaded file content in {round((total_time - start_time) * 1000, 2)}ms")
+            
+            return {
+                'content': content_text,
+                'is_binary': is_binary,
+                'size_bytes': len(file_content),
+                'content_type': response.get('ContentType', 'application/octet-stream'),
+                'last_modified': response.get('LastModified').isoformat() if response.get('LastModified') else None,
+                'etag': response.get('ETag', '').strip('"')
+            }
             
         except NoCredentialsError:
             raise Exception("AWS credentials not found. Please configure your AWS credentials.")
@@ -313,7 +345,7 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='S3 Presigner Local Server')
+    parser = argparse.ArgumentParser(description='S3 File Content Downloader Local Server')
     parser.add_argument('--port', type=int, default=8080, help='Port to run the server on (default: 8080)')
     parser.add_argument('--host', default='localhost', help='Host to bind to (default: localhost)')
     
@@ -339,7 +371,7 @@ def main():
     server_address = (args.host, args.port)
     httpd = HTTPServer(server_address, S3PresignerHandler)
     
-    print(f"🚀 S3 Presigner Server starting on http://{args.host}:{args.port}")
+    print(f"🚀 S3 File Content Downloader Server starting on http://{args.host}:{args.port}")
     print(f"📋 Usage:")
     print(f"   GET:  http://{args.host}:{args.port}/?url=https://fleetdata-production.s3.amazonaws.com/path/file.txt")
     print(f"   POST: http://{args.host}:{args.port}/ with JSON body: {{\"url\": \"https://...\"}}")
