@@ -82,8 +82,8 @@ export const MetadataManager = {
       return null;
     }
 
-    const content = await this._getMetadata(metadataUrl);
-    console.log("Signed URL:", content);
+    const content = await this._getMetadata(metadataUrl, alertId);
+    console.log("Metadata content:", content);
     if (!content) {
       Utils.log(`Failed to fetch metadata content from URL: ${metadataUrl}`);
       return null;
@@ -222,14 +222,25 @@ export const MetadataManager = {
   // S3 OPERATIONS
   // ========================================
 
-  async _getMetadata(s3Url) {
+  async _getMetadata(s3Url, alertId) {
     if (!s3Url) return null;
 
     try {
+      const requestBody = { url: s3Url };
+      
+      // Include alert_id if provided for local storage caching
+      if (alertId) {
+        const normalizedAlertId = this._normalizeAlertId(alertId);
+        if (normalizedAlertId) {
+          requestBody.alert_id = normalizedAlertId;
+          Utils.log(`Requesting metadata with normalized alert_id: ${normalizedAlertId}`);
+        }
+      }
+
       const response = await fetch(CONFIG.S3_PRESIGNER.LOCAL_SERVER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: s3Url }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -237,12 +248,18 @@ export const MetadataManager = {
       }
 
       const data = await response.json();
+      
+      // Log the source of the data for debugging
+      if (data.source) {
+        Utils.log(`Metadata retrieved from: ${data.source}`);
+      }
+      
       return data.content || null;
     } catch (error) {
       if (error.name === "TypeError" && error.message.includes("fetch")) {
         Utils.log(`Presigner server not running on ${CONFIG.S3_PRESIGNER.LOCAL_SERVER_URL}`);
       } else {
-        Utils.log(`Error getting signed URL: ${error.message}`);
+        Utils.log(`Error getting metadata: ${error.message}`);
       }
       return null;
     }

@@ -2,11 +2,13 @@
 """
 Local server to download S3 file content directly.
 This server accepts S3 URLs and returns the file content directly instead of presigned URLs.
+Supports local storage caching with neokpi_storage folder.
 """
 
 import argparse
 import base64
 import json
+import os
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -17,6 +19,11 @@ import time
 
 
 class S3PresignerHandler(BaseHTTPRequestHandler):
+    # Storage directory for metadata files (relative to script location)
+    STORAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "neokpi_storage")
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
     def log_request_response(self, method, request_data=None, response_data=None, status_code=200, error=None):
         """Log request and response with timestamp"""
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -41,12 +48,16 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
         
         # Log response
         print(f"Response Status: {status_code}")
-        if response_data:
-            print(f"Response Body:")
-            if isinstance(response_data, dict):
-                print(f"  {json.dumps(response_data, indent=2)}")
-            else:
-                print(f"  {response_data}")
+        # if response_data:
+        #     print(f"Response Body:")
+        #     if isinstance(response_data, dict):
+        #         # Create a copy without sensitive content for logging
+        #         log_data = response_data.copy()
+        #         if 'content' in log_data and len(log_data['content']) > 100:
+        #             log_data['content'] = f"<content truncated - {len(log_data['content'])} chars>"
+        #         print(f"  {json.dumps(log_data, indent=2)}")
+        #     else:
+        #         print(f"  {response_data}")
         
         if error:
             print(f"Error: {error}")
@@ -88,12 +99,16 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
         
         # Log response
         print(f"Response Status: {status_code}")
-        if response_data:
-            print(f"Response Body:")
-            if isinstance(response_data, dict):
-                print(f"  {json.dumps(response_data, indent=2)}")
-            else:
-                print(f"  {response_data}")
+        # if response_data:
+        #     print(f"Response Body:")
+        #     if isinstance(response_data, dict):
+        #         # Create a copy without sensitive content for logging
+        #         log_data = response_data.copy()
+        #         if 'content' in log_data and len(log_data['content']) > 100:
+        #             log_data['content'] = f"<content truncated - {len(log_data['content'])} chars>"
+        #         print(f"  {json.dumps(log_data, indent=2)}")
+        #     else:
+        #         print(f"  {response_data}")
         
         if error:
             print(f"Error: {error}")
@@ -111,7 +126,7 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        """Handle GET requests with URL parameter"""
+        """Handle GET requests with URL and alert_id parameters"""
         start_time = time.time()
         request_data = None
         response_data = None
@@ -133,13 +148,37 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
             if 'url' not in query_params:
                 response_data = {
                     'error': 'Missing url parameter',
-                    'usage': 'GET /?url=https://fleetdata-production.s3.amazonaws.com/...'
+                    'usage': 'GET /?url=https://fleetdata-production.s3.amazonaws.com/...&alert_id=<alert_id>'
                 }
                 error = 'Missing url parameter'
                 self.wfile.write(json.dumps(response_data).encode())
                 return
 
             s3_url = query_params['url'][0]
+            alert_id = query_params.get('alert_id', [None])[0]
+            
+            # First, check local storage if alert_id is provided
+            if alert_id:
+                cached_data = self.get_metadata_from_storage(alert_id)
+                if cached_data:
+                    response_data = {
+                        'original_url': s3_url,
+                        'content': cached_data.get('content', ''),
+                        'is_binary': cached_data.get('is_binary', False),
+                        'size_bytes': cached_data.get('size_bytes', 0),
+                        'content_type': cached_data.get('content_type', 'application/json'),
+                        'last_modified': cached_data.get('last_modified'),
+                        'etag': cached_data.get('etag', ''),
+                        'status': 'success',
+                        'source': 'local_storage',
+                        'alert_id': alert_id,
+                        'processing_time_ms': round((time.time() - start_time) * 1000, 2)
+                    }
+                    
+                    self.wfile.write(json.dumps(response_data, indent=2).encode())
+                    return
+            
+            # If not found in storage or no alert_id, fetch from S3
             file_data = self.download_file_content_from_s3_url(s3_url)
             
             response_data = {
@@ -151,8 +190,14 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 'last_modified': file_data['last_modified'],
                 'etag': file_data['etag'],
                 'status': 'success',
+                'source': 'aws_s3',
+                'alert_id': alert_id,
                 'processing_time_ms': round((time.time() - start_time) * 1000, 2)
             }
+            
+            # Save to local storage if alert_id is provided
+            if alert_id:
+                self.save_metadata_to_storage(alert_id, file_data)
             
             self.wfile.write(json.dumps(response_data, indent=2).encode())
             
@@ -214,7 +259,7 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
             if 'url' not in request_data:
                 response_data = {
                     'error': 'Missing url in JSON body',
-                    'usage': 'POST with JSON: {"url": "https://fleetdata-production.s3.amazonaws.com/..."}',
+                    'usage': 'POST with JSON: {"url": "https://fleetdata-production.s3.amazonaws.com/...", "alert_id": "<alert_id>"}',
                     'received_data': request_data
                 }
                 error = 'Missing url in request body'
@@ -222,7 +267,30 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 return
 
             s3_url = request_data['url']
+            alert_id = request_data.get('alert_id')
             
+            # First, check local storage if alert_id is provided
+            if alert_id:
+                cached_data = self.get_metadata_from_storage(alert_id)
+                if cached_data:
+                    response_data = {
+                        'original_url': s3_url,
+                        'content': cached_data.get('content', ''),
+                        'is_binary': cached_data.get('is_binary', False),
+                        'size_bytes': cached_data.get('size_bytes', 0),
+                        'content_type': cached_data.get('content_type', 'application/json'),
+                        'last_modified': cached_data.get('last_modified'),
+                        'etag': cached_data.get('etag', ''),
+                        'status': 'success',
+                        'source': 'local_storage',
+                        'alert_id': alert_id,
+                        'processing_time_ms': round((time.time() - start_time) * 1000, 2)
+                    }
+                    
+                    self.wfile.write(json.dumps(response_data, indent=2).encode())
+                    return
+            
+            # If not found in storage or no alert_id, fetch from S3
             file_data = self.download_file_content_from_s3_url(s3_url)
             
             response_data = {
@@ -234,8 +302,14 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
                 'last_modified': file_data['last_modified'],
                 'etag': file_data['etag'],
                 'status': 'success',
+                'source': 'aws_s3',
+                'alert_id': alert_id,
                 'processing_time_ms': round((time.time() - start_time) * 1000, 2)
             }
+            
+            # Save to local storage if alert_id is provided
+            if alert_id:
+                self.save_metadata_to_storage(alert_id, file_data)
             
             self.wfile.write(json.dumps(response_data, indent=2).encode())
             
@@ -332,11 +406,94 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
             }
             
         except NoCredentialsError:
-            raise Exception("AWS credentials not found. Please configure your AWS credentials.")
+            raise Exception("AWS credentials not found. Please configure your AWS credentials or use --offline mode for local storage only.")
         except ClientError as e:
             raise Exception(f"AWS client error: {e}")
         except Exception as e:
-            raise Exception(f"Error generating presigned URL: {e}")
+            raise Exception(f"Error downloading from S3: {e}")
+
+    def get_metadata_from_storage(self, alert_id):
+        """
+        Get metadata content from local storage
+        
+        :param alert_id: The alert ID
+        :return: Dictionary with content in S3 response format or None if not found
+        """
+        if not alert_id:
+            return None
+            
+        metadata_file = os.path.join(self.STORAGE_DIR, f"{alert_id}.json")
+        
+        if os.path.exists(metadata_file):
+            try:
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    # Try to read as JSON first
+                    try:
+                        content_data = json.load(f)
+                        # Convert back to string format for consistency with S3 response
+                        content = json.dumps(content_data)
+                        is_binary = False
+                    except json.JSONDecodeError:
+                        # If not JSON, read as plain text
+                        f.seek(0)  # Reset file pointer
+                        content = f.read()
+                        is_binary = False
+                
+                print(f"✅ Found metadata in local storage: {metadata_file}")
+                
+                # Return in the same format as S3 response for consistency
+                return {
+                    'content': content,
+                    'is_binary': is_binary,
+                    'size_bytes': len(content.encode('utf-8')),
+                    'content_type': 'application/json',
+                    'last_modified': None,
+                    'etag': ''
+                }
+            except Exception as e:
+                print(f"❌ Error reading metadata from storage: {e}")
+                return None
+        else:
+            print(f"📁 Metadata not found in local storage: {metadata_file}")
+            return None
+    
+    def save_metadata_to_storage(self, alert_id, file_data):
+        """
+        Save only the metadata content to local storage
+        
+        :param alert_id: The alert ID
+        :param file_data: Dictionary containing file data from S3 (with 'content' key)
+        """
+        if not alert_id:
+            print("⚠️ Cannot save metadata: alert_id is required")
+            return False
+            
+        metadata_file = os.path.join(self.STORAGE_DIR, f"{alert_id}.json")
+        
+        try:
+            # Extract only the content and parse it if it's JSON
+            content = file_data.get('content', '')
+            
+            # Try to parse content as JSON to store it properly formatted
+            try:
+                if content.strip().startswith('{') or content.strip().startswith('['):
+                    parsed_content = json.loads(content)
+                    with open(metadata_file, 'w', encoding='utf-8') as f:
+                        json.dump(parsed_content, f, indent=2)
+                else:
+                    # If not JSON, store as plain text in a simple wrapper
+                    with open(metadata_file, 'w', encoding='utf-8') as f:
+                        f.write(content)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, store as plain text
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                    
+            print(f"💾 Saved metadata content to local storage: {metadata_file}")
+            return True
+        except Exception as e:
+            print(f"❌ Error saving metadata to storage: {e}")
+            return False
 
     def log_message(self, format, *args):
         """Override to customize logging - suppress default HTTP logging since we have detailed logging"""
@@ -345,27 +502,39 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='S3 File Content Downloader Local Server')
+    parser = argparse.ArgumentParser(description='S3 File Content Downloader Local Server with Local Storage')
     parser.add_argument('--port', type=int, default=8080, help='Port to run the server on (default: 8080)')
     parser.add_argument('--host', default='localhost', help='Host to bind to (default: localhost)')
+    parser.add_argument('--offline', action='store_true', help='Run in offline mode (local storage only, no AWS)')
     
     args = parser.parse_args()
     
-    # Test AWS credentials
-    try:
-        s3_client = boto3.client('s3')
-        s3_client.list_buckets()  # Simple test to verify credentials
-        print("✅ AWS credentials verified")
-    except NoCredentialsError:
-        print("❌ AWS credentials not found!")
-        print("Please configure your AWS credentials using one of these methods:")
-        print("1. AWS CLI: aws configure")
-        print("2. Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN")
-        print("3. AWS credentials file: ~/.aws/credentials")
-        return 1
-    except Exception as e:
-        print(f"❌ AWS credentials test failed: {e}")
-        return 1
+    # Test AWS credentials only if not in offline mode
+    aws_available = False
+    if not args.offline:
+        try:
+            s3_client = boto3.client('s3')
+            s3_client.list_buckets()  # Simple test to verify credentials
+            print("✅ AWS credentials verified")
+            aws_available = True
+        except NoCredentialsError:
+            print("⚠️ AWS credentials not found!")
+            print("Running in local storage mode only.")
+            print("To enable AWS access, configure credentials using:")
+            print("1. AWS CLI: aws configure")
+            print("2. Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN")
+            print("3. AWS credentials file: ~/.aws/credentials")
+            print("Or use --offline flag to suppress this warning.")
+        except Exception as e:
+            print(f"⚠️ AWS credentials test failed: {e}")
+            print("Running in local storage mode only.")
+    else:
+        print("🔒 Running in offline mode (local storage only)")
+
+    # Ensure neokpi_storage directory exists
+    storage_dir = S3PresignerHandler.STORAGE_DIR
+    os.makedirs(storage_dir, exist_ok=True)
+    print(f"📁 Local storage directory: {os.path.abspath(storage_dir)}")
 
     # Start the server
     server_address = (args.host, args.port)
@@ -373,8 +542,9 @@ def main():
     
     print(f"🚀 S3 File Content Downloader Server starting on http://{args.host}:{args.port}")
     print(f"📋 Usage:")
-    print(f"   GET:  http://{args.host}:{args.port}/?url=https://fleetdata-production.s3.amazonaws.com/path/file.txt")
-    print(f"   POST: http://{args.host}:{args.port}/ with JSON body: {{\"url\": \"https://...\"}}")
+    print(f"   GET:  http://{args.host}:{args.port}/?url=https://fleetdata-production.s3.amazonaws.com/path/file.txt&alert_id=<alert_id>")
+    print(f"   POST: http://{args.host}:{args.port}/ with JSON body: {{\"url\": \"https://...\", \"alert_id\": \"<alert_id>\"}}")
+    print(f"💡 Local storage: Files cached as neokpi_storage/<alert_id>.json")
     print(f"💡 Press Ctrl+C to stop")
     
     try:

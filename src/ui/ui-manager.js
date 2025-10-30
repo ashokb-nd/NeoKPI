@@ -334,9 +334,9 @@ export const NotepadUI = {
         action: () => this.clearBulkAlerts(),
       },
       {
-        text: "🎯 Load Annotations",
-        color: "#17a2b8",
-        action: () => this.loadAnnotationsForCurrentAlert(),
+        text: "🗑️ Clear Storage",
+        color: "#dc3545",
+        action: () => this.clearMetadataStorage(),
       },
       { text: "⚙️", color: "#6c757d", action: () => this.openSettings() },
       { text: "×", color: "#3c3c3c", action: () => this.toggle() },
@@ -712,29 +712,27 @@ export const NotepadUI = {
     }
   },
 
-  async loadAnnotationsForCurrentAlert() {
-    const alertId = AppState.notepad.currentAlertId;
-    
-    if (!alertId) {
-      UIManager.showNotification("No alert ID selected", "warning");
-      return;
-    }
-
+  async clearMetadataStorage() {
     try {
-      // Show loading notification
-      UIManager.showNotification("Loading annotations...", "info", 2000);
+      // Show confirmation dialog
+      const confirmed = confirm("Are you sure you want to clear all metadata storage?\n\nThis will delete:\n- All cached metadata from IndexedDB\n- All stored metadata URLs\n\nThis action cannot be undone.");
       
-      // Load annotations using default categories from config
-      const success = await AnnotationManager.loadAnnotationsForAlert();
-      
-      if (success) {
-        UIManager.showNotification(`✅ Annotations loaded for alert ${alertId}`, "success");
-      } else {
-        UIManager.showNotification(`❌ Failed to load annotations for alert ${alertId}`, "error");
+      if (!confirmed) {
+        return;
       }
+
+      // Show clearing notification
+      UIManager.showNotification("Clearing metadata storage...", "info", 2000);
+      
+      // Clear the metadata storage
+      await MetadataManager.clearAll();
+      
+      UIManager.showNotification("✅ Metadata storage cleared successfully", "success");
+      console.log("🗑️ Metadata storage cleared by user");
+      
     } catch (error) {
-      console.error("Error loading annotations:", error);
-      UIManager.showNotification(`Error loading annotations: ${error.message}`, "error");
+      console.error("Error clearing metadata storage:", error);
+      UIManager.showNotification(`❌ Error clearing storage: ${error.message}`, "error");
     }
   },
 
