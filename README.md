@@ -2,6 +2,10 @@
 
 A Chrome Extension that improves the KPI-Alert Debug page with keyboard shortcuts, note-taking capabilities, bulk processing and quick custom annotations.
 
+# NOTE
+- video annotation features are used from markrEdge folder, it has 'konva' based implementation.
+- we are not using the video renderers implemented in Neokpi/src/features . it's outdated.
+
 ## Rendering Pipeline
 ![NeoKPI2 drawio](docs/assets/Rendering_pipeline.svg)
 
