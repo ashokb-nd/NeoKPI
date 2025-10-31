@@ -2,6 +2,16 @@
 
 A Node.js project for markrEdge application.
 
+## Integration with Main NeoKPI Application
+
+**For New Developers:** This folder serves as both a standalone video annotation demo and a reusable module for the main NeoKPI application.
+
+**Key Integration:**
+- The main NeoKPI app imports `VideoAnnotator` from `./annotations/video-annotator.js`
+- Used in `/src/features/annotations/annotation-manager-new.js` for video overlay annotations
+- Provides Konva.js-based canvas rendering with pluggable visual components
+- Can run independently for testing/development or be imported as a module
+
 ## Getting Started
 
 ### Prerequisites
