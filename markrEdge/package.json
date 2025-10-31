@@ -1,0 +1,23 @@
+{
+  "name": "markredge",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "markr",
+    "edge",
+    "video",
+    "processing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "markrEdge Node.js application",
+  "dependencies": {
+    "express": "^5.1.0",
+    "konva": "^9.3.22"
+  }
+}
