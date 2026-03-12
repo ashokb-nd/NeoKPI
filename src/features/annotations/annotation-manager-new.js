@@ -127,6 +127,4 @@ setResizeListenersForKonvaResizing() {
 }
 };
 
-window.AnnotationManager = AnnotationManager;
-
 export { AnnotationManager };

@@ -5,7 +5,6 @@ import { BulkProcessor } from "../features/bulk-processor.js";
 import { AppState } from "../core/app-state.js";
 import { MetadataManager } from "../services/metadata.js";
 import { NotesManager } from "../features/notes.js";
-import { AnnotationManager } from "../features/annotations/annotation-manager.js";
 
 /**
  * UIManager handles the main application UI components including

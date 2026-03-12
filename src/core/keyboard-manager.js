@@ -19,6 +19,7 @@ import { BulkProcessor } from "../features/bulk-processor.js";
 import { UIManager, NotepadUI } from "../ui/ui-manager.js";
 import { ModalManager } from "../ui/modal-manager.js";
 import { AppState } from "./app-state.js";
+import { AnnotationManager } from "../features/annotations/annotation-manager-new.js";
 
 
 export const KeyboardManager = {
