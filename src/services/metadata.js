@@ -68,14 +68,12 @@ export const MetadataManager = {
     }
 
     const content = await this._getMetadata(metadataUrl, alertId);
-    console.log("Metadata content:", content);
     if (!content) {
       Utils.log(`Failed to fetch metadata content from URL: ${metadataUrl}`);
       return null;
     }
 
     Utils.log(`Successfully fetched metadata for alert ${alertId} from S3`);
-
     return this._parseContent(content);
   },
 
@@ -133,20 +131,15 @@ export const MetadataManager = {
 
   async _processResponse(responseData) {
     try {
-      const possibleKeys = [
-        "debug-alert-details-div",
-        "debug_alert_details_div",
-        "debug_alert_details",
-      ];
+      const data =
+        responseData?.response?.["debug-alert-details-div"]?.data ||
+        responseData?.response?.["debug_alert_details_div"]?.data ||
+        responseData?.response?.["debug_alert_details"]?.data;
 
-      for (const key of possibleKeys) {
-        const data = responseData?.response?.[key]?.data;
-        if (data?.alert_id && (data.metadata_path || data.summaryPath)) {
-          const metadataUrl = data.metadata_path || data.summaryPath;
-          await this._storeMetadataUrl(data.alert_id, metadataUrl);
-          Utils.log(`🎯 Captured metadata URL for alert ${data.alert_id}`);
-          break;
-        }
+      if (data?.alert_id && (data.metadata_path || data.summaryPath)) {
+        const metadataUrl = data.metadata_path || data.summaryPath;
+        await this._storeMetadataUrl(data.alert_id, metadataUrl);
+        Utils.log(`🎯 Captured metadata URL for alert ${data.alert_id}`);
       }
     } catch (error) {
       Utils.log(`Error extracting metadata from response: ${error.message}`);
@@ -170,7 +163,6 @@ export const MetadataManager = {
         timestamp: new Date().toISOString(),
         downloaded: false,
       });
-      Utils.log(`Stored metadata URL for alert ${normalizedId}`);
     }
   },
 
@@ -182,7 +174,7 @@ export const MetadataManager = {
     try {
       const requestBody = { url: s3Url };
 
-      // Include alert_id if provided for local storage caching
+      // Server-side presigner server caches files in neokpi_storage/
       if (alertId) {
         const normalizedAlertId = this._normalizeAlertId(alertId);
         if (normalizedAlertId) {
