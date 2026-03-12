@@ -16,7 +16,7 @@ export const MetadataManager = {
     this.db = createAppDatabase();
     await this.db.init();
     this._interceptDashRequests();
-    Utils.log("Metadata manager initialized - intercepting Dash requests and IndexedDB");
+    Utils.log("Metadata manager initialized - intercepting Dash requests for URL tracking");
   },
 
   // ========================================
@@ -24,7 +24,7 @@ export const MetadataManager = {
   // ========================================
 
   /**
-   * Get metadata for an alert. Tries cache first, then fetches from S3 if needed.
+   * Get metadata for an alert. Fetches from S3 directly, using python server.
    * This is the main method used by AnnotationManager.
    */
   async getMetadata(alertId) {
@@ -34,11 +34,7 @@ export const MetadataManager = {
       const normalizedId = this._normalizeAlertId(alertId);
       if (!normalizedId) return null;
 
-      // Try cache first
-      const cached = await this._getCachedMetadata(normalizedId);
-      if (cached) return cached;
-
-      // Fetch from S3 if not cached
+      // Fetch from S3 directly (no browser cache for large files)
       return await this._fetchAndCacheMetadata(normalizedId);
     } catch (error) {
       Utils.log(`Error getting metadata for alert ${alertId}: ${error.message}`);
@@ -63,17 +59,10 @@ export const MetadataManager = {
     return normalized;
   },
 
-  async _getCachedMetadata(alertId) {
-    const cached = await this.db.get(CONFIG.DATABASE.STORES.METADATA, alertId);
-    if (cached) {
-      Utils.log(`Found cached metadata for alert ID: ${alertId}`);
-      return this._parseContent(cached.content);
-    }
-    return null;
-  },
+
 
   async _fetchAndCacheMetadata(alertId) {
-    Utils.log(`Metadata not cached for alert ${alertId}, fetching from S3...`);
+    Utils.log(`Fetching metadata for alert ${alertId} from S3...`);
     
     // Wait for metadata URL to be intercepted if not already available
     const metadataUrl = await this.getMetadataUrl(alertId, true, 5000);
@@ -88,20 +77,8 @@ export const MetadataManager = {
       Utils.log(`Failed to fetch metadata content from URL: ${metadataUrl}`);
       return null;
     }
-    // if (!signedUrl) {
-    //   Utils.log(`Failed to get signed URL for metadata: ${metadataUrl}`);
-    //   return null;
-    // }
 
-    // const response = await fetch(signedUrl);
-    // if (!response.ok) {
-    //   Utils.log(`Failed to fetch metadata: HTTP ${response.status}`);
-    //   return null;
-    // }
-
-    // const content = await response.text();
-    await this._storeMetadata(alertId, content, metadataUrl);
-    Utils.log(`Successfully fetched and cached metadata for alert ${alertId}`);
+    Utils.log(`Successfully fetched metadata for alert ${alertId} from S3`);
     
     return this._parseContent(content);
   },
@@ -198,25 +175,7 @@ export const MetadataManager = {
     }
   },
 
-  async _storeMetadata(alertId, content, metadataUrl) {
-    const normalizedId = this._normalizeAlertId(alertId);
-    if (!normalizedId) throw new Error(`Invalid alertId: ${alertId}`);
 
-    await this.db.put(CONFIG.DATABASE.STORES.METADATA, {
-      alertId: normalizedId,
-      content,
-      url: metadataUrl,
-      timestamp: new Date().toISOString(),
-      size: content?.length || 0,
-    });
-
-    // Mark URL as downloaded
-    const urlRecord = await this.db.get(CONFIG.DATABASE.STORES.METADATA_URLS, normalizedId);
-    if (urlRecord) {
-      urlRecord.downloaded = true;
-      await this.db.put(CONFIG.DATABASE.STORES.METADATA_URLS, urlRecord);
-    }
-  },
 
   // ========================================
   // S3 OPERATIONS
@@ -304,25 +263,19 @@ export const MetadataManager = {
     if (!this.db) await this.init();
 
     const allUrls = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA_URLS);
-    const allMetadata = await this.db.getAll(CONFIG.DATABASE.STORES.METADATA);
-
-    const totalSize = allMetadata.reduce((sum, item) => sum + (item.size || 0), 0);
 
     return {
       total: allUrls.length,
       downloaded: allUrls.filter(item => item.downloaded).length,
       pending: allUrls.length - allUrls.filter(item => item.downloaded).length,
-      totalSizeBytes: totalSize,
-      totalSizeKB: Math.round(totalSize / 1024),
-      cachedEntries: allMetadata.length,
+      note: 'Metadata files are cached on server (neokpi_storage/) not in browser',
     };
   },
 
   async clearAll() {
     if (!this.db) await this.init();
     await this.db.clear(CONFIG.DATABASE.STORES.METADATA_URLS);
-    await this.db.clear(CONFIG.DATABASE.STORES.METADATA);
-    Utils.log("Cleared all metadata from IndexedDB");
+    Utils.log("Cleared metadata URL tracking from IndexedDB (server-side cache remains in neokpi_storage/)");
   },
 };
 

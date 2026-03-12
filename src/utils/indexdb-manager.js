@@ -280,14 +280,7 @@ let appDatabaseInstance = null;
 export const createAppDatabase = () => {
   if (!appDatabaseInstance) {
     appDatabaseInstance = new IndexedDBManager(CONFIG.DATABASE.NAME, CONFIG.DATABASE.VERSION)
-      // Metadata stores
-      .defineStore(CONFIG.DATABASE.STORES.METADATA, {
-        keyPath: "alertId",
-        indexes: [
-          { name: "timestamp", unique: false },
-          { name: "downloaded", unique: false },
-        ],
-      })
+      // Metadata URL tracking (files cached server-side in neokpi_storage/)
       .defineStore(CONFIG.DATABASE.STORES.METADATA_URLS, {
         keyPath: "alertId",
         indexes: [{ name: "timestamp", unique: false }],

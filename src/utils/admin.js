@@ -13,9 +13,6 @@ export const AdminTools = {
     let metadataStats = {
       total: 0,
       downloaded: 0,
-      cachedEntries: 0,
-      totalSizeMB: 0,
-      totalSizeKB: 0,
       pending: 0,
     };
 
@@ -31,15 +28,11 @@ export const AdminTools = {
     console.log("=== Storage Usage Statistics ===");
     console.log(`localStorage: ${(localStorageSize / 1024).toFixed(2)} KB`);
     console.log(
-      `IndexedDB URLs: ${metadataStats.total} entries (${metadataStats.downloaded} downloaded)`,
+      `IndexedDB URLs: ${metadataStats.total} entries (${metadataStats.downloaded} downloaded, ${metadataStats.pending} pending)`,
     );
     console.log(
-      `IndexedDB Metadata: ${metadataStats.cachedEntries} cached entries`,
+      `Note: Metadata files cached server-side in neokpi_storage/`,
     );
-    console.log(
-      `IndexedDB Size: ${metadataStats.totalSizeMB} MB (${metadataStats.totalSizeKB} KB)`,
-    );
-    console.log(`Pending Downloads: ${metadataStats.pending}`);
 
     // Note: UIManager will be available in the main app context
     if (typeof window !== "undefined" && window.UIManager) {
@@ -72,7 +65,7 @@ export const AdminTools = {
   // Clear all data with confirmation
   async clearAllData() {
     const confirmed = confirm(
-      "This will clear ALL stored data (localStorage + IndexedDB).\n\nThis includes:\n- Notes\n- Metadata URLs\n- Cached metadata content\n- Settings\n- Bulk processing state\n\nContinue?",
+      "This will clear ALL stored data (localStorage + IndexedDB).\n\nThis includes:\n- Notes\n- Metadata URL tracking\n- Settings\n- Bulk processing state\n\n(Metadata files are cached server-side and not affected)\n\nContinue?",
     );
 
     if (!confirmed) return;
@@ -109,7 +102,7 @@ export const AdminTools = {
   // Delete entire IndexedDB database
   async deleteIndexedDatabase() {
     const confirmed = confirm(
-      "This will DELETE the entire IndexedDB database.\n\nThis will permanently remove:\n- All metadata URLs\n- All cached metadata content\n\nContinue?",
+      "This will DELETE the entire IndexedDB database.\n\nThis will permanently remove:\n- All metadata URL tracking\n\n(Metadata files cached server-side are not affected)\n\nContinue?",
     );
 
     if (!confirmed) return;

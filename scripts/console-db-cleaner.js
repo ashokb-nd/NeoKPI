@@ -182,6 +182,6 @@ Valid store names: ${Object.values(DB_CONFIG.STORES).join(", ")}
 
 Example usage:
   cleanAppDatabase()                    // Clean everything
-  clearAppStore('${DB_CONFIG.STORES.METADATA_URLS}')          // Clear just metadata URLs
+  clearAppStore('${DB_CONFIG.STORES.METADATA_URLS}')    // Clear metadata URL tracking
   inspectAppDatabase()                  // See current state
 `);

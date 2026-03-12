@@ -50,10 +50,10 @@ export const CONFIG = {
     NAME: "NeoKPIApp",
     VERSION: 1,
     STORES: {
-      METADATA: "metadata",
-      METADATA_URLS: "metadataUrls", 
+      METADATA_URLS: "metadataUrls",
       NOTES: "notes",
-      // Removed: TAGS (stored as arrays in notes), SETTINGS (uses localStorage)
+      // Removed: METADATA (large files now cached server-side in neokpi_storage/)
+      // Removed: TAGS (stored as arrays within notes), SETTINGS (uses localStorage)
     },
     // Best practices for key handling
     KEY_NORMALIZATION: {
