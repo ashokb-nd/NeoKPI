@@ -3,8 +3,6 @@ import { ModalManager } from "../ui/modal-manager.js";
 import { MetadataManager } from "../services/metadata.js";
 import { NotesManager } from "../features/notes.js";
 import { TagsUI } from "../ui/tags-ui.js";
-import { AnnotationSamples } from "../utils/debug-utils.js";
-import { CONFIG } from "../config/constants.js";
 
 /**
  * Global scope utilities for console access and development
