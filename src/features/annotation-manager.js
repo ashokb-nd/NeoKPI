@@ -9,7 +9,7 @@ if (!window.Konva) {
   script.onload = () => console.log('Konva loaded from CDN');
   document.head.appendChild(script);
 }
-import {VideoAnnotator} from "../../../markrEdge/annotations/video-annotator.js";
+import {VideoAnnotator} from "../../markrEdge/annotations/video-annotator.js";
 
 
 // some elements
