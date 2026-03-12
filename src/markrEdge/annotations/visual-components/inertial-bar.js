@@ -240,13 +240,36 @@ class InertialBar extends BaseVisualizer {
         this.data.pil_offset
       );
       this.grapher.createElements(graphX, graphY, graphWidth, graphHeight, epochTime);
-      // Add demo markers
-      this.grapher.addMarker('marker1', '📱', 'Driver distraction alert - incab', 0.5);
-      this.grapher.addMarker('marker2', '🚗', 'Vehicle speed alert - incab \n 80 mph', 0.75);
-      this.grapher.addMarker('marker3', '😴', 'Drowsy - incab', 0.25);
+      const dsfEvents = Array.isArray(this.data?.dsf_events) ? this.data.dsf_events : [];
+      dsfEvents.forEach((event, index) => {
+        const dsfNormalizedTime = this.getEventNormalizedTime(event);
+        if (dsfNormalizedTime !== null) {
+          this.grapher.addMarker(`dsf-marker-${index}`, '🚗', 'DSF - incab', dsfNormalizedTime);
+        }
+      });
+
+      const eec1sEvents = Array.isArray(this.data?.eec_1s_events) ? this.data.eec_1s_events : [];
+      eec1sEvents.forEach((event, index) => {
+        const eec1sNormalizedTime = this.getEventNormalizedTime(event);
+        if (eec1sNormalizedTime !== null) {
+          this.grapher.addMarker(`eec1s-marker-${index}`, '😴', 'Drowsy - incab', eec1sNormalizedTime);
+        }
+      });
     } else {
       this.grapher.updateTimeline(epochTime, graphWidth, graphHeight);
     }
+  }
+
+  getEventNormalizedTime(event) {
+    if (typeof event?.start_timestamp !== 'number') return null;
+    if (typeof this.data?.startTime !== 'number') return null;
+    if (typeof this.grapher?.minTime !== 'number' || typeof this.grapher?.maxTime !== 'number') return null;
+
+    const eventEpoch = event.start_timestamp + this.data.startTime;
+    const timeRange = this.grapher.maxTime - this.grapher.minTime;
+    if (timeRange <= 0) return null;
+
+    return Math.min(1, Math.max(0, (eventEpoch - this.grapher.minTime) / timeRange));
   }
 
   addMarker(markerID, emoji, description, normalizedTime) {
