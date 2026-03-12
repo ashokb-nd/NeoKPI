@@ -17,9 +17,8 @@ export class Multilane extends BaseVisualizer {
     this.CANONICAL_OUTWARD_IMAGE_HEIGHT = CANONICAL_OUTWARD_IMAGE_HEIGHT
     this.CANONICAL_OUTWARD_IMAGE_WIDTH = CANONICAL_OUTWARD_IMAGE_WIDTH
 
-    let extractedData = metadata.inference_data.observations_data.multiLane;
-    // window.metadata = metadata;
-    return extractedData;
+    let multiLaneData = metadata.inference_data.observations_data.multiLane;
+    return multiLaneData;
   }
 
   _format_bazier_points(points,H,W,debug=true) {
@@ -65,7 +64,7 @@ export class Multilane extends BaseVisualizer {
     return scaled_points;
 
   }
-  _draw_track(track_content,H,W,epochTime){
+  _draw_track(track_id,track_content,H,W,epochTime){
 
     // console.log(`track_content: ${track_content}`);
     for(let track_frame of track_content){
@@ -83,13 +82,12 @@ export class Multilane extends BaseVisualizer {
         continue;
     }
 
-    // console.log(`timeDiff ${time_diff}`);
-
-
     let lane = track_frame.slice(2, 10);
+    const scaledPoints = this._format_bazier_points(lane, H, W);
 
+    // track bezier curve
     const bezierCurve = new Konva.Line({
-        points : this._format_bazier_points(lane, H, W),
+        points : scaledPoints,
         stroke: 'rgba(32, 103, 246, 0.90)',
         strokeWidth: 1.5,
         bezier: true
@@ -97,11 +95,27 @@ export class Multilane extends BaseVisualizer {
         this.staticLayer.add(bezierCurve);
         this.lane_frame_markings.push(bezierCurve);
 
+    // add track id label
+    const trackLabel = new Konva.Text({
+        x: scaledPoints[0] + 4,
+        y: scaledPoints[1] - 14,
+        text: `${track_id}`,
+        fontSize: 13,
+        fill: 'rgba(246, 82, 32, 0.95)',
+        listening: false,
+        shadowColor: 'black',
+        shadowBlur: 4,
+        shadowOffset: { x: 1, y: 1 },
+        shadowOpacity: 0.5,
+
+      });
+        this.staticLayer.add(trackLabel);
+        this.lane_frame_markings.push(trackLabel);
+
     }
   }
   display(epochTime, H, W) {
     // Implement visualization logic here
-    // console.log(this.data);
 
     // bazier value : BezPoints (list) - 6 element list representing [p1x, p1y, p2x, p2y, c1x, c1y, c2x, c2y]
 
@@ -115,9 +129,9 @@ export class Multilane extends BaseVisualizer {
     }
 
     for(let track of this.data){
-        // console.log(`track id : ${track[0]}`)
+        let track_id = track[0];
         let track_content = track[1];
-        this._draw_track(track_content,H,W,epochTime);
+        this._draw_track(track_id, track_content,H,W,epochTime);
     }
 
   
