@@ -21,6 +21,8 @@ class InertialBar extends BaseVisualizer {
       LabelColor: "#bdc3c7", // Light gray for labels
       CurveLineWidth: 2,
       TimelineWidth: 1,
+      DSFEventColor: "#b053eeff",
+      EEC1SEventColor: "#00bcd4ff",
       TextStrokeColor: "#2c3e50", // Dark blue-gray stroke
       TextStrokeWidth: 1.5,
     };
@@ -98,17 +100,22 @@ class InertialBar extends BaseVisualizer {
 
     let startTime = metadata.startTime || null;
     let events = metadata?.inference_data?.events_data?.alerts || [];
+
     let dsf_events = [];
+    let eec_1s_events = [];
 
 // event_code
 // : 
     const DSF_EVENT_CODE = "900.0.1.0";
+    const EEC_1S_EVENT_CODE = "900.0.0.1";
     for (let event of events) {
       if (event.event_code === DSF_EVENT_CODE) {
         dsf_events.push(event);
+      } else if (event.event_code === EEC_1S_EVENT_CODE) {
+        eec_1s_events.push(event);
       }
     }
-    console.log("Extracted events:", dsf_events);
+    console.log("Extracted events:", dsf_events, eec_1s_events);
 
     let PIL_offset = this.get_PIL_offset(metadata);
     return {
@@ -156,6 +163,7 @@ class InertialBar extends BaseVisualizer {
       // lateralValues: acc2,  // Use acc2 for lateral
       // drivingValues: acc3   // Use acc3 for driving
       dsf_events: dsf_events,
+      eec_1s_events: eec_1s_events,
       startTime: startTime,
       pil_offset: PIL_offset
     };
@@ -227,6 +235,7 @@ class InertialBar extends BaseVisualizer {
         this.minTime,
         this.maxTime,
         this.data.dsf_events,
+        this.data.eec_1s_events,
         this.data.startTime,
         this.data.pil_offset
       );

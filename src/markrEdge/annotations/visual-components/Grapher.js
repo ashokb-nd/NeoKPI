@@ -1,6 +1,6 @@
 // Grapher class encapsulates all graph-related logic and elements
 class Grapher {
-  constructor(staticLayer, dynamicLayer, options, data, minTime, maxTime, dsf_events, startTime,
+  constructor(staticLayer, dynamicLayer, options, data, minTime, maxTime, dsf_events, eec_1s_events, startTime,
     pil_offset
   ) {
     this.staticLayer = staticLayer;
@@ -10,6 +10,7 @@ class Grapher {
     this.minTime = null;
     this.maxTime = null;
     this.dsf_events = dsf_events;
+    this.eec_1s_events = eec_1s_events;
     this.startTime = startTime;
     this.pil_offset = pil_offset;
 
@@ -94,26 +95,26 @@ class Grapher {
       this.dynamicLayer.add(timelineLine);
     }
 
-    // TODO: Add DSF bars here.
     this.addDSFBars();
+    this.addEEC1SBars();
 
   }
 
-  addDSFBars() {
-    console.log('dsf events detected.', this.dsf_events);
-    let dsf_events = this.dsf_events || [];
+  addEventBars(events = [], color) {
+    const eventList = Array.isArray(events) ? events : [];
+    if (eventList.length === 0) return;
 
-    // Iterate over the DSF events and create bars for each
-    dsf_events.forEach(event => {
-      // const bar = new DSFBar(event);
+    eventList.forEach(event => {
+      if (typeof event?.start_timestamp !== 'number' || typeof this.startTime !== 'number') {
+        return;
+      }
 
-      // Calculate normalized progress for the event start time
-      console.log("difference between mintime, starttime", this.minTime, this.startTime);
       const videoProgress = TimelineIndicator.calculateVideoProgress(
         event.start_timestamp + this.startTime,
         this.minTime,
         this.maxTime
       );
+
       const graphX = this.graphGroup.x();
       const graphY = this.graphGroup.y();
       const graphWidth = this.graphGroup.width();
@@ -122,12 +123,20 @@ class Grapher {
 
       const bar = new Konva.Line({
         points: [barX, graphY, barX, graphY + graphHeight],
-        stroke: "#b053eeff",
+        stroke: color,
         strokeWidth: 2,
         opacity: 0.7
       });
       this.staticLayer.add(bar);
     });
+  }
+
+  addDSFBars() {
+    this.addEventBars(this.dsf_events, this.options.DSFEventColor || "#b053eeff");
+  }
+
+  addEEC1SBars() {
+    this.addEventBars(this.eec_1s_events, this.options.EEC1SEventColor || "rgb(237, 44, 134)");
   }
 
   updateTimeline(epochTime, graphWidth, graphHeight) {
