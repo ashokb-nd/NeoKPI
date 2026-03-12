@@ -17,6 +17,17 @@ from botocore.exceptions import ClientError, NoCredentialsError
 import datetime
 import time
 
+def custom_metadata_location(alert_id):
+    custom_path = None
+    #logic here
+    # custom_path = f"/custom/path/for/{alert_id}/summary.json"
+
+
+
+    # check if path exists else return None
+    if custom_path and os.path.exists(custom_path):
+        return custom_path
+    return None
 
 class S3PresignerHandler(BaseHTTPRequestHandler):
     # Storage directory for metadata files (relative to script location)
@@ -422,7 +433,7 @@ class S3PresignerHandler(BaseHTTPRequestHandler):
         if not alert_id:
             return None
             
-        metadata_file = os.path.join(self.STORAGE_DIR, f"{alert_id}.json")
+        metadata_file = custom_metadata_location(alert_id) or os.path.join(self.STORAGE_DIR, f"{alert_id}.json")
         
         if os.path.exists(metadata_file):
             try:
