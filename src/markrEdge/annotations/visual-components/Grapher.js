@@ -100,7 +100,7 @@ class Grapher {
 
   }
 
-  addEventBars(events = [], color) {
+  addEventBars(events = [], color, dash = [6, 4]) {
     const eventList = Array.isArray(events) ? events : [];
     if (eventList.length === 0) return;
 
@@ -125,18 +125,19 @@ class Grapher {
         points: [barX, graphY, barX, graphY + graphHeight],
         stroke: color,
         strokeWidth: 2,
-        opacity: 0.7
+        opacity: 0.7,
+        dash
       });
       this.staticLayer.add(bar);
     });
   }
 
   addDSFBars() {
-    this.addEventBars(this.dsf_events, this.options.DSFEventColor || "#b053eeff");
+    this.addEventBars(this.dsf_events, this.options.DSFEventColor || "#b053eeff", [6, 4]);
   }
 
   addEEC1SBars() {
-    this.addEventBars(this.eec_1s_events, this.options.EEC1SEventColor || "rgb(237, 44, 134)");
+    this.addEventBars(this.eec_1s_events, this.options.EEC1SEventColor || "rgb(237, 44, 134)", [6, 4]);
   }
 
   updateTimeline(epochTime, graphWidth, graphHeight) {
