@@ -106,7 +106,7 @@ export class Multilane extends BaseVisualizer {
         shadowColor: 'black',
         shadowBlur: 4,
         shadowOffset: { x: 1, y: 1 },
-        shadowOpacity: 0.5,
+        shadowOpacity: 0.8,
 
       });
         this.staticLayer.add(trackLabel);
