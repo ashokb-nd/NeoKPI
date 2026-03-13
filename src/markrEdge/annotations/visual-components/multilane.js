@@ -95,19 +95,27 @@ export class Multilane extends BaseVisualizer {
         this.staticLayer.add(bezierCurve);
         this.lane_frame_markings.push(bezierCurve);
 
+    // Add a Rect behind your Text
+    const background = new Konva.Rect({
+        x: scaledPoints[0],
+        y: scaledPoints[1] - 18,
+        width: 30, // Can be dynamic
+        height: 16,
+      fill: '#0f2a5f',
+        opacity: 0.6, // Dark enough to see text, transparent enough to see the road
+        cornerRadius: 3
+    });
+    this.staticLayer.add(background);
+    this.lane_frame_markings.push(background);
+
     // add track id label
     const trackLabel = new Konva.Text({
         x: scaledPoints[0] + 4,
         y: scaledPoints[1] - 14,
         text: `${track_id}`,
         fontSize: 13,
-        fill: 'rgba(246, 82, 32, 0.95)',
+        fill: '#EAF2FF',
         listening: false,
-        shadowColor: 'black',
-        shadowBlur: 4,
-        shadowOffset: { x: 1, y: 1 },
-        shadowOpacity: 0.8,
-
       });
         this.staticLayer.add(trackLabel);
         this.lane_frame_markings.push(trackLabel);
@@ -127,6 +135,7 @@ export class Multilane extends BaseVisualizer {
     for(let dot of this.debug_points){
         dot.destroy();
     }
+
 
     for(let track of this.data){
         let track_id = track[0];
