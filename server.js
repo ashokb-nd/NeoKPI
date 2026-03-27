@@ -6,8 +6,8 @@ import { URL } from "node:url";
 
 const PORT = Number(process.env.PORT || 8090);
 let dataDir = process.env.ALERT_DATA_DIR || "/Users/batakalaashok/Code/ak_tools/src/ak_tools/temp";
-const STATIC_DIR = path.resolve("mock-alert-site/public");
-const REPO_SRC_DIR = path.resolve("src");
+const STATIC_DIR = path.resolve(".");
+const MARKR_EDGE_DIR = path.resolve("markrEdge");
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -240,12 +240,12 @@ function serveData(req, res, urlObj) {
   fs.createReadStream(filePath).pipe(res);
 }
 
-function serveRepoModule(res, pathname) {
-  const requestedPath = decodeURIComponent(pathname.replace(/^\/repo\/src\//, ""));
+function serveMarkrEdgeModule(res, pathname) {
+  const requestedPath = decodeURIComponent(pathname.replace(/^\/markrEdge\//, ""));
   const safePath = path.normalize(requestedPath).replace(/^\.\.(\/|\\|$)+/, "");
-  const filePath = path.join(REPO_SRC_DIR, safePath);
+  const filePath = path.join(MARKR_EDGE_DIR, safePath);
 
-  if (!filePath.startsWith(REPO_SRC_DIR)) {
+  if (!filePath.startsWith(MARKR_EDGE_DIR)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
@@ -270,8 +270,8 @@ function serveRepoModule(res, pathname) {
 const server = http.createServer((req, res) => {
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
 
-  if (urlObj.pathname.startsWith("/repo/src/")) {
-    return serveRepoModule(res, urlObj.pathname);
+  if (urlObj.pathname.startsWith("/markrEdge/")) {
+    return serveMarkrEdgeModule(res, urlObj.pathname);
   }
 
   if (urlObj.pathname.startsWith("/api/")) {
