@@ -2,10 +2,11 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { URL } from "node:url";
 
 const PORT = Number(process.env.PORT || 8090);
-let dataDir = process.env.ALERT_DATA_DIR || "/Users/batakalaashok/Code/ak_tools/src/ak_tools/temp";
+let dataDir = process.env.ALERT_DATA_DIR || path.join(os.homedir(), "neokpi");
 const STATIC_DIR = path.resolve(".");
 const MARKR_EDGE_DIR = path.resolve("markrEdge");
 

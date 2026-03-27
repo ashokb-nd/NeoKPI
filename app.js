@@ -312,7 +312,8 @@ async function moveAlertSelection(direction) {
 
   const step = direction === "previous" ? -1 : 1;
   const baseIndex = currentAlertIndex === -1 ? 0 : currentAlertIndex;
-  const nextIndex = (baseIndex + step + availableAlertIds.length) % availableAlertIds.length;
+  const nextIndex = Math.max(0, Math.min(availableAlertIds.length - 1, baseIndex + step));
+  if (nextIndex === baseIndex) return true;
   await loadAlert(availableAlertIds[nextIndex]);
   return true;
 }
