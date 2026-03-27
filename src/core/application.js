@@ -11,7 +11,6 @@ import { AnnotationManager } from "../features/annotation-manager.js";
 import { NotesManager } from "../features/notes.js";
 import { BulkProcessor } from "../features/bulk-processor.js";
 import { FireworkShow } from "../ui/fireworks.js";
-import { VideoControlsManager } from "../ui/video-controls.js";
 import { UIManager, NotepadUI } from "../ui/ui-manager.js";
 
 /**
@@ -83,9 +82,6 @@ export class Application {
       // Set up event handlers
       this.setupInputMonitoring(elements);
       await KeyboardManager.init(); // KeyboardManager now handles its own elements
-
-      // Initialize UI components
-      VideoControlsManager.init();
 
       // Auto-open notepad on page load
       this.autoOpenNotepad();
@@ -165,7 +161,6 @@ export class Application {
     this.isInitializing = false;
 
     KeyboardManager.cleanup();
-    VideoControlsManager.cleanup();
     AnnotationManager.cleanup();
     URLMonitor.cleanup();
 

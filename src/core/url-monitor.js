@@ -95,7 +95,6 @@ export const URLMonitor = {
       "#notepad-panel",
       "#bulk-status", 
       "#fireworks-canvas",
-      "#video-controls-styles",
       "#bulk-status-keyframes",
       "#spinner-animation"
     ];

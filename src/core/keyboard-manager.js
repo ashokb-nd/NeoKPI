@@ -13,7 +13,6 @@
  */
 
 
-import { CONFIG } from "../config/constants.js";
 import { Utils } from "../utils/utils.js";
 import { BulkProcessor } from "../features/bulk-processor.js";
 import { UIManager, NotepadUI } from "../ui/ui-manager.js";
@@ -37,9 +36,6 @@ export const KeyboardManager = {
     ['cmd+arrowup', 'previousAlert'],
     ['cmd+shift+b', 'toggleBulkMode'],
     ['cmd+j', 'toggleNotepad'],
-    ['space', 'playPauseVideo'],
-    ['arrowleft', 'rewindVideo'],
-    ['arrowright', 'fastForwardVideo'],
     ['escape', 'focusBody'],
     ['ctrl+a', 'toggleAnnotations']
   ]),
@@ -178,44 +174,6 @@ export const KeyboardManager = {
     toggleNotepad(event) {
       event.preventDefault();
       NotepadUI.toggle();
-    },
-
-    playPauseVideo(event) {
-      
-      if (Utils.isBodyFocused()) {
-        event.preventDefault(); // keep it here only. (we don't want to interfere with typing in input fields)
-        const video = Utils.getVideoElement();
-        if (video) {
-          if (video.paused) {
-            video.muted = true;
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        }
-      }
-    },
-
-    rewindVideo(event) {
-      if (Utils.isBodyFocused()) {
-        event.preventDefault();
-        const video = Utils.getVideoElement();
-        if (video) {
-          const newTime = video.currentTime - CONFIG.TIMING.VIDEO_SEEK_SECONDS;
-          video.currentTime = Math.max(0, newTime);
-        }
-      }
-    },
-
-    fastForwardVideo(event) {
-      if (Utils.isBodyFocused()) {
-        event.preventDefault();
-        const video = Utils.getVideoElement();
-        if (video) {
-          const newTime = video.currentTime + CONFIG.TIMING.VIDEO_SEEK_SECONDS;
-          video.currentTime = Math.min(video.duration || 0, newTime);
-        }
-      }
     },
 
     focusBody(event) {
