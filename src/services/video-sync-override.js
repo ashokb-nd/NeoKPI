@@ -218,6 +218,10 @@ function sync_play_pause_enhanced(outward_time, inward_time, sync_checkbox, load
  */
 class VideoSyncOverride {
     static init() {
+        if (VideoSyncOverride.isInitialized) {
+            return true;
+        }
+
         // Override the original function
         if (typeof window !== 'undefined') {
             // Ensure dash_clientside exists
@@ -240,6 +244,8 @@ class VideoSyncOverride {
             // Optional: Provide global access for debugging
             window.VideoSyncManager = videoSyncManager;
             window.originalVideoSync = originalSyncFunction;
+
+            VideoSyncOverride.isInitialized = true;
             
             return true;
         }
@@ -305,6 +311,8 @@ class VideoSyncOverride {
         return videoSyncManager;
     }
 }
+
+VideoSyncOverride.isInitialized = false;
 
 // Override the original function
 if (typeof window !== 'undefined') {

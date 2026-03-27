@@ -1,130 +1,181 @@
-// use this
-// MetadataManager.getMetadata(695288171).then(metadata => AnnotationManager.init(metadata));
+import "../markrEdge/konva.min.js";
+import { VideoAnnotator } from "../markrEdge/annotations/video-annotator.js";
 
-
-
-if (!window.Konva) {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/konva@latest/konva.min.js';
-  script.onload = () => console.log('Konva loaded from CDN');
-  document.head.appendChild(script);
-}
-import {VideoAnnotator} from "../markrEdge/annotations/video-annotator.js";
-
-
-// some elements
-let debugBox1,debugBox2;
-let konvaDiv1, konvaDiv2;
-let inwardStage, outwardStage;
-let inwardAnnotator, outwardAnnotator;
-let inwardVideo, outwardVideo;
-
-window.inwardStage = inwardStage;
-window.outwardStage = outwardStage;
+let debugBox1;
+let debugBox2;
+let konvaDiv1;
+let konvaDiv2;
+let inwardStage;
+let outwardStage;
+let inwardAnnotator;
+let outwardAnnotator;
+let inwardVideo;
+let outwardVideo;
+let inwardResizeObserver;
+let outwardResizeObserver;
+let inwardLoadedMetadataHandler;
+let outwardLoadedMetadataHandler;
 
 const AnnotationManager = {
-  init(metadata) {
-    console.log("AnnotationManager initialized");
+    async init(metadata) {
+        const KonvaLib = window.Konva;
+        if (!KonvaLib || !metadata) {
+            return false;
+        }
 
+        debugBox1 = document.getElementById("debug-exp-box-1-video");
+        debugBox2 = document.getElementById("debug-exp-box-2-video");
+        if (!debugBox1 || !debugBox2) {
+            return false;
+        }
 
+        this.ensureContainers();
+        this.ensureStages(KonvaLib);
 
-    debugBox1 = document.getElementById("debug-exp-box-1-video");
-    debugBox2 = document.getElementById("debug-exp-box-2-video");
-    // console.log("Debug boxes found:", debugBox1, debugBox2);
+        inwardVideo = debugBox1.querySelector("video");
+        outwardVideo = debugBox2.querySelector("video");
+        if (!inwardVideo || !outwardVideo) {
+            return false;
+        }
 
+        this.destroyAnnotators();
 
-    // create divs inside these for konva stages
-    if (debugBox1 && !konvaDiv1) {
-      konvaDiv1 = document.createElement("div");
-      konvaDiv1.id = "konva-container-1";
-      konvaDiv1.style.position = "absolute";
-      debugBox1.appendChild(konvaDiv1);
-      console.log(debugBox1);
-    }
+        inwardAnnotator = new VideoAnnotator(inwardVideo, inwardStage, metadata, [
+            "Dsf",
+            "Multilane",
+        ]);
 
-    if (debugBox2 && !konvaDiv2) {
-      konvaDiv2 = document.createElement("div");
-      konvaDiv2.id = "konva-container-2";
-      konvaDiv2.style.position = "absolute";
-      debugBox2.appendChild(konvaDiv2);
-      console.log(debugBox2);
-    }
+        outwardAnnotator = new VideoAnnotator(outwardVideo, outwardStage, metadata, [
+            "Header",
+            "InertialBar",
+        ]);
 
-if (konvaDiv1 && !inwardStage) {
-    inwardStage = new Konva.Stage({
-        container: konvaDiv1,
-        // width: inwardVideo.offsetWidth,
-        // height: inwardVideo.offsetHeight,
-        width: 500,
-        height: 500,
-    });
-}
+        this.setResizeListenersForKonvaResizing();
+        return true;
+    },
 
-if (konvaDiv2 && !outwardStage) {
-    outwardStage = new Konva.Stage({
-        container: konvaDiv2,
-        // width: outwardVideo.offsetWidth,
-        // height: outwardVideo.offsetHeight,
-        width: 500,
-        height: 500,
-    });
-}
+    ensureContainers() {
+        if (debugBox1 && !konvaDiv1) {
+            konvaDiv1 = document.createElement("div");
+            konvaDiv1.id = "konva-container-1";
+            konvaDiv1.style.position = "absolute";
+            konvaDiv1.style.inset = "0";
+            debugBox1.appendChild(konvaDiv1);
+        }
 
-    inwardVideo = debugBox1.querySelector("video");
-    outwardVideo = debugBox2.querySelector("video");
+        if (debugBox2 && !konvaDiv2) {
+            konvaDiv2 = document.createElement("div");
+            konvaDiv2.id = "konva-container-2";
+            konvaDiv2.style.position = "absolute";
+            konvaDiv2.style.inset = "0";
+            debugBox2.appendChild(konvaDiv2);
+        }
+    },
 
-    if (inwardAnnotator){
-        inwardAnnotator.destroy();
-    }
-    if (outwardAnnotator){
-        outwardAnnotator.destroy();
-    }
+    ensureStages(KonvaLib) {
+        if (konvaDiv1 && !inwardStage) {
+            inwardStage = new KonvaLib.Stage({
+                container: konvaDiv1,
+                width: 500,
+                height: 500,
+            });
+        }
 
-    // show annotations
-        inwardAnnotator = new VideoAnnotator(
-        inwardVideo, 
-        inwardStage, 
-        metadata,
-        ['Dsf','Multilane']
-    );
+        if (konvaDiv2 && !outwardStage) {
+            outwardStage = new KonvaLib.Stage({
+                container: konvaDiv2,
+                width: 500,
+                height: 500,
+            });
+        }
 
-    outwardAnnotator = new VideoAnnotator(
-        outwardVideo,
-        outwardStage,
-        metadata,
-        ['Header','InertialBar']
-    );
-    this.setResizeListenersForKonvaResizing();
-},
+        window.inwardStage = inwardStage;
+        window.outwardStage = outwardStage;
+    },
 
-setResizeListenersForKonvaResizing() {
+    destroyAnnotators() {
+        if (inwardAnnotator) {
+            inwardAnnotator.destroy();
+            inwardAnnotator = null;
+        }
 
-    // Add event listeners for video size changes
-    function updateInwardStageSize() {
-        inwardStage.width(inwardVideo.offsetWidth);
-        inwardStage.height(inwardVideo.offsetHeight);
-    }
+        if (outwardAnnotator) {
+            outwardAnnotator.destroy();
+            outwardAnnotator = null;
+        }
+    },
 
-    function updateOutwardStageSize() {
-        outwardStage.width(outwardVideo.offsetWidth);
-        outwardStage.height(outwardVideo.offsetHeight);
-    }
+    setResizeListenersForKonvaResizing() {
+        this.removeResizeListeners();
 
-    // Listen for video resize events
-    inwardVideo.addEventListener('loadedmetadata', updateInwardStageSize);
-    outwardVideo.addEventListener('loadedmetadata', updateOutwardStageSize);
+        const updateInwardStageSize = () => {
+            if (!inwardStage || !inwardVideo) return;
+            inwardStage.width(inwardVideo.offsetWidth || 0);
+            inwardStage.height(inwardVideo.offsetHeight || 0);
+        };
 
-    // Use ResizeObserver to watch for actual video element size changes
-    const inwardResizeObserver = new ResizeObserver(() => {
+        const updateOutwardStageSize = () => {
+            if (!outwardStage || !outwardVideo) return;
+            outwardStage.width(outwardVideo.offsetWidth || 0);
+            outwardStage.height(outwardVideo.offsetHeight || 0);
+        };
+
+        inwardLoadedMetadataHandler = updateInwardStageSize;
+        outwardLoadedMetadataHandler = updateOutwardStageSize;
+
+        inwardVideo.addEventListener("loadedmetadata", inwardLoadedMetadataHandler);
+        outwardVideo.addEventListener("loadedmetadata", outwardLoadedMetadataHandler);
+
+        inwardResizeObserver = new ResizeObserver(updateInwardStageSize);
+        inwardResizeObserver.observe(inwardVideo);
+
+        outwardResizeObserver = new ResizeObserver(updateOutwardStageSize);
+        outwardResizeObserver.observe(outwardVideo);
+
         updateInwardStageSize();
-    });
-    inwardResizeObserver.observe(inwardVideo);
-
-    const outwardResizeObserver = new ResizeObserver(() => {
         updateOutwardStageSize();
-    });
-    outwardResizeObserver.observe(outwardVideo);
-}
+    },
+
+    removeResizeListeners() {
+        if (inwardVideo && inwardLoadedMetadataHandler) {
+            inwardVideo.removeEventListener("loadedmetadata", inwardLoadedMetadataHandler);
+        }
+
+        if (outwardVideo && outwardLoadedMetadataHandler) {
+            outwardVideo.removeEventListener("loadedmetadata", outwardLoadedMetadataHandler);
+        }
+
+        inwardLoadedMetadataHandler = null;
+        outwardLoadedMetadataHandler = null;
+
+        inwardResizeObserver?.disconnect();
+        outwardResizeObserver?.disconnect();
+        inwardResizeObserver = null;
+        outwardResizeObserver = null;
+    },
+
+    cleanup() {
+        this.removeResizeListeners();
+        this.destroyAnnotators();
+
+        inwardStage?.destroy();
+        outwardStage?.destroy();
+        inwardStage = null;
+        outwardStage = null;
+
+        konvaDiv1?.remove();
+        konvaDiv2?.remove();
+        konvaDiv1 = null;
+        konvaDiv2 = null;
+
+        debugBox1 = null;
+        debugBox2 = null;
+        inwardVideo = null;
+        outwardVideo = null;
+
+        window.inwardStage = null;
+        window.outwardStage = null;
+    },
 };
 
 export { AnnotationManager };

@@ -7,13 +7,19 @@ import { createAppDatabase } from "../utils/indexdb-manager.js";
 // ========================================
 export const MetadataManager = {
   db: null,
+  isInitialized: false,
+  fetchInterceptorInstalled: false,
+  originalFetch: null,
 
   // INITIALIZATION & SETUP
 
   async init() {
+    if (this.isInitialized) return;
+
     this.db = createAppDatabase();
     await this.db.init();
     this._interceptDashRequests();
+    this.isInitialized = true;
     Utils.log(
       "Metadata manager initialized - intercepting Dash requests for URL tracking",
     );
@@ -94,17 +100,21 @@ export const MetadataManager = {
   // DASH REQUEST INTERCEPTION
 
   _interceptDashRequests() {
-    const originalFetch = window.fetch;
+    if (this.fetchInterceptorInstalled) return;
+
+    this.originalFetch = window.fetch.bind(window);
 
     window.fetch = async function (...args) {
-      const url = args[0];
+      const input = args[0];
       const options = args[1];
+      const url = MetadataManager._getRequestUrl(input);
+      const method = (options?.method || input?.method || "GET").toUpperCase();
 
       if (
         url.includes("/_dash-update-component") &&
-        options?.method === "POST"
+        method === "POST"
       ) {
-        const response = await originalFetch(...args);
+        const response = await MetadataManager.originalFetch(...args);
         const clone = response?.clone ? response.clone() : response;
 
         try {
@@ -125,8 +135,26 @@ export const MetadataManager = {
         return response;
       }
 
-      return originalFetch(...args);
+      return MetadataManager.originalFetch(...args);
     };
+
+    this.fetchInterceptorInstalled = true;
+  },
+
+  _getRequestUrl(input) {
+    if (typeof input === "string") {
+      return input;
+    }
+
+    if (input instanceof URL) {
+      return input.toString();
+    }
+
+    if (input && typeof input.url === "string") {
+      return input.url;
+    }
+
+    return "";
   },
 
   async _processResponse(responseData) {

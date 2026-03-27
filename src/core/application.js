@@ -7,6 +7,7 @@ import { URLMonitor } from "./url-monitor.js";
 import { SettingsManager } from "../services/settings.js";
 import { MetadataManager } from "../services/metadata.js";
 import { VideoSyncOverride } from "../services/video-sync-override.js";
+import { AnnotationManager } from "../features/annotation-manager.js";
 import { NotesManager } from "../features/notes.js";
 import { BulkProcessor } from "../features/bulk-processor.js";
 import { FireworkShow } from "../ui/fireworks.js";
@@ -20,6 +21,11 @@ import { UIManager, NotepadUI } from "../ui/ui-manager.js";
 export class Application {
   constructor() {
     this.VERSION = CONFIG.VERSION;
+    this.isInitialized = false;
+    this.isInitializing = false;
+    this.elements = null;
+    this.inputHandler = null;
+    this.autoOpenTimer = null;
   }
 
   /**
@@ -28,14 +34,22 @@ export class Application {
   async init() {
     try {
       // Initialize URL monitoring first
-      URLMonitor.init();
+      URLMonitor.init({
+        onEnterAlertDebug: () => {
+          this.initializeFeatures();
+        },
+        onLeaveAlertDebug: () => {
+          this.teardownFeatures();
+        },
+      });
 
       // Initialize beautiful fireworks on first load
       // const fireworks = new FireworkShow();
       // fireworks.init();
 
-      // Initialize features
-      await this.initializeFeatures();
+      if (URLMonitor.isAlertDebugPage(window.location.href)) {
+        await this.initializeFeatures();
+      }
     } catch (error) {
       console.error("Failed to initialize UserScript:", error);
       UIManager.showNotification("UserScript initialization failed", "error");
@@ -46,12 +60,18 @@ export class Application {
    * Initialize all application features once DOM elements are ready
    */
   async initializeFeatures() {
+    if (this.isInitialized || this.isInitializing) return;
+    if (!URLMonitor.isAlertDebugPage(window.location.href)) return;
+
+    this.isInitializing = true;
+
     try {
       // Wait for required elements first
       const elements = await Utils.waitForElements();
+      this.elements = elements;
 
       // Initialize core services
-      MetadataManager.init();
+      await MetadataManager.init();
       SettingsManager.init();
       VideoSyncOverride.init(); // Override Dash video sync with enhanced version
       await NotesManager.init(); // Initialize IndexedDB for notes
@@ -69,11 +89,14 @@ export class Application {
 
       // Auto-open notepad on page load
       this.autoOpenNotepad();
+      this.isInitialized = true;
 
       Utils.log(`NeoKPI V${this.VERSION} initialized successfully 🚀`);
     } catch (error) {
       console.error("Failed to initialize features:", error);
       UIManager.showNotification("Feature initialization failed", "error");
+    } finally {
+      this.isInitializing = false;
     }
   }
 
@@ -94,43 +117,67 @@ export class Application {
    * Set up input monitoring for notepad updates
    */
   setupInputMonitoring(elements) {
-    elements.input.addEventListener(
-      "input",
-      Utils.debounce(async () => {
-        const alertId = elements.input.value.trim();
-        if (alertId && alertId !== AppState.notepad.currentAlertId) {
-          // Always update current alert (for annotations)
-          await AppState.setCurrentAlert(alertId);
+    if (this.inputHandler && this.elements?.input) {
+      this.elements.input.removeEventListener("input", this.inputHandler);
+    }
 
-          // Update notepad only if open
-          if (AppState.notepad.isOpen) {
-            NotepadUI.updateContent();
-          }
+    this.inputHandler = Utils.debounce(async () => {
+      const alertId = elements.input.value.trim();
+      if (alertId && alertId !== AppState.notepad.currentAlertId) {
+        // Always update current alert (for annotations)
+        await AppState.setCurrentAlert(alertId);
+
+        // Update notepad only if open
+        if (AppState.notepad.isOpen) {
+          NotepadUI.updateContent();
         }
-      }, 300),
-    );
+      }
+    }, 300);
+
+    elements.input.addEventListener("input", this.inputHandler);
   }
 
   /**
    * Auto-open notepad after initialization
    */
   autoOpenNotepad() {
-    setTimeout(() => {
+    clearTimeout(this.autoOpenTimer);
+    this.autoOpenTimer = setTimeout(() => {
+      if (!URLMonitor.isAlertDebugPage(window.location.href)) return;
+
       if (!AppState.notepad.isOpen) {
         NotepadUI.toggle();
       }
     }, 500);
   }
 
+  teardownFeatures() {
+    clearTimeout(this.autoOpenTimer);
+    this.autoOpenTimer = null;
+
+    if (this.inputHandler && this.elements?.input) {
+      this.elements.input.removeEventListener("input", this.inputHandler);
+    }
+
+    this.inputHandler = null;
+    this.elements = null;
+    this.isInitialized = false;
+    this.isInitializing = false;
+
+    KeyboardManager.cleanup();
+    VideoControlsManager.cleanup();
+    AnnotationManager.cleanup();
+    URLMonitor.cleanup();
+
+    AppState.notepad.isOpen = false;
+    AppState.notepad.currentAlertId = null;
+  }
+
   /**
    * Cleanup function for development/testing
    */
   cleanup() {
-    // Use URL monitor's cleanup which is more comprehensive
-    URLMonitor.cleanup();
-
-    // Additional cleanup
-    StorageManager.clear();
+    this.teardownFeatures();
     Utils.log("UserScript cleanup complete");
   }
 }

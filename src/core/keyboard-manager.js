@@ -20,9 +20,12 @@ import { UIManager, NotepadUI } from "../ui/ui-manager.js";
 import { ModalManager } from "../ui/modal-manager.js";
 import { AppState } from "./app-state.js";
 import { AnnotationManager } from "../features/annotation-manager.js";
+import { MetadataManager } from "../services/metadata.js";
 
 
 export const KeyboardManager = {
+  isInitialized: false,
+  keydownHandler: null,
 
   elements: null, // DOM elements required for keyboard interactions eg. input fields, buttons etc.
 
@@ -42,16 +45,31 @@ export const KeyboardManager = {
   ]),
 
   async init() {
+    if (this.isInitialized) return;
+
     this.elements = await Utils.waitForElements();
-    
+
     // Set up global keyboard event handlers
-    document.addEventListener("keydown", (event) => {
+    this.keydownHandler = (event) => {
       try {
         this.handleKeydown(event, this.elements);
       } catch (error) {
         console.error("Keyboard handler error:", error);
       }
-    });
+    };
+
+    document.addEventListener("keydown", this.keydownHandler);
+    this.isInitialized = true;
+  },
+
+  cleanup() {
+    if (this.keydownHandler) {
+      document.removeEventListener("keydown", this.keydownHandler);
+    }
+
+    this.keydownHandler = null;
+    this.elements = null;
+    this.isInitialized = false;
   },
 
   // Handler functions
@@ -83,9 +101,7 @@ export const KeyboardManager = {
         elements.input.blur();
 
         // Always update current alert (for annotations)
-        AppState.setCurrentAlert(inputValue).catch(error => 
-          console.warn('Failed to set current alert:', error)
-        );
+        AppState.setCurrentAlert(inputValue);
         
         // Update notepad only if open
         if (AppState.notepad.isOpen) {
@@ -100,15 +116,16 @@ export const KeyboardManager = {
         
         const filters = AppState.notepad.selectedFilters;
         const logic = AppState.notepad.filterLogic;
+        const includeHashtags = AppState.notepad.includeHashtags;
         
         const nextAlert = filters.length > 0
-          ? BulkProcessor.nextFilteredAlert(filters, logic)
+          ? BulkProcessor.nextFilteredAlert(filters, logic, includeHashtags)
           : BulkProcessor.nextAlert();
 
         if (nextAlert) {
           UIManager.loadAlertId(nextAlert, elements);
           const progress = filters.length > 0
-            ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
+            ? BulkProcessor.getFilteredProgress(filters, logic, includeHashtags)
             : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${nextAlert}`);
         } else {
@@ -125,15 +142,16 @@ export const KeyboardManager = {
         
         const filters = AppState.notepad.selectedFilters;
         const logic = AppState.notepad.filterLogic;
+        const includeHashtags = AppState.notepad.includeHashtags;
         
         const prevAlert = filters.length > 0
-          ? BulkProcessor.prevFilteredAlert(filters, logic)
+          ? BulkProcessor.prevFilteredAlert(filters, logic, includeHashtags)
           : BulkProcessor.prevAlert();
 
         if (prevAlert) {
           UIManager.loadAlertId(prevAlert, elements);
           const progress = filters.length > 0
-            ? BulkProcessor.getFilteredProgress(filters, logic, AppState.notepad.includeHashtags)
+            ? BulkProcessor.getFilteredProgress(filters, logic, includeHashtags)
             : BulkProcessor.getProgress();
           UIManager.showBulkStatus(`${progress} ${prevAlert}`);
         } else {
@@ -204,10 +222,25 @@ export const KeyboardManager = {
       document.activeElement.blur();
       document.body.focus();
     },
-    toggleAnnotations(event) {
-      let currentAlert = AppState.notepad.currentAlertId || null;
-      console.log('Toggling annotations for alert:', currentAlert);
-      MetadataManager.getMetadata(currentAlert).then(metadata => AnnotationManager.init(metadata));
+    async toggleAnnotations(event) {
+      event.preventDefault();
+
+      const currentAlert = AppState.notepad.currentAlertId || null;
+      if (!currentAlert) {
+        UIManager.showNotification("Select an alert before loading annotations", "warning");
+        return;
+      }
+
+      const metadata = await MetadataManager.getMetadata(currentAlert);
+      if (!metadata) {
+        UIManager.showNotification("Metadata unavailable for current alert", "warning");
+        return;
+      }
+
+      const initialized = await AnnotationManager.init(metadata);
+      if (!initialized) {
+        UIManager.showNotification("Unable to initialize annotations", "error");
+      }
     },
   },
 
@@ -238,7 +271,12 @@ export const KeyboardManager = {
     const handlerName = this.shortcutMap.get(keyString);
     
     if (handlerName && this.handlers[handlerName]) {
-      this.handlers[handlerName](event, elements);
+      const result = this.handlers[handlerName](event, elements);
+      if (result && typeof result.catch === "function") {
+        result.catch((error) => {
+          console.error(`Keyboard handler failure for ${handlerName}:`, error);
+        });
+      }
     }
   },
 };

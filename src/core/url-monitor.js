@@ -6,11 +6,24 @@ import { Utils } from "../utils/utils.js";
 export const URLMonitor = {
   isInitialized: false,
   lastUrl: '',
+  monitorIntervalId: null,
+  originalPushState: null,
+  originalReplaceState: null,
+  popstateHandler: null,
+  hashchangeHandler: null,
+  onEnterAlertDebug: null,
+  onLeaveAlertDebug: null,
 
-  init() {
-    if (this.isInitialized) return;
+  init({ onEnterAlertDebug = null, onLeaveAlertDebug = null } = {}) {
+    if (this.isInitialized) {
+      this.onEnterAlertDebug = onEnterAlertDebug;
+      this.onLeaveAlertDebug = onLeaveAlertDebug;
+      return;
+    }
     
     this.lastUrl = window.location.href;
+    this.onEnterAlertDebug = onEnterAlertDebug;
+    this.onLeaveAlertDebug = onLeaveAlertDebug;
     this.startMonitoring();
     this.isInitialized = true;
     
@@ -19,31 +32,33 @@ export const URLMonitor = {
 
   startMonitoring() {
     // Monitor URL changes via history API
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    this.originalPushState = history.pushState;
+    this.originalReplaceState = history.replaceState;
     
     history.pushState = (...args) => {
-      originalPushState.apply(history, args);
+      this.originalPushState.apply(history, args);
       this.checkURLChange();
     };
     
     history.replaceState = (...args) => {
-      originalReplaceState.apply(history, args);
+      this.originalReplaceState.apply(history, args);
       this.checkURLChange();
     };
     
     // Monitor popstate events (back/forward buttons)
-    window.addEventListener('popstate', () => {
+    this.popstateHandler = () => {
       this.checkURLChange();
-    });
+    };
+    window.addEventListener('popstate', this.popstateHandler);
     
     // Monitor hash changes
-    window.addEventListener('hashchange', () => {
+    this.hashchangeHandler = () => {
       this.checkURLChange();
-    });
+    };
+    window.addEventListener('hashchange', this.hashchangeHandler);
     
     // Periodic check as fallback (every 2 seconds)
-    setInterval(() => {
+    this.monitorIntervalId = setInterval(() => {
       this.checkURLChange();
     }, 2000);
   },
@@ -58,10 +73,13 @@ export const URLMonitor = {
       const isOnAlertDebug = this.isAlertDebugPage(currentUrl);
       
       if (wasOnAlertDebug && !isOnAlertDebug) {
-        Utils.log('Left alert-debug page, forcing page reload to ensure clean state...');
-        // Force a full page reload to completely clean up the extension
-        setTimeout(() => window.location.reload(), 100);
-        return;
+        Utils.log('Left alert-debug page, cleaning up extension state');
+        this.onLeaveAlertDebug?.();
+      }
+
+      if (!wasOnAlertDebug && isOnAlertDebug) {
+        Utils.log('Entered alert-debug page, initializing extension state');
+        this.onEnterAlertDebug?.();
       }
       
       this.lastUrl = currentUrl;
@@ -72,7 +90,6 @@ export const URLMonitor = {
     return url.includes('/alert-debug');
   },
 
-  // Legacy cleanup method - kept for compatibility but not used with force reload
   cleanup() {
     const elementsToRemove = [
       "#notepad-panel",

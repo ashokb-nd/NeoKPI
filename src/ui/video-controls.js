@@ -2,11 +2,28 @@ import { CONFIG } from "../config/constants.js";
 import { Utils } from "../utils/utils.js";
 
 export const VideoControlsManager = {
-init() {
+  observer: null,
+
+  init() {
     this.injectStyles();
     this.setupVideoObserver();
     this.enhanceExistingVideos();
     this.delete_video_label_divs();
+  },
+
+  cleanup() {
+    this.observer?.disconnect();
+    this.observer = null;
+
+    document.querySelectorAll(".custom-video-controls").forEach((panel) => {
+      panel.remove();
+    });
+
+    document.querySelectorAll("video[data-controls-enhanced]").forEach((video) => {
+      delete video.dataset.controlsEnhanced;
+      video.removeAttribute("tabindex");
+      video.parentElement?.classList.remove("video-controls-enhanced");
+    });
   },
 
   delete_video_label_divs() {
@@ -84,8 +101,10 @@ init() {
   },
 
   setupVideoObserver() {
+    if (this.observer) return;
+
     // Watch for new video elements being added to the page
-    const observer = new MutationObserver((mutations) => {
+    this.observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
@@ -99,7 +118,7 @@ init() {
       });
     });
 
-    observer.observe(document.body, {
+    this.observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
