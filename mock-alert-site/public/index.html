@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alert Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <!-- Konva must load as a classic script to set window.Konva -->
+    <script src="/repo/src/markrEdge/konva.min.js"></script>
+  </head>
+  <body>
+    <!-- ── Top control bar ── -->
+    <header class="top-bar">
+      <input id="data-dir-input" class="data-dir-input" type="text" placeholder="Alert data directory" />
+      <button id="apply-data-dir-btn" type="button">Apply Path</button>
+
+      <div class="controls">
+        <input id="alert-id-input" type="text" placeholder="Alert ID…" />
+
+        <select id="second-video-select" title="Second video channel">
+          <option value="inward" selected>Inward</option>
+          <option value="dms">DMS</option>
+        </select>
+
+        <button id="load-btn">Load</button>
+
+        <label class="ann-toggle" title="Toggle annotations">
+          <input id="annotations-toggle" type="checkbox" />
+          <span class="ann-toggle-track"></span>
+          <span class="ann-toggle-label">Annotations</span>
+        </label>
+      </div>
+    </header>
+
+    <!-- ── App body ── -->
+    <div class="app-body">
+
+      <!-- Main content -->
+      <main class="content">
+        <!-- Full-width video row: two half-width containers -->
+        <div class="video-row">
+          <!-- Box 1: outward (fixed) -->
+          <div class="video-box" id="video-box-1">
+            <div class="video-box-label">Outward</div>
+            <div class="video-stage-wrap" id="video-stage-wrap-1">
+              <video id="video-1" preload="metadata"></video>
+              <div id="konva-host-1" class="konva-host"></div>
+            </div>
+          </div>
+
+          <!-- Box 2: selectable (inward / dms) -->
+          <div class="video-box" id="video-box-2">
+            <div class="video-box-label" id="box2-label">Inward</div>
+            <div class="video-stage-wrap" id="video-stage-wrap-2">
+              <video id="video-2" preload="metadata"></video>
+              <div id="konva-host-2" class="konva-host"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shared video control panel -->
+        <div class="video-controls">
+          <button class="vc-btn" id="vc-play-pause" title="Play / Pause">&#9654;</button>
+          <span class="vc-time" id="vc-current">0:00</span>
+          <input id="vc-seek" type="range" min="0" max="0" value="0" step="0.1" />
+          <span class="vc-time" id="vc-duration">0:00</span>
+          <button class="vc-btn vc-mute-btn" id="vc-mute" title="Mute / Unmute">&#128266;</button>
+        </div>
+
+      </main>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
