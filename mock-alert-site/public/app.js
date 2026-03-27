@@ -31,7 +31,7 @@ const telemetrySmoothSliderEl = document.querySelector("#telemetry-smooth-slider
 
 // State
 let activeDetail = null;
-let annotationsEnabled = false;
+let annotationsEnabled = Boolean(annotationsToggleEl?.checked);
 let stage1 = null;
 let stage2 = null;
 let annotator1 = null;
