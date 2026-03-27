@@ -62,14 +62,36 @@
         <div class="video-controls">
           <button class="vc-btn" id="vc-play-pause" title="Play / Pause">&#9654;</button>
           <span class="vc-time" id="vc-current">0:00</span>
-          <input id="vc-seek" type="range" min="0" max="0" value="0" step="0.1" />
+          <input id="vc-seek" type="range" min="0" max="0" value="0" step="0.01" />
           <span class="vc-time" id="vc-duration">0:00</span>
           <button class="vc-btn vc-mute-btn" id="vc-mute" title="Mute / Unmute">&#128266;</button>
         </div>
 
+        <section class="telemetry-panel" id="telemetry-panel">
+          <div class="telemetry-header">
+            <h3>Telemetry</h3>
+            <div class="telemetry-values">
+              <span class="telemetry-pill" id="telemetry-lane-value">PIL: --</span>
+              <span class="telemetry-pill" id="telemetry-lateral-value">Acc Y: --</span>
+              <span class="telemetry-pill" id="telemetry-driving-value">Acc Z: --</span>
+            </div>
+          </div>
+          <div class="telemetry-grid">
+            <div class="telemetry-chart-card">
+              <div class="telemetry-chart-title">Position In Lane (Corrected)</div>
+              <div id="telemetry-lane-chart" class="telemetry-plot"></div>
+            </div>
+            <div class="telemetry-chart-card">
+              <div class="telemetry-chart-title">Inertial Signals</div>
+              <div id="telemetry-inertial-chart" class="telemetry-plot"></div>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
 
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="/app.js" type="module"></script>
   </body>
 </html>
