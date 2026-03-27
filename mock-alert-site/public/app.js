@@ -1,3 +1,5 @@
+import { VideoAnnotator } from "/repo/src/markrEdge/annotations/video-annotator.js";
+
 // ─── Video channel mapping ────────────────────────────────────────────────────
 // 0.mp4 = outward (road-facing, always shown in box 1)
 // 1.mp4 = inward  (cabin-facing)
@@ -95,6 +97,9 @@ let activeDetail       = null;
 let annotationsEnabled = false;
 /** @type {import('konva')|null} */ let stage1 = null;
 /** @type {import('konva')|null} */ let stage2 = null;
+let annotator1 = null;
+let annotator2 = null;
+let annotationInitToken = 0;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function capitalize(str) {
@@ -116,6 +121,50 @@ function setVideo(videoEl, url) {
     videoEl.load();
     videoEl.style.opacity = "0.2";
   }
+}
+
+function destroyAnnotators() {
+  if (annotator1) {
+    annotator1.destroy();
+    annotator1 = null;
+  }
+  if (annotator2) {
+    annotator2.destroy();
+    annotator2 = null;
+  }
+}
+
+function parseMetadataText(metadataText) {
+  if (!metadataText || !metadataText.trim()) return null;
+  try {
+    return JSON.parse(metadataText);
+  } catch (err) {
+    console.warn("Metadata is not valid JSON, skipping annotations", err);
+    return null;
+  }
+}
+
+function waitForVideoMetadata(videoEl) {
+  if (videoEl.readyState >= 1) return Promise.resolve();
+  return new Promise(resolve => {
+    videoEl.addEventListener("loadedmetadata", resolve, { once: true });
+  });
+}
+
+async function refreshAnnotators() {
+  const token = ++annotationInitToken;
+  destroyAnnotators();
+
+  if (!annotationsEnabled || !activeDetail || !stage1 || !stage2) return;
+
+  const metadata = parseMetadataText(activeDetail.metadataText || "");
+  if (!metadata) return;
+
+  await Promise.all([waitForVideoMetadata(video1El), waitForVideoMetadata(video2El)]);
+  if (token !== annotationInitToken || !annotationsEnabled) return;
+
+  annotator1 = new VideoAnnotator(video1El, stage1, metadata, ["Dsf", "Multilane"]);
+  annotator2 = new VideoAnnotator(video2El, stage2, metadata, ["Header", "InertialBar"]);
 }
 
 function projectedHeight(videoEl, boxWidth) {
@@ -194,6 +243,7 @@ async function loadAlert(alertId) {
   setVideo(video1El, getVideoUrl(activeDetail, FIRST_VIDEO));
   applySecondVideo(activeDetail);
   updateRigidVideoFrameHeight();
+  await refreshAnnotators();
 }
 
 async function refreshAlerts() {
@@ -221,6 +271,7 @@ async function applyDataDir() {
   } else {
     setVideo(video1El, null);
     setVideo(video2El, null);
+    destroyAnnotators();
   }
 }
 
@@ -253,14 +304,14 @@ dataDirInputEl.addEventListener("keydown", e => {
 alertIdInputEl.addEventListener("keydown", e => { if (e.key === "Enter") loadBtnEl.click(); });
 
 secondVideoSelectEl.addEventListener("change", () => {
-  if (activeDetail) applySecondVideo(activeDetail);
+  if (!activeDetail) return;
+  applySecondVideo(activeDetail);
+  refreshAnnotators().catch(err => console.error(err));
 });
 
 annotationsToggleEl.addEventListener("change", () => {
   annotationsEnabled = annotationsToggleEl.checked;
-  // Annotation implementation goes here in a later step
-  console.log("Annotations:", annotationsEnabled ? "on" : "off",
-    "| stage1:", stage1, "| stage2:", stage2);
+  refreshAnnotators().catch(err => console.error(err));
 });
 
 init().catch(err => console.error("Init failed:", err));
