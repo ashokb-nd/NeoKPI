@@ -222,15 +222,20 @@ body {
 }
 
 .vc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface-2);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 12px;
+  width: 36px;
+  height: 30px;
+  padding: 0;
   font-size: 14px;
   cursor: pointer;
   flex-shrink: 0;
-  line-height: 1.6;
+  line-height: 1;
   transition: background 0.15s;
 }
 
