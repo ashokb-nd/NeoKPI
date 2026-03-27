@@ -34,6 +34,8 @@ const telemetryInertialChartEl = document.querySelector("#telemetry-inertial-cha
 const telemetryLaneValueEl = document.querySelector("#telemetry-lane-value");
 const telemetryLateralValueEl = document.querySelector("#telemetry-lateral-value");
 const telemetryDrivingValueEl = document.querySelector("#telemetry-driving-value");
+const telemetrySmoothSliderEl = document.querySelector("#telemetry-smooth-slider");
+const telemetrySmoothValueEl = document.querySelector("#telemetry-smooth-value");
 
 // State
 let activeDetail = null;
@@ -51,6 +53,9 @@ let lastTelemetryDrawMs = 0;
 let playheadRafId = null;
 let pendingPlayheadTime = 0;
 let controlsRafId = null;
+const SMOOTHING_WINDOWS = [1, 3, 5, 9, 15, 25];
+let smoothedAccYByWindow = null;
+let smoothedAccZByWindow = null;
 
 function drawPlayhead(t) {
   if (laneChart && window.Plotly) {
@@ -173,6 +178,31 @@ function downsampleSeries(series, maxPoints = TELEMETRY_MAX_POINTS) {
   return out;
 }
 
+function smoothSeriesY(series, windowSize) {
+  if (!Array.isArray(series) || !series.length || windowSize <= 1) {
+    return (series || []).map(p => p.y);
+  }
+
+  const size = Math.max(1, Math.floor(windowSize));
+  const half = Math.floor(size / 2);
+  const y = series.map(p => p.y);
+  const out = new Array(y.length);
+
+  for (let i = 0; i < y.length; i += 1) {
+    const start = Math.max(0, i - half);
+    const end = Math.min(y.length - 1, i + half);
+    let sum = 0;
+    let count = 0;
+    for (let j = start; j <= end; j += 1) {
+      sum += y[j];
+      count += 1;
+    }
+    out[i] = count > 0 ? sum / count : y[i];
+  }
+
+  return out;
+}
+
 function parseAccelerometerSeries(sensorMetaData, startEpochMs) {
   if (!Array.isArray(sensorMetaData)) return { accY: [], accZ: [] };
 
@@ -258,7 +288,10 @@ function buildTelemetryModel(metadata) {
   if (!metadata || typeof metadata !== "object") return null;
 
   const positionsInLane = metadata?.inference_data?.observations_data?.positionsInLane || [];
-  const startEpochMs = extractMinEpochMs(metadata, positionsInLane) ?? Number(metadata.startTime) ?? Date.now();
+  const metadataStart = Number(metadata.startTime);
+  const startEpochMs = Number.isFinite(metadataStart)
+    ? metadataStart
+    : (extractMinEpochMs(metadata, positionsInLane) ?? Date.now());
   const pilOffset = getPilOffset(metadata);
 
   const laneSeries = downsampleSeries(
@@ -366,10 +399,17 @@ function plotLayout(yLabel, xMax = 1, yMin = undefined, yMax = undefined) {
 function initTelemetryCharts(metadata) {
   destroyTelemetryCharts();
   telemetryModel = buildTelemetryModel(metadata);
+  smoothedAccYByWindow = null;
+  smoothedAccZByWindow = null;
 
   telemetryLaneValueEl.textContent = "PIL: --";
   telemetryLateralValueEl.textContent = "Acc Y: --";
   telemetryDrivingValueEl.textContent = "Acc Z: --";
+  if (telemetrySmoothSliderEl) {
+    telemetrySmoothSliderEl.disabled = true;
+    telemetrySmoothSliderEl.value = "0";
+  }
+  if (telemetrySmoothValueEl) telemetrySmoothValueEl.textContent = "1";
 
   if (!telemetryModel || !window.Plotly) return;
 
@@ -406,6 +446,14 @@ function initTelemetryCharts(metadata) {
     hovertemplate: "t=%{x:.2f}s<br>AccZ=%{y:.4f}<extra></extra>",
   };
 
+  smoothedAccYByWindow = Object.fromEntries(
+    SMOOTHING_WINDOWS.map(w => [w, smoothSeriesY(telemetryModel.accY, w)]),
+  );
+  smoothedAccZByWindow = Object.fromEntries(
+    SMOOTHING_WINDOWS.map(w => [w, smoothSeriesY(telemetryModel.accZ, w)]),
+  );
+  const inertialLayout = plotLayout("Acceleration", telemetryModel.xMax, inertialRange.min, inertialRange.max);
+
   const cfg = { displayModeBar: false, responsive: true, staticPlot: false };
   window.Plotly.react(
     telemetryLaneChartEl,
@@ -416,14 +464,35 @@ function initTelemetryCharts(metadata) {
   window.Plotly.react(
     telemetryInertialChartEl,
     [accYTrace, accZTrace],
-    plotLayout("Acceleration", telemetryModel.xMax, inertialRange.min, inertialRange.max),
+    inertialLayout,
     cfg,
   );
 
   laneChart = true;
   inertialChart = true;
 
+  if (telemetrySmoothSliderEl) {
+    telemetrySmoothSliderEl.max = String(SMOOTHING_WINDOWS.length - 1);
+    telemetrySmoothSliderEl.value = "0";
+    telemetrySmoothSliderEl.disabled = false;
+  }
+  if (telemetrySmoothValueEl) telemetrySmoothValueEl.textContent = String(SMOOTHING_WINDOWS[0]);
+
   updateTelemetryAtCurrentTime(true);
+}
+
+function applyInertialSmoothingByIndex(index) {
+  if (!inertialChart || !window.Plotly || !smoothedAccYByWindow || !smoothedAccZByWindow) return;
+
+  const idx = Math.max(0, Math.min(SMOOTHING_WINDOWS.length - 1, Number(index) || 0));
+  const w = SMOOTHING_WINDOWS[idx];
+  if (telemetrySmoothValueEl) telemetrySmoothValueEl.textContent = String(w);
+
+  window.Plotly.restyle(
+    telemetryInertialChartEl,
+    { y: [smoothedAccYByWindow[w], smoothedAccZByWindow[w]] },
+    [0, 1],
+  );
 }
 
 function interpolateSeries(series, tSec) {
@@ -709,5 +778,11 @@ annotationsToggleEl.addEventListener("change", () => {
   annotationsEnabled = annotationsToggleEl.checked;
   refreshAnnotators().catch(err => console.error(err));
 });
+
+if (telemetrySmoothSliderEl) {
+  telemetrySmoothSliderEl.addEventListener("input", e => {
+    applyInertialSmoothingByIndex(e.target.value);
+  });
+}
 
 init().catch(err => console.error("Init failed:", err));

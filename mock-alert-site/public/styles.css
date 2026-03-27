@@ -332,6 +332,46 @@ body {
   height: 160px;
 }
 
+.telemetry-inertial-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 160px;
+}
+
+.telemetry-inertial-layout .telemetry-plot {
+  flex: 1;
+  height: 100%;
+}
+
+.telemetry-smooth-rail {
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.telemetry-smooth-slider {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  writing-mode: bt-lr;
+  width: 18px;
+  height: 128px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.telemetry-smooth-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  transform: rotate(180deg);
+  writing-mode: vertical-rl;
+  user-select: none;
+}
+
 @media (max-width: 980px) {
   .telemetry-grid {
     grid-template-columns: 1fr;

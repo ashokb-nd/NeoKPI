@@ -83,7 +83,13 @@
             </div>
             <div class="telemetry-chart-card">
               <div class="telemetry-chart-title">Inertial Signals</div>
-              <div id="telemetry-inertial-chart" class="telemetry-plot"></div>
+              <div class="telemetry-inertial-layout">
+                <div id="telemetry-inertial-chart" class="telemetry-plot"></div>
+                <div class="telemetry-smooth-rail">
+                  <input id="telemetry-smooth-slider" class="telemetry-smooth-slider" type="range" min="0" max="5" step="1" value="0" />
+                  <div class="telemetry-smooth-label">Smooth <span id="telemetry-smooth-value">1</span></div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
