@@ -208,6 +208,58 @@ function snapVideo2ToVideo1() {
   if (drift > 0.3) video2El.currentTime = video1El.currentTime;
 }
 
+function togglePlayback() {
+  if (!video1El.src) return;
+  if (video1El.paused) video1El.play().catch(() => {});
+  else video1El.pause();
+}
+
+function seekToTime(nextTimeSec) {
+  if (!video1El.src) return;
+
+  const duration = Number.isFinite(video1El.duration) ? video1El.duration : 0;
+  const clampedTime = Math.max(0, Math.min(nextTimeSec, duration || nextTimeSec));
+  video1El.currentTime = clampedTime;
+  if (video2El.readyState >= 1) video2El.currentTime = clampedTime;
+  updateControlsUI();
+  telemetryGraphs.updateForTime(clampedTime, true);
+}
+
+function seekBy(deltaSec) {
+  seekToTime((video1El.currentTime || 0) + deltaSec);
+}
+
+function isTypingTarget(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+
+  const tagName = target.tagName;
+  return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
+}
+
+function wireKeyboardShortcuts() {
+  document.addEventListener("keydown", e => {
+    if (isTypingTarget(e.target)) return;
+
+    if (e.code === "Space") {
+      e.preventDefault();
+      togglePlayback();
+      return;
+    }
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      seekBy(-5);
+      return;
+    }
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      seekBy(5);
+    }
+  });
+}
+
 function updateControlsUI() {
   vcPlayPauseEl.innerHTML = video1El.paused ? "&#9654;" : "&#9646;&#9646;";
   vcCurrentEl.textContent = fmtTime(video1El.currentTime);
@@ -253,16 +305,11 @@ function wireVideoSync() {
   });
 
   vcPlayPauseEl.addEventListener("click", () => {
-    if (video1El.paused) video1El.play().catch(() => {});
-    else video1El.pause();
+    togglePlayback();
   });
 
   vcSeekEl.addEventListener("input", () => {
-    const t = parseFloat(vcSeekEl.value);
-    video1El.currentTime = t;
-    if (video2El.readyState >= 1) video2El.currentTime = t;
-    updateControlsUI();
-    telemetryGraphs.updateForTime(t, true);
+    seekToTime(parseFloat(vcSeekEl.value));
   });
 
   vcMuteEl.addEventListener("click", () => {
@@ -329,6 +376,7 @@ async function applyDataDir() {
 async function init() {
   initStages();
   wireVideoSync();
+  wireKeyboardShortcuts();
 
   const payload = await refreshAlerts();
   if ((payload.alerts || []).length > 0) {
