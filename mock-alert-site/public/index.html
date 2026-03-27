@@ -15,6 +15,7 @@
       <button id="apply-data-dir-btn" type="button">Apply Path</button>
 
       <div class="controls">
+        <span id="alert-index-badge" class="alert-index-badge">--/--</span>
         <input id="alert-id-input" type="text" placeholder="Alert ID…" />
 
         <select id="second-video-select" title="Second video channel">
@@ -86,8 +87,8 @@
               <div class="telemetry-inertial-layout">
                 <div id="telemetry-inertial-chart" class="telemetry-plot"></div>
                 <div class="telemetry-smooth-rail">
-                  <input id="telemetry-smooth-slider" class="telemetry-smooth-slider" type="range" min="0" max="5" step="1" value="0" />
-                  <div class="telemetry-smooth-label">Smooth <span id="telemetry-smooth-value">1</span></div>
+                  <input id="telemetry-smooth-slider" class="telemetry-smooth-slider" type="range" min="0" max="5" step="1" value="3" />
+                  <div class="telemetry-smooth-label">Smooth <span id="telemetry-smooth-value">7</span></div>
                 </div>
               </div>
             </div>

@@ -39,8 +39,9 @@ body {
 }
 
 .data-dir-input {
-  flex: 1;
-  min-width: 280px;
+  flex: 0 1 auto;
+  width: 250px;
+  min-width: 220px;
   height: 32px;
   background: var(--surface-2);
   color: var(--text);
@@ -112,6 +113,21 @@ body {
   white-space: nowrap;
 }
 #load-btn:hover { background: var(--brand-hover); }
+
+.alert-index-badge {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-label);
+  background: var(--surface-2);
+  font-size: 12px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 /* ---- Annotations toggle ---- */
 .ann-toggle {

@@ -1,6 +1,7 @@
 const TELEMETRY_MAX_POINTS = 1200;
 const TELEMETRY_PLAYHEAD_FPS = 24;
-const SMOOTHING_WINDOWS = [1, 3, 5, 9, 15, 25];
+const SMOOTHING_WINDOWS = [1, 3, 5, 7, 9, 11];
+const DEFAULT_SMOOTHING_INDEX = Math.max(0, SMOOTHING_WINDOWS.indexOf(7));
 
 function fmtSigned(value, digits = 3) {
   if (!Number.isFinite(value)) return "--";
@@ -315,9 +316,9 @@ export function createTelemetryGraphs({
     setTelemetryValues(null, null, null);
     if (smoothSliderEl) {
       smoothSliderEl.disabled = true;
-      smoothSliderEl.value = "0";
+      smoothSliderEl.value = String(DEFAULT_SMOOTHING_INDEX);
     }
-    if (smoothValueEl) smoothValueEl.textContent = "1";
+    if (smoothValueEl) smoothValueEl.textContent = String(SMOOTHING_WINDOWS[DEFAULT_SMOOTHING_INDEX]);
   }
 
   function initFromMetadata(metadata, initialTimeSec = 0) {
@@ -385,10 +386,12 @@ export function createTelemetryGraphs({
 
     if (smoothSliderEl) {
       smoothSliderEl.max = String(SMOOTHING_WINDOWS.length - 1);
-      smoothSliderEl.value = "0";
+      smoothSliderEl.value = String(DEFAULT_SMOOTHING_INDEX);
       smoothSliderEl.disabled = false;
     }
-    if (smoothValueEl) smoothValueEl.textContent = String(SMOOTHING_WINDOWS[0]);
+    if (smoothValueEl) smoothValueEl.textContent = String(SMOOTHING_WINDOWS[DEFAULT_SMOOTHING_INDEX]);
+
+    applySmoothingByIndex(DEFAULT_SMOOTHING_INDEX);
 
     updateForTime(initialTimeSec, true);
   }

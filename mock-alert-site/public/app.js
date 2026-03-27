@@ -11,6 +11,7 @@ const applyDataDirBtnEl = document.querySelector("#apply-data-dir-btn");
 const alertIdInputEl = document.querySelector("#alert-id-input");
 const secondVideoSelectEl = document.querySelector("#second-video-select");
 const loadBtnEl = document.querySelector("#load-btn");
+const alertIndexBadgeEl = document.querySelector("#alert-index-badge");
 const annotationsToggleEl = document.querySelector("#annotations-toggle");
 
 const box2LabelEl = document.querySelector("#box2-label");
@@ -37,6 +38,8 @@ let stage2 = null;
 let annotator1 = null;
 let annotator2 = null;
 let annotationInitToken = 0;
+let availableAlertIds = [];
+let currentAlertIndex = -1;
 
 let controlsRafId = null;
 const telemetryGraphs = createTelemetryGraphs({
@@ -81,6 +84,21 @@ function fmtTime(s) {
 
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function syncCurrentAlertIndex(alertId) {
+  currentAlertIndex = availableAlertIds.indexOf(alertId);
+}
+
+function renderAlertIndexBadge() {
+  if (!alertIndexBadgeEl) return;
+
+  if (currentAlertIndex < 0 || availableAlertIds.length === 0) {
+    alertIndexBadgeEl.textContent = "--/--";
+    return;
+  }
+
+  alertIndexBadgeEl.textContent = `${currentAlertIndex + 1}/${availableAlertIds.length}`;
 }
 
 function getVideoUrl(detail, filename) {
@@ -237,8 +255,43 @@ function isTypingTarget(target) {
   return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
+async function moveAlertSelection(direction) {
+  if (!availableAlertIds.length) return false;
+
+  if (currentAlertIndex === -1 && activeDetail?.alertId) {
+    syncCurrentAlertIndex(activeDetail.alertId);
+  }
+
+  const step = direction === "previous" ? -1 : 1;
+  const baseIndex = currentAlertIndex === -1 ? 0 : currentAlertIndex;
+  const nextIndex = (baseIndex + step + availableAlertIds.length) % availableAlertIds.length;
+  await loadAlert(availableAlertIds[nextIndex]);
+  return true;
+}
+
+async function submitAlertInput() {
+  const inputValue = alertIdInputEl.value.trim();
+  if (!inputValue) return;
+
+  await loadAlert(inputValue);
+}
+
 function wireKeyboardShortcuts() {
-  document.addEventListener("keydown", e => {
+  document.addEventListener("keydown", async e => {
+    const hasNavigationModifier = (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
+
+    if (hasNavigationModifier && e.key === "ArrowDown") {
+      e.preventDefault();
+      await moveAlertSelection("next");
+      return;
+    }
+
+    if (hasNavigationModifier && e.key === "ArrowUp") {
+      e.preventDefault();
+      await moveAlertSelection("previous");
+      return;
+    }
+
     if (isTypingTarget(e.target)) return;
 
     if (e.code === "Space") {
@@ -333,6 +386,8 @@ async function loadAlert(alertId) {
   if (!res.ok) throw new Error(`Failed to load alert: ${alertId}`);
 
   activeDetail = await res.json();
+  syncCurrentAlertIndex(activeDetail.alertId);
+  renderAlertIndexBadge();
   alertIdInputEl.value = activeDetail.alertId;
 
   setVideo(video1El, getVideoUrl(activeDetail, FIRST_VIDEO));
@@ -348,6 +403,12 @@ async function refreshAlerts() {
 
   const payload = await res.json();
   dataDirInputEl.value = payload.dataDir || "";
+  availableAlertIds = Array.isArray(payload.alerts)
+    ? payload.alerts.map(alert => alert.alertId).filter(Boolean)
+    : [];
+  if (activeDetail?.alertId) syncCurrentAlertIndex(activeDetail.alertId);
+  else currentAlertIndex = -1;
+  renderAlertIndexBadge();
   return payload;
 }
 
@@ -366,6 +427,9 @@ async function applyDataDir() {
   if ((payload.alerts || []).length > 0) {
     await loadAlert(payload.alerts[0].alertId);
   } else {
+    availableAlertIds = [];
+    currentAlertIndex = -1;
+    renderAlertIndexBadge();
     setVideo(video1El, null);
     setVideo(video2El, null);
     destroyAnnotators();
@@ -386,8 +450,7 @@ async function init() {
 
 // Events
 loadBtnEl.addEventListener("click", async () => {
-  const id = alertIdInputEl.value.trim();
-  if (id) await loadAlert(id).catch(err => console.error(err));
+  await submitAlertInput().catch(err => console.error(err));
 });
 
 applyDataDirBtnEl.addEventListener("click", () => {
@@ -399,7 +462,10 @@ dataDirInputEl.addEventListener("keydown", e => {
 });
 
 alertIdInputEl.addEventListener("keydown", e => {
-  if (e.key === "Enter") loadBtnEl.click();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submitAlertInput().catch(err => console.error(err));
+  }
 });
 
 secondVideoSelectEl.addEventListener("change", () => {
