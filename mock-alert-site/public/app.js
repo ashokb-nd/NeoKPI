@@ -578,7 +578,7 @@ async function refreshAnnotators() {
   if (token !== annotationInitToken || !annotationsEnabled) return;
 
   annotator1 = new VideoAnnotator(video1El, stage1, metadata, ["Dsf", "Multilane"]);
-  annotator2 = new VideoAnnotator(video2El, stage2, metadata, ["Header", "InertialBar"]);
+  annotator2 = new VideoAnnotator(video2El, stage2, metadata, ["Header"]); // "InertialBar"
 }
 
 // Stage setup
