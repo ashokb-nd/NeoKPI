@@ -11,6 +11,7 @@ const applyDataDirBtnEl = document.querySelector("#apply-data-dir-btn");
 const alertIdInputEl = document.querySelector("#alert-id-input");
 const secondVideoSelectEl = document.querySelector("#second-video-select");
 const loadBtnEl = document.querySelector("#load-btn");
+const copyAlertIdsBtnEl = document.querySelector("#copy-alert-ids-btn");
 const alertIndexBadgeEl = document.querySelector("#alert-index-badge");
 const annotationsToggleEl = document.querySelector("#annotations-toggle");
 
@@ -40,6 +41,7 @@ let annotator2 = null;
 let annotationInitToken = 0;
 let availableAlertIds = [];
 let currentAlertIndex = -1;
+let copyIdsStatusTimer = null;
 
 let controlsRafId = null;
 const telemetryGraphs = createTelemetryGraphs({
@@ -99,6 +101,52 @@ function renderAlertIndexBadge() {
   }
 
   alertIndexBadgeEl.textContent = `${currentAlertIndex + 1}/${availableAlertIds.length}`;
+}
+
+function setCopyIdsButtonStatus(label) {
+  if (!copyAlertIdsBtnEl) return;
+  copyAlertIdsBtnEl.textContent = label;
+
+  if (copyIdsStatusTimer) clearTimeout(copyIdsStatusTimer);
+  copyIdsStatusTimer = setTimeout(() => {
+    copyAlertIdsBtnEl.textContent = "Copy IDs";
+    copyIdsStatusTimer = null;
+  }, 1400);
+}
+
+async function writeTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const scratch = document.createElement("textarea");
+  scratch.value = text;
+  scratch.setAttribute("readonly", "");
+  scratch.style.position = "absolute";
+  scratch.style.left = "-9999px";
+  document.body.appendChild(scratch);
+  scratch.select();
+
+  const success = document.execCommand("copy");
+  document.body.removeChild(scratch);
+  if (!success) throw new Error("Clipboard copy failed");
+}
+
+async function copyAlertIds() {
+  if (!availableAlertIds.length) {
+    setCopyIdsButtonStatus("No IDs");
+    return;
+  }
+
+  const payload = availableAlertIds.join("\n");
+  try {
+    await writeTextToClipboard(payload);
+    setCopyIdsButtonStatus("Copied");
+  } catch (err) {
+    console.error("Copy IDs failed:", err);
+    setCopyIdsButtonStatus("Copy failed");
+  }
 }
 
 function getVideoUrl(detail, filename) {
@@ -452,6 +500,12 @@ async function init() {
 loadBtnEl.addEventListener("click", async () => {
   await submitAlertInput().catch(err => console.error(err));
 });
+
+if (copyAlertIdsBtnEl) {
+  copyAlertIdsBtnEl.addEventListener("click", () => {
+    copyAlertIds();
+  });
+}
 
 applyDataDirBtnEl.addEventListener("click", () => {
   applyDataDir().catch(err => console.error(err));

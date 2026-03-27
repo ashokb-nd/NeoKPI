@@ -114,6 +114,23 @@ body {
 }
 #load-btn:hover { background: var(--brand-hover); }
 
+#copy-alert-ids-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#copy-alert-ids-btn:hover {
+  border-color: var(--brand);
+}
+
 .alert-index-badge {
   height: 32px;
   display: inline-flex;
